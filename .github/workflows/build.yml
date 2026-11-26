@@ -198,6 +198,17 @@ jobs:
           g.write_text(t)
           PY
 
+      - name: Install redesigned prospecting assistant
+        run: |
+          PROJECT=extracted/xiaomei-ai
+          cp app/MainActivity.new.kt "$PROJECT/app/src/main/java/com/xiaomei/ai/MainActivity.kt"
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("extracted/xiaomei-ai/app/build.gradle.kts")
+          s=p.read_text().replace('versionCode = 5','versionCode = 6').replace('versionName = "0.5.0"','versionName = "0.6.0"')
+          p.write_text(s)
+          PY
+
       - name: Diagnose Kotlin source
         run: |
           FILE=$(find extracted -name MainActivity.kt -type f | head -n 1)
