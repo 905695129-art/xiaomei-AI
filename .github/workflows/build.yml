@@ -212,6 +212,70 @@ jobs:
       - name: Install new sweet launcher icon
         run: bash scripts/install_launcher_icon.sh
 
+      - name: Add floating assistant overlay service
+        run: |
+          PROJECT=extracted/xiaomei-ai
+          mkdir -p "$PROJECT/app/src/main/java/com/xiaomei/ai"
+          cat > "$PROJECT/app/src/main/java/com/xiaomei/ai/OverlayService.kt" <<'EOF'
+          package com.xiaomei.ai
+          import android.app.Service
+          import android.content.Intent
+          import android.graphics.PixelFormat
+          import android.os.Build
+          import android.os.IBinder
+          import android.view.Gravity
+          import android.view.WindowManager
+          import android.widget.TextView
+          class OverlayService : Service() {
+              private var wm: WindowManager? = null
+              private var bubble: TextView? = null
+              override fun onBind(intent: Intent?): IBinder? = null
+              override fun onCreate() {
+                  super.onCreate()
+                  wm = getSystemService(WINDOW_SERVICE) as WindowManager
+                  val v = TextView(this).apply {
+                      text = "✿ 小美"
+                      textSize = 15f
+                      setTextColor(0xFFFFFFFF.toInt())
+                      setPadding(26, 18, 26, 18)
+                      setBackgroundColor(0xFFE58AB2.toInt())
+                      elevation = 12f
+                      setOnClickListener {
+                          val i = packageManager.getLaunchIntentForPackage(packageName)
+                          i?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                          if (i != null) startActivity(i)
+                      }
+                      setOnLongClickListener { stopSelf(); true }
+                  }
+                  bubble = v
+                  val type = if (Build.VERSION.SDK_INT >= 26) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE
+                  val lp = WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT, type, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.TRANSLUCENT)
+                  lp.gravity = Gravity.TOP or Gravity.END
+                  lp.x = 24
+                  lp.y = 180
+                  wm?.addView(v, lp)
+              }
+              override fun onDestroy() {
+                  bubble?.let { try { wm?.removeView(it) } catch (_: Exception) {} }
+                  bubble = null
+                  super.onDestroy()
+              }
+          }
+          EOF
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("extracted/xiaomei-ai/app/src/main/AndroidManifest.xml")
+          s=p.read_text()
+          if "SYSTEM_ALERT_WINDOW" not in s:
+              s=s.replace("<application", '<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />\\n    <application', 1)
+          if ".OverlayService" not in s:
+              s=s.replace("</application>", '<service android:name=".OverlayService" android:exported="false" />\\n    </application>', 1)
+          p.write_text(s)
+          g=Path("extracted/xiaomei-ai/app/build.gradle.kts")
+          t=g.read_text().replace("versionCode = 6","versionCode = 7").replace('versionName = "0.6.0"','versionName = "0.7.0"')
+          g.write_text(t)
+          PY
+
       - name: Diagnose Kotlin source
         run: |
           FILE=$(find extracted -name MainActivity.kt -type f | head -n 1)
