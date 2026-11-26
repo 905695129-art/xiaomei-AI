@@ -33,12 +33,12 @@ class MainActivity : Activity() {
    val q=kw.text.toString().trim();if(q.isEmpty()){toast("请先填写关键词");return@setOnClickListener}
    p.edit().putString("kw",q).apply()
    if(!android.provider.Settings.canDrawOverlays(this)){
-    startActivity(Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,Uri.parse("package:$packageName")))
+    startActivity(Intent(this@MainActivity, android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION).setData(Uri.parse("package:$packageName")))
     toast("请允许小美AI显示在其他应用上层，然后重新点击")
     return@setOnClickListener
    }
    try{
-    startService(Intent(this, OverlayService::class.java))
+    startService(Intent(this@MainActivity, OverlayService::class.java))
     val launch=packageManager.getLaunchIntentForPackage("com.ss.android.ugc.aweme")
     if(launch!=null){launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);startActivity(launch);state.text="小美已缩为悬浮窗。请在抖音内搜索：$q"}
     else{startActivity(Intent(Intent.ACTION_VIEW,Uri.parse("https://www.douyin.com/search/"+Uri.encode(q)+"?type=general")));state.text="未检测到抖音 App，已打开网页版。"}
