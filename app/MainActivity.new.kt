@@ -32,7 +32,17 @@ class MainActivity : Activity() {
   box.addView(Button(this).apply{text="一键开始：打开抖音关键词搜索";setOnClickListener{
    val q=kw.text.toString().trim();if(q.isEmpty()){toast("请先填写关键词");return@setOnClickListener}
    p.edit().putString("kw",q).apply()
-   try{startActivity(Intent(Intent.ACTION_VIEW,Uri.parse("https://www.douyin.com/search/"+Uri.encode(q)+"?type=general")));state.text="已打开搜索。进入相关视频评论区后，返回本软件读取页面。"}catch(e:Exception){toast("无法打开抖音搜索")}
+   if(!android.provider.Settings.canDrawOverlays(this)){
+    startActivity(Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,Uri.parse("package:$packageName")))
+    toast("请允许小美AI显示在其他应用上层，然后重新点击")
+    return@setOnClickListener
+   }
+   try{
+    startService(Intent(this, OverlayService::class.java))
+    val launch=packageManager.getLaunchIntentForPackage("com.ss.android.ugc.aweme")
+    if(launch!=null){launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);startActivity(launch);state.text="小美已缩为悬浮窗。请在抖音内搜索：$q"}
+    else{startActivity(Intent(Intent.ACTION_VIEW,Uri.parse("https://www.douyin.com/search/"+Uri.encode(q)+"?type=general")));state.text="未检测到抖音 App，已打开网页版。"}
+   }catch(e:Exception){toast("启动失败："+e.message)}
   }})
   box.addView(Button(this).apply{text="开启屏幕文字读取权限";setOnClickListener{startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))}})
   box.addView(Button(this).apply{text="读取当前抖音页面可见评论";setOnClickListener{
