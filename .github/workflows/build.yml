@@ -19,21 +19,19 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      -       - name: Setup Android
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK
-        run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
+      - name: Install Android SDK
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
       - name: Find and extract ZIP
         run: |
           set -euxo pipefail
-          ls -lah
           ZIP_FILE=$(find . -maxdepth 1 -type f -iname '*.zip' | head -n 1)
           test -n "$ZIP_FILE"
           mkdir extracted
@@ -49,4 +47,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: xiaomei-ai-apk
-          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
+          path: extracted/xiaomei-ai/app/build/outputs/apk/debug/app-debug.apk }}/app/build/outputs/apk/debug/app-debug.apk
