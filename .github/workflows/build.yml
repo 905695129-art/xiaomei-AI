@@ -1,0 +1,41 @@
+name: Build XiaoMei AI APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download source
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Extract project
+        run: |
+          unzip -q xiaomei-ai-android-prototype-v0.2.zip -d extracted
+
+      - name: Build APK
+        run: gradle -p extracted/xiaomei-ai :app:assembleDebug
+
+      - name: Save APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: xiaomei-ai-apk
+          path: extracted/xiaomei-ai/app/build/outputs/apk/debug/app-debug.apk
