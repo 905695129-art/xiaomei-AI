@@ -231,7 +231,7 @@ jobs:
           fi
           sed -i 's/ singleLine = true/ isSingleLine = true/' "$FILE"
           echo "Patched EditText single-line property:"
-          grep -n 'hint = hintText' "$FILE"
+          grep -n 'hint = hintText' "$FILE" || true
           
       - name: Find Gradle Project
         id: project
