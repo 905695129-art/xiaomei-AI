@@ -31,15 +31,29 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Find Project
+      - name: Extract Project
+        run: |
+          ZIP=$(find . -maxdepth 1 -name "*.zip" -type f | head -n 1)
+
+          if [ -z "$ZIP" ]; then
+            echo "ERROR: No ZIP file found"
+            exit 1
+          fi
+
+          echo "Found ZIP: $ZIP"
+          mkdir -p extracted
+          unzip -q "$ZIP" -d extracted
+
+          echo "ZIP contents:"
+          find extracted -maxdepth 4 -type f | head -100
+
+      - name: Find Gradle Project
         id: project
         run: |
-          echo "Searching for Gradle project..."
-          SETTINGS=$(find . -type f \( -name "settings.gradle.kts" -o -name "settings.gradle" \) | head -n 1)
+          SETTINGS=$(find extracted -type f \( -name "settings.gradle.kts" -o -name "settings.gradle" \) | head -n 1)
 
           if [ -z "$SETTINGS" ]; then
-            echo "ERROR: No settings.gradle file found"
-            find . -maxdepth 5 -type f | head -200
+            echo "ERROR: ZIP does not contain settings.gradle"
             exit 1
           fi
 
