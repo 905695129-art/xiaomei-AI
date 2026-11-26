@@ -209,6 +209,9 @@ jobs:
           p.write_text(s)
           PY
 
+      - name: Install new sweet launcher icon
+        run: bash scripts/install_launcher_icon.sh
+
       - name: Diagnose Kotlin source
         run: |
           FILE=$(find extracted -name MainActivity.kt -type f | head -n 1)
