@@ -54,6 +54,99 @@ jobs:
           path: extracted/xiaomei-ai/
           if-no-files-found: error
 
+
+      - name: Add on-device accessibility assistant
+        run: |
+          PROJECT=extracted/xiaomei-ai
+          mkdir -p "$PROJECT/app/src/main/res/xml"
+          cat > "$PROJECT/app/src/main/res/xml/accessibility_service_config.xml" <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+              android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged|typeViewTextChanged"
+              android:accessibilityFeedbackType="feedbackGeneric"
+              android:notificationTimeout="250"
+              android:canRetrieveWindowContent="true"
+              android:canPerformGestures="false"
+              android:description="@string/accessibility_description" />
+          EOF
+          mkdir -p "$PROJECT/app/src/main/res/values"
+          cat > "$PROJECT/app/src/main/res/values/accessibility.xml" <<'EOF'
+          <resources>
+              <string name="accessibility_description">在你主动开启后，读取当前屏幕可见文字，供你检查和生成沟通建议；不会自动点击或发送消息。</string>
+          </resources>
+          EOF
+          cat > "$PROJECT/app/src/main/java/com/xiaomei/ai/PhoneAssistantService.kt" <<'EOF'
+          package com.xiaomei.ai
+
+          import android.accessibilityservice.AccessibilityService
+          import android.view.accessibility.AccessibilityEvent
+          import android.view.accessibility.AccessibilityNodeInfo
+
+          class PhoneAssistantService : AccessibilityService() {
+              override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+                  if (event == null) return
+                  val root = rootInActiveWindow ?: return
+                  val lines = mutableListOf<String>()
+                  collectText(root, lines, 0)
+                  val snapshot = lines.distinct().filter { it.isNotBlank() }.take(100).joinToString("\n")
+                  getSharedPreferences("xiaomei", MODE_PRIVATE).edit()
+                      .putString("screen_snapshot", snapshot)
+                      .putString("screen_package", event.packageName?.toString() ?: "")
+                      .putLong("screen_updated_at", System.currentTimeMillis())
+                      .apply()
+              }
+
+              private fun collectText(node: AccessibilityNodeInfo, out: MutableList<String>, depth: Int) {
+                  if (depth > 18 || out.size >= 150) return
+                  node.text?.toString()?.trim()?.takeIf { it.isNotEmpty() }?.let { out.add(it) }
+                  node.contentDescription?.toString()?.trim()?.takeIf { it.isNotEmpty() }?.let { out.add(it) }
+                  for (i in 0 until node.childCount) {
+                      node.getChild(i)?.let { child ->
+                          collectText(child, out, depth + 1)
+                          child.recycle()
+                      }
+                  }
+              }
+
+              override fun onInterrupt() {}
+          }
+          EOF
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("extracted/xiaomei-ai/app/src/main/AndroidManifest.xml")
+          s=p.read_text()
+          service='''        <service
+                  android:name=".PhoneAssistantService"
+                  android:label="小美AI屏幕辅助"
+                  android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+                  android:exported="true">
+                  <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
+                  <meta-data android:name="android.accessibilityservice" android:resource="@xml/accessibility_service_config" />
+              </service>
+          '''
+          s=s.replace('    </application>', service+'    </application>')
+          p.write_text(s)
+          p=Path("extracted/xiaomei-ai/app/src/main/java/com/xiaomei/ai/MainActivity.kt")
+          s=p.read_text()
+          s=s.replace('        root.addView(Button(this).apply { text = "开启通知读取权限";', '''        root.addView(Button(this).apply {
+              text = "开启手机屏幕辅助（需你在系统设置中授权）"
+              setOnClickListener { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+          })
+          root.addView(Button(this).apply {
+              text = "读取当前屏幕可见内容"
+              setOnClickListener {
+                  val snapshot = getSharedPreferences("xiaomei", MODE_PRIVATE).getString("screen_snapshot", "")
+                  val pkg = getSharedPreferences("xiaomei", MODE_PRIVATE).getString("screen_package", "")
+                  result.text = if (snapshot.isNullOrBlank()) "暂未读取到页面。请先在系统无障碍设置中开启“小美AI屏幕辅助”，再返回目标 App。" else "当前页面（$pkg）：\\n\\n$snapshot\\n\\n内容仅用于你检查和生成建议；不会自动点击或发送。"
+              }
+          })
+          root.addView(Button(this).apply { text = "开启通知读取权限";''')
+          p.write_text(s)
+          g=Path("extracted/xiaomei-ai/app/build.gradle.kts")
+          t=g.read_text().replace('versionCode = 4','versionCode = 5').replace('versionName = "0.4.0"','versionName = "0.5.0"')
+          g.write_text(t)
+          PY
+
       - name: Diagnose Kotlin source
         run: |
           FILE=$(find extracted -name MainActivity.kt -type f | head -n 1)
