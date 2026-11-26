@@ -57,6 +57,17 @@ jobs:
           echo "SOURCE_FILE=$FILE"
           nl -ba "$FILE" | sed -n '60,90p'
 
+      - name: Patch Kotlin singleLine property
+        run: |
+          FILE=$(find extracted -name MainActivity.kt -type f | head -n 1)
+          if [ -z "$FILE" ]; then
+            echo "ERROR: MainActivity.kt not found"
+            exit 1
+          fi
+          sed -i 's/ singleLine = true/ isSingleLine = true/' "$FILE"
+          echo "Patched EditText single-line property:"
+          grep -n 'hint = hintText' "$FILE"
+          
       - name: Find Gradle Project
         id: project
         run: |
