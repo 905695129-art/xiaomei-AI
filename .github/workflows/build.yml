@@ -47,6 +47,16 @@ jobs:
           echo "ZIP contents:"
           find extracted -maxdepth 4 -type f | head -100
 
+      - name: Diagnose Kotlin source
+        run: |
+          FILE=$(find extracted -name MainActivity.kt -type f | head -n 1)
+          if [ -z "$FILE" ]; then
+            echo "ERROR: MainActivity.kt not found"
+            exit 1
+          fi
+          echo "SOURCE_FILE=$FILE"
+          nl -ba "$FILE" | sed -n '60,90p'
+
       - name: Find Gradle Project
         id: project
         run: |
