@@ -147,6 +147,57 @@ jobs:
           g.write_text(t)
           PY
 
+      - name: Add keyword prospecting workflow UI
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("extracted/xiaomei-ai/app/src/main/java/com/xiaomei/ai/MainActivity.kt")
+          s=p.read_text()
+          needle='        root.addView(input, ViewGroup.LayoutParams(-1, -2))'
+          addition=r'''
+                  val keyword = EditText(this).apply {
+                      hint = "输入获客关键词，例如：情感咨询、脱单、相亲"
+                      setText(getSharedPreferences("xiaomei", MODE_PRIVATE).getString("lead_keyword", "情感咨询"))
+                      textSize = 14f
+                  }
+                  root.addView(TextView(this).apply { text = "抖音关键词获客"; textSize = 18f; setTextColor(0xFF9C4772.toInt()); setPadding(0, dp(18), 0, dp(5)) })
+                  root.addView(keyword)
+                  root.addView(Button(this).apply {
+                      text = "打开抖音搜索关键词"
+                      setOnClickListener {
+                          val q = keyword.text.toString().trim()
+                          if (q.isBlank()) { result.text = "请填写关键词。"; return@setOnClickListener }
+                          getSharedPreferences("xiaomei", MODE_PRIVATE).edit().putString("lead_keyword", q).apply()
+                          val searchUrl = "https://www.douyin.com/search/" + android.net.Uri.encode(q) + "?type=general"
+                          startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(searchUrl)))
+                      }
+                  })
+                  root.addView(Button(this).apply {
+                      text = "读取当前页面可见评论文字"
+                      setOnClickListener {
+                          val snap = getSharedPreferences("xiaomei", MODE_PRIVATE).getString("screen_snapshot", "").orEmpty()
+                          if (snap.isBlank()) result.text = "未读取到页面文字。先授权小美AI屏幕辅助，再在抖音打开视频评论区。"
+                          else input.setText(snap)
+                      }
+                  })
+                  root.addView(Button(this).apply {
+                      text = "AI筛选近期评论客户并生成私信草稿"
+                      setOnClickListener {
+                          val raw = input.text.toString().trim()
+                          if (raw.isBlank()) result.text = "先读取评论页面文字或粘贴评论内容。"
+                          else runAi("请分析抖音关键词“" + keyword.text.toString() + "”对应的评论文本：提取可见昵称、评论内容和明确时间；按最近1小时、24小时、3天、7天分类，时间不明确标注未知，不得猜测；识别真实需求和高/中/低意向；为高意向者生成自然、尊重边界的私信开场草稿；排除无关、广告和明确拒绝联系者。不要自动发送消息。评论文本：\\n" + raw, false)
+                      }
+                  })
+          '''
+          if needle not in s:
+              raise SystemExit("MainActivity insertion point not found")
+          s=s.replace(needle, needle+"\n"+addition, 1)
+          p.write_text(s)
+          g=Path("extracted/xiaomei-ai/app/build.gradle.kts")
+          t=g.read_text().replace('versionCode = 4','versionCode = 6').replace('versionName = "0.4.0"','versionName = "0.6.0"')
+          g.write_text(t)
+          PY
+
       - name: Diagnose Kotlin source
         run: |
           FILE=$(find extracted -name MainActivity.kt -type f | head -n 1)
