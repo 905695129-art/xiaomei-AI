@@ -32,7 +32,7 @@ class MainActivity : Activity() {
   box.addView(Button(this).apply{text="一键开始：打开抖音关键词搜索";setOnClickListener{
    val q=kw.text.toString().trim();if(q.isEmpty()){toast("请先填写关键词");return@setOnClickListener}
    p.edit().putString("kw",q).apply()
-   if(!android.provider.Settings.canDrawOverlays(this)){
+   if(!android.provider.Settings.canDrawOverlays(this@MainActivity)){
     startActivity(Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION).setData(Uri.parse("package:$packageName")))
     toast("请允许小美AI显示在其他应用上层，然后重新点击")
     return@setOnClickListener
