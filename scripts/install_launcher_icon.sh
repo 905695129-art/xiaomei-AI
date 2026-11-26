@@ -31,7 +31,7 @@ python3 - <<'PY'
 from pathlib import Path
 p=Path("extracted/xiaomei-ai/app/src/main/AndroidManifest.xml")
 s=p.read_text()
-s=s.replace('android:label="小美AI" android:allowBackup="false"',
-            'android:label="小美AI" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher" android:allowBackup="false"')
+import re
+s=re.sub(r'<application\\b([^>]*)>', lambda m: '<application'+m.group(1).replace('android:icon="@mipmap/ic_launcher"', '').replace('android:roundIcon="@mipmap/ic_launcher"', '')+' android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher">', s, count=1)
 p.write_text(s)
 PY
