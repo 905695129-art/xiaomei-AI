@@ -155,7 +155,7 @@ class MainActivity : Activity() {
         show(r)
     }
     private fun open(i:Int){when(i){0->course();1->profile();2->screening();3->chat();4->journal();5->date()}}
-    private val lessonTitles = ["停止讨好：把注意力放回自己","真实展示：让别人看见你的魅力","温柔而坚定：建立清晰边界","轻松吸引：让交流有来有往","适度留白：保留自己的生活节奏","识别双向奔赴：选择值得的人"]
+    private val lessonTitles = listOf("停止讨好：把注意力放回自己","真实展示：让别人看见你的魅力","温柔而坚定：建立清晰边界","轻松吸引：让交流有来有往","适度留白：保留自己的生活节奏","识别双向奔赴：选择值得的人")
     private val lessonBodies = listOf(
         """【本课目标】
 把“我必须让对方喜欢我”慢慢调整为“我也在观察，这段关系是否适合我”。
