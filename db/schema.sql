@@ -596,17 +596,6 @@ BEGIN
     RAISE EXCEPTION 'PAYMENT_EVENT_DIGEST_MISMATCH';
   END IF;
 
-  IF event_row.processing_status = 'processed' THEN
-    IF event_row.order_id = p_order_id THEN
-      RETURN;
-    END IF;
-    RAISE EXCEPTION 'PAYMENT_EVENT_ALREADY_BOUND_TO_ANOTHER_ORDER';
-  END IF;
-
-  IF event_row.processing_status <> 'processing' THEN
-    RAISE EXCEPTION 'PAYMENT_EVENT_NOT_CLAIMED';
-  END IF;
-
   SELECT * INTO order_row
   FROM orders
   WHERE id = p_order_id
@@ -626,6 +615,19 @@ BEGIN
   END IF;
   IF order_row.amount_minor <> p_amount_minor OR order_row.currency <> p_currency THEN
     RAISE EXCEPTION 'PROVIDER_AMOUNT_OR_CURRENCY_MISMATCH';
+  END IF;
+
+  IF event_row.processing_status = 'processed' THEN
+    IF event_row.order_id = p_order_id
+       AND order_row.status = 'paid'
+       AND order_row.provider_order_id = p_provider_order_id THEN
+      RETURN;
+    END IF;
+    RAISE EXCEPTION 'PAYMENT_EVENT_ALREADY_PROCESSED_WITH_DIFFERENT_ORDER_STATE';
+  END IF;
+
+  IF event_row.processing_status <> 'processing' THEN
+    RAISE EXCEPTION 'PAYMENT_EVENT_NOT_CLAIMED';
   END IF;
 
   IF order_row.status = 'paid' THEN
