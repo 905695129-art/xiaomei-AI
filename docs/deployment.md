@@ -30,6 +30,7 @@ cp .env.example .env
 ## 3. 启动应用
 
 ```bash
+docker compose run --rm migrate
 docker compose up -d --build
 docker compose ps
 docker compose logs -f app
