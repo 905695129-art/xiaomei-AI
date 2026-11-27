@@ -35,8 +35,8 @@ export async function GET() {
         e.slug AS experience_slug,
         e.title AS experience_title,
         l.id AS level_id,
-        l.position AS level_position,
-        l.title AS level_title
+        COALESCE(ent.level_position_snapshot, l.position) AS level_position,
+        COALESCE(ent.level_title_snapshot, l.title) AS level_title
       FROM entitlements ent
       JOIN orders o ON o.id = ent.order_id
       JOIN experiences e ON e.id = o.experience_id
