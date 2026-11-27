@@ -196,13 +196,20 @@ jobs:
                   display(menu,type)
               }
               private fun generate(mode:Int,type:Int){
+                  val wait=basePanel()
+                  wait.addView(TextView(this).apply{text="正在识别当前聊天内容…";textSize=15f;setTextColor(0xFF78445E.toInt());setPadding(dp(12),dp(18),dp(12),dp(18))})
+                  display(wait,type)
+                  sendBroadcast(Intent("com.xiaomei.ai.REFRESH_CHAT").setPackage(packageName))
+                  handler.postDelayed({generateFromLatest(mode,type)},450)
+              }
+              private fun generateFromLatest(mode:Int,type:Int){
                   val prefs=getSharedPreferences("xiaomei",MODE_PRIVATE)
                   val context=prefs.getString("screen_snapshot","").orEmpty()
                   val key=prefs.getString("key","").orEmpty()
                   val endpoint=prefs.getString("endpoint","https://api.openai.com/v1/chat/completions").orEmpty()
                   val model=prefs.getString("model","gpt-4o-mini").orEmpty()
                   val wait=basePanel()
-                  wait.addView(TextView(this).apply{text="正在为你整理六种表达…";textSize=15f;setTextColor(0xFF78445E.toInt());setPadding(dp(12),dp(18),dp(12),dp(18))})
+                  wait.addView(TextView(this).apply{text="已读取当前页面，正在生成六种表达…";textSize=15f;setTextColor(0xFF78445E.toInt());setPadding(dp(12),dp(18),dp(12),dp(18))})
                   display(wait,type)
                   if(key.isBlank()){showResults(listOf("请先在小美 AI 设置中配置 AI 服务。"),type);return}
                   if(context.isBlank() && mode>=3){showResults(listOf("还没有识别到聊天文字。请先打开聊天页面，并在系统设置中允许小美读取当前屏幕文字。"),type);return}
@@ -260,8 +267,29 @@ jobs:
           import android.view.accessibility.AccessibilityNodeInfo
           import android.content.Context
           import android.os.SystemClock
+          import android.content.BroadcastReceiver
+          import android.content.Intent
+          import android.content.IntentFilter
+          import android.os.Build
           class ChatCaptureAccessibilityService:AccessibilityService(){
               private var last=0L
+              private val refreshReceiver=object:BroadcastReceiver(){
+                  override fun onReceive(context:Context?,intent:Intent?){captureCurrentWindow()}
+              }
+              override fun onServiceConnected(){
+                  super.onServiceConnected()
+                  val filter=IntentFilter("com.xiaomei.ai.REFRESH_CHAT")
+                  if(Build.VERSION.SDK_INT>=33)registerReceiver(refreshReceiver,filter,Context.RECEIVER_NOT_EXPORTED)
+                  else registerReceiver(refreshReceiver,filter)
+              }
+              private fun captureCurrentWindow(){
+                  val prefs=getSharedPreferences("xiaomei",Context.MODE_PRIVATE)
+                  if(!prefs.getBoolean("capture_enabled",false))return
+                  val root=rootInActiveWindow?:return
+                  val parts=ArrayList<String>();collect(root,parts,0)
+                  val text=parts.distinct().joinToString("\\n").take(6500)
+                  if(text.isNotBlank())prefs.edit().putString("screen_snapshot",text).putString("capture_time",System.currentTimeMillis().toString()).apply()
+              }
               override fun onAccessibilityEvent(event:AccessibilityEvent?){
                   if(event==null)return
                   val now=SystemClock.elapsedRealtime();if(now-last<1200)return;last=now
@@ -281,6 +309,7 @@ jobs:
                   for(i in 0 until node.childCount){val child=node.getChild(i)?:continue;collect(child,out,depth+1)}
               }
               override fun onInterrupt(){}
+              override fun onDestroy(){try{unregisterReceiver(refreshReceiver)}catch(_:Exception){};super.onDestroy()}
           }
           EOF
           cat > "$RES/xiaomei_accessibility.xml" <<'EOF'
