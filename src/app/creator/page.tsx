@@ -2,11 +2,13 @@
 import { useEffect, useState } from "react";
 
 type Experience = { id: string; slug: string; title: string; description: string; status: string };
+type CreatorSession = { id: string; created_at: string; expires_at: string; is_current: boolean };
 export default function CreatorPage() {
   const [mode,setMode] = useState<"login"|"register">("register");
   const [email,setEmail] = useState(""); const [password,setPassword] = useState(""); const [displayName,setDisplayName] = useState("");
   const [user,setUser] = useState<{email:string;displayName:string}|null>(null);
   const [experiences,setExperiences] = useState<Experience[]>([]);
+  const [sessions,setSessions] = useState<CreatorSession[]>([]);
   const [title,setTitle] = useState(""); const [slug,setSlug] = useState("");
   const [editingId,setEditingId] = useState<string|null>(null);
   const [editTitle,setEditTitle] = useState(""); const [editDescription,setEditDescription] = useState("");
@@ -14,8 +16,8 @@ export default function CreatorPage() {
 
   async function load() {
     const r=await fetch("/api/creator/experiences");
-    if(r.ok){const d=await r.json();setExperiences(d.experiences);setUser(v=>v??{email:"已登录",displayName:"创作者"});setMessage("");}
-    else {setUser(null);setMessage("登录或注册后即可创建作品。");}
+    if(r.ok){const d=await r.json();setExperiences(d.experiences);setUser(v=>v??{email:"已登录",displayName:"创作者"});const sr=await fetch("/api/auth/sessions",{cache:"no-store"});if(sr.ok){const sd=await sr.json();setSessions(sd.sessions||[]);}else{setSessions([]);}setMessage("");}
+    else {setUser(null);setSessions([]);setMessage("登录或注册后即可创建作品。");}
   }
   useEffect(()=>{load().catch(()=>setMessage("暂时无法连接服务器。"));},[]);
   async function auth(e:React.FormEvent) {
@@ -54,7 +56,7 @@ export default function CreatorPage() {
       await load();setMessage(next==="archived"?"作品已归档，历史记录保留。":"作品已恢复为草稿。");
     } catch(e){setMessage(e instanceof Error?e.message:"操作失败");} finally{setBusy(false);}
   }
-  async function logout(){await fetch("/api/auth/logout",{method:"POST"});setUser(null);setExperiences([]);setMessage("已退出登录。")}
+  async function logout(){await fetch("/api/auth/logout",{method:"POST"});setUser(null);setExperiences([]);setSessions([]);setMessage("已退出登录。")}
   async function revokeOtherSessions(){
     if(!window.confirm("这会让其他设备上的创作者账户退出登录，但保留当前设备。确定继续吗？"))return;
     setBusy(true);setMessage("");
@@ -67,7 +69,7 @@ export default function CreatorPage() {
   }
   return <main className="creatorShell"><a href="/" className="back">♡ 心意闯关</a><section className="creatorCard"><p className="eyebrow">CREATOR STUDIO</p><h1>创作者工作台</h1><p className="sub">创建你的专属心意作品，再逐步设计每一道关卡。</p>
   {!user ? <><div className="switch"><button className={mode==="register"?"chosen":""} onClick={()=>setMode("register")}>注册</button><button className={mode==="login"?"chosen":""} onClick={()=>setMode("login")}>登录</button></div><form onSubmit={auth} className="form">{mode==="register"&&<label>显示昵称<input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="怎么称呼你" maxLength={40}/></label>}<label>邮箱<input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="name@example.com"/></label><label>密码<input type="password" required minLength={10} value={password} onChange={e=>setPassword(e.target.value)} placeholder="至少 10 位"/></label><button className="primary" disabled={busy}>{busy?"请稍候…":mode==="register"?"创建创作者账户":"登录工作台"}</button></form></>:<>
-    <div className="welcome"><b>{user.displayName||user.email}</b><div className="welcomeActions"><a href="/creator/orders">订单记录 ↗</a><button disabled={busy} onClick={revokeOtherSessions}>退出其他设备</button><button onClick={logout}>退出</button></div></div>
+    <div className="welcome"><b>{user.displayName||user.email}</b><div className="welcomeActions"><a href="/creator/orders">订单记录 ↗</a><button disabled={busy} onClick={revokeOtherSessions}>退出其他设备</button><button onClick={logout}>退出</button></div></div><section className="sessionPanel"><h2>登录设备</h2><p>这里只显示当前账户的有效登录会话。退出其他设备不会影响当前设备。</p>{sessions.length===0?<span>暂未读取到有效会话。</span>:<ul>{sessions.map(s=><li key={s.id}><b>{s.is_current?"当前设备":"其他设备"}</b><span>登录时间：{new Date(s.created_at).toLocaleString()}</span><span>有效期至：{new Date(s.expires_at).toLocaleString()}</span></li>)}</ul>}</section>
     <form onSubmit={create} className="form createForm"><label>作品名称<input required maxLength={80} value={title} onChange={e=>setTitle(e.target.value)} placeholder="例如：给你的一场心意旅行"/></label><label>分享标识<input required minLength={3} maxLength={48} value={slug} onChange={e=>setSlug(e.target.value)} placeholder="my-heart-story"/></label><button className="primary" disabled={busy}>＋ 创建作品</button></form>
     <h2>我的作品</h2>{experiences.length===0?<p className="empty">还没有作品，创建第一份心意吧。</p>:<div className="experienceList">{experiences.map(x=><div className="experienceWrap" key={x.id}>
       <article className="experience experienceItem"><div><b>{x.title}</b><span>{x.status==="published"?"已发布":x.status==="archived"?"已归档":"草稿"} · /{x.slug}</span></div><div className="experienceActions"><button type="button" disabled={busy} onClick={()=>beginEdit(x)}>编辑信息</button>{x.status!=="archived"&&<a href={`/creator/${x.id}`}>编辑关卡 →</a>}{x.status==="published"&&<a href={`/p/${x.slug}`} target="_blank" rel="noreferrer">预览分享页 ↗</a>}<button type="button" disabled={busy} onClick={()=>archive(x)}>{x.status==="archived"?"恢复草稿":"归档"}</button></div></article>
