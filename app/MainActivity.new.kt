@@ -296,7 +296,144 @@ class MainActivity : Activity() {
 回顾最近三次互动，分三栏记录：对方实际做了什么、我的真实感受、仍需核实的信息。只记录事实，不替对方编理由，也不把猜测当结论。
 
 【结束语】
-双向奔赴不是每一天都完全对等，而是双方都愿意看见彼此、尊重彼此，并在有分歧时一起寻找办法。你也有选择的权利。"""
+双向奔赴不是每一天都完全对等，而是双方都愿意看见彼此、尊重彼此，并在有分歧时一起寻找办法。你也有选择的权利。""",
+        """【本课目标】
+提升识别和表达情绪的能力，不让情绪替自己做全部决定。
+
+【核心讲解】
+情绪不是敌人，它常常提示某个需要没有被看见。愤怒可能与边界被侵犯有关，失落可能与期待落空有关，焦虑可能来自不确定。情绪提供线索，但不自动证明我们的解释正确。
+练习把“我很难受”拆成三个问题：发生了什么？我感受到什么？我希望接下来有什么变化？
+
+【四步练习】
+1. 给情绪命名：焦虑、委屈、失望、嫉妒、开心或疲惫。
+2. 找到触发事实：只写摄像机能记录的事情，不写动机猜测。
+3. 识别需要：尊重、确定、陪伴、休息、空间或公平。
+4. 选择行动：表达、询问、暂停、寻求支持或调整期待。
+
+【示例】
+事实：“约好的电话临时取消，没有提前通知。”
+感受：“我有点失落，也不太确定后续安排。”
+需要：“我希望计划有变化时能提前说一声。”
+表达：“临时取消我有点失落。下次如果时间有变化，可以提前告诉我吗？”
+
+【练习】
+连续三天记录一次明显情绪：触发事实、情绪名称、身体感受、真正需要和一个不伤害自己或他人的行动。
+
+【温柔提醒】
+情绪值得被认真对待，但不必把每个情绪都变成指责。""",
+        """【本课目标】
+练习听懂对方，而不是急着证明自己正确或马上给建议。
+
+【核心讲解】
+倾听包含注意、理解、核对和回应。好的倾听不是沉默等待轮到自己说话，而是努力复述对方的重点，并允许对方纠正。
+有时对方只想被听见，有时需要实际建议。先问一句“你现在更想让我听你说，还是一起想办法？”可以减少误会。
+
+【可执行方法】
+1. 暂停打断，先听完一段表达。
+2. 用自己的话复述重点：“你的意思是……对吗？”
+3. 核对情绪：“这件事让你有点失望，是这样吗？”
+4. 询问需要：“你希望我陪你聊聊，还是帮你一起梳理？”
+5. 给建议前先征求同意。
+
+【示例】
+对方：“今天工作又被临时加任务，真的烦。”
+可以回应：“本来安排好的事情又被打乱了，难怪你觉得烦。你想先说说发生了什么，还是想一起看看怎么安排？”
+
+【练习】
+下一次交流时，刻意先复述一次对方的重点，再提出一个开放问题。观察对方是否感觉被理解。
+
+【注意】
+倾听不代表要接受辱骂或无限承担。你也可以说：“我愿意听，但我们能不能先不互相攻击？”""",
+        """【本课目标】
+在冲突后修复关系，同时保留自己的立场和尊严。
+
+【核心讲解】
+冲突并不必然意味着关系失败。关键在于双方能否停止升级、理解影响、承担各自责任，并把道歉落实为行动。有效道歉不是“对不起，你别生气了”，而是说清具体行为、造成的影响和下一步改变。
+修复需要双方参与，单方面道歉不能替代对方的责任。
+
+【修复步骤】
+1. 先降温：情绪很高时约定稍后再谈。
+2. 说事实：避免“你永远都这样”。
+3. 承认影响：说明自己的行为给对方带来的感受。
+4. 提出改变：说清下次具体怎么做。
+5. 回看行动：观察改变是否持续发生。
+
+【表达示例】
+“刚才我打断了你，还提高了声音，这让你很难把话说完。我为这部分道歉。下次我会先听完再回应。关于我们意见不同的地方，我也希望等平静后继续谈。”
+
+【练习】
+写下一次冲突：我的行为、对方可能受到的影响、我能承担的部分、我希望提出的具体请求。
+
+【重要提醒】
+若存在暴力、威胁、跟踪或胁迫，优先离开危险环境并寻求支持，不必为了修复而冒险。""",
+        """【本课目标】
+理解亲密关系中的安全感需求，同时避免给自己或他人随意贴心理标签。
+
+【核心讲解】
+不同的人对亲近、独处、承诺和回应的需求可能不同。过去经验会影响当下感受，但不能仅凭回复速度或一次争执判断一个人的依恋类型。
+更有帮助的做法，是描述自己的触发点和可协商需求，而不是用标签解释一切。
+
+【练习路径】
+1. 识别触发：什么场景让我特别不安？
+2. 区分过去与现在：眼前事实是什么？哪些是旧经验带来的联想？
+3. 稳定自己：先做呼吸、散步、休息等调节。
+4. 清楚表达：把需要说成可执行的请求。
+5. 观察回应：对方是否愿意理解并共同协商？
+
+【示例】
+“如果你临时需要忙，可以简单告诉我一声。我不需要你随时在线，但有个说明会让我更容易安排自己的时间。”
+
+【练习】
+写下自己在关系中最重要的三项安全感来源，并区分哪些可以通过自我照顾满足，哪些需要双方协商。
+
+【提醒】
+依恋理论是理解关系的一个视角，不是诊断工具，也不应成为替伤害行为开脱的理由。""",
+        """【本课目标】
+更全面地判断一段关系是否适合继续投入，而不只看短暂心动或外在条件。
+
+【核心讲解】
+筛选不是给人打分，而是确认两个人的生活期待、责任方式和相处体验能否兼容。收入、职业和外貌可以是个人偏好的一部分，但不能单独证明可靠、善良或适合。
+判断需要时间、事实和持续观察。
+
+【七个观察维度】
+1. 尊重：是否尊重你的拒绝、隐私和时间。
+2. 可靠：承诺与行动是否大体一致。
+3. 主动：是否双方都愿意发起和维护联系。
+4. 情绪责任：能否表达不满而不羞辱、威胁或惩罚。
+5. 金钱观：消费、储蓄、债务和风险态度是否可沟通。
+6. 生活节奏：工作、社交、家庭和休息是否能协调。
+7. 未来期待：对婚育、居住、家庭责任等重要议题是否存在可讨论的共识。
+
+【事实记录表】
+写下具体行为、发生频率、自己的感受、尚未核实的信息。避免用一次事件推断全部人格，也不要忽视反复出现的伤害。
+
+【练习】
+选出自己最重视的三个关系条件，分别写出可观察的行为证据。再写出三项可以协商的差异。
+
+【提醒】
+你不是来通过考试的，对方也不是待评估的商品。双方都在选择，也都需要被尊重。""",
+        """【本课目标】
+学会在关系结束、对方冷淡或明确拒绝时，保护自己并尊重对方决定。
+
+【核心讲解】
+关系结束会带来失落，但挽回不是靠不断说服、追问或寻找漏洞。若对方愿意沟通，可以清楚表达一次自己的感受和愿望；若对方明确拒绝或要求停止联系，就应尊重决定。
+接受结束不是否定过去，也不是承认自己不值得被爱。
+
+【照顾自己的步骤】
+1. 区分事实与希望：对方实际表达了什么？不要把沉默解释成暗示。
+2. 设置联系边界：停止反复发送消息、查看动态或通过他人打听。
+3. 恢复生活节奏：吃饭、睡眠、运动、工作和朋友支持。
+4. 整理经验：哪些需求被看见了？哪些边界需要更早表达？
+5. 寻求帮助：若长期无法正常生活，可向可信任的人或专业人士求助。
+
+【可以使用的结束表达】
+“我尊重你的决定，也谢谢这段时间的相处。接下来我会把注意力放回自己的生活，祝你顺利。”
+
+【停止条件】
+明确拒绝、要求不联系、拉黑或持续不回应时，不再追问。若出现威胁、跟踪或安全风险，保留必要证据并寻求当地支持。
+
+【温柔提醒】
+放下不是立刻不难过，而是不再用伤害自己或越过他人边界的方式寻找答案。"""
     )
     private fun course(){
         val done=prefs.getStringSet("course_done",emptySet())?:emptySet()
@@ -310,12 +447,13 @@ class MainActivity : Activity() {
         gap(hero,15)
         hero.addView(label("我的成长进度",12f,deep,true));gap(hero,6)
         val progress=ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal).apply{
-            max=6;progress=done.size.coerceAtMost(6);progressTintList=android.content.res.ColorStateList.valueOf(0xFFD8759F.toInt())
+            max=12;progress=done.size.coerceAtMost(12);progressTintList=android.content.res.ColorStateList.valueOf(0xFFD8759F.toInt())
             progressBackgroundTintList=android.content.res.ColorStateList.valueOf(0xFFFFF9FC.toInt())
         }
         hero.addView(progress,LinearLayout.LayoutParams(-1,dp(7)));gap(hero,7)
-        hero.addView(label("${done.size.coerceAtMost(6)} / 6 课已完成 · 不用赶进度，按自己的节奏来",11f,muted))
+        hero.addView(label("${done.size.coerceAtMost(12)} / 12 课已完成 · 不用赶进度，按自己的节奏来",11f,muted))
         r.addView(hero);gap(r,20)
+        r.addView(button("📚 打开完整聊天与女性成长知识库"){knowledge()});gap(r,12)
 
         val daily=LinearLayout(this).apply{orientation=1;setPadding(dp(17),dp(16),dp(17),dp(16));background=bgd(Color.WHITE,20);elevation=dp(2).toFloat()}
         daily.addView(label("今日成长灵感  ·  01",10f,pink,true));gap(daily,7)
@@ -323,10 +461,10 @@ class MainActivity : Activity() {
         daily.addView(label("今天的小练习：做一件原本就想为自己做的事。完成后，记下那一刻的感受。",12f,muted))
         r.addView(daily);gap(r,20)
 
-        r.addView(label("循序渐进 · 6 个成长单元",18f,deep,true));gap(r,5)
+        r.addView(label("循序渐进 · 12 个成长单元",18f,deep,true));gap(r,5)
         r.addView(label("每一课都有目标、生活案例、表达方法和练习。",12f,muted));gap(r,12)
-        val subtitles=listOf("找回自我价值与生活重心","真实照片、简介与个人表达","偏好表达、拒绝与协商","观察、分享、提问与倾听","保留自己的生活节奏","观察行动与双向契合")
-        val palettes=listOf(0xFFFFEFF5.toInt(),0xFFF1EDFF.toInt(),0xFFFFF4E9.toInt(),0xFFECF7F3.toInt(),0xFFFFF0F0.toInt(),0xFFF0F1FF.toInt())
+        val subtitles=listOf("找回自我价值与生活重心","真实照片、简介与个人表达","偏好表达、拒绝与协商","观察、分享、提问与倾听","保留自己的生活节奏","观察行动与双向契合","识别情绪、需要与触发点","深度倾听与核对理解","冲突降温、道歉与修复","理解安全感与依恋需求","长期契合、价值观与现实筛选","体面结束、恢复生活与自我照顾")
+        val palettes=listOf(0xFFFFEFF5.toInt(),0xFFF1EDFF.toInt(),0xFFFFF4E9.toInt(),0xFFECF7F3.toInt(),0xFFFFF0F0.toInt(),0xFFF0F1FF.toInt(),0xFFFFEFF5.toInt(),0xFFF1EDFF.toInt(),0xFFFFF4E9.toInt(),0xFFECF7F3.toInt(),0xFFFFF0F0.toInt(),0xFFF0F1FF.toInt())
         lessonTitles.forEachIndexed{index,title->
             val finished=done.contains(index.toString())
             val tile=LinearLayout(this).apply{
@@ -335,7 +473,7 @@ class MainActivity : Activity() {
                 elevation=dp(2).toFloat();setOnClickListener{lesson(index)}
             }
             val badge=TextView(this).apply{
-                text=listOf("♡","✿","☁","✧","❀","♡")[index];textSize=21f;gravity=Gravity.CENTER;setTextColor(0xFFB96D91.toInt());background=bgd(palettes[index],15)
+                text=listOf("♡","✿","☁","✧","❀","♡","🌸","🫧","🕊","💗","💎","🌷")[index];textSize=21f;gravity=Gravity.CENTER;setTextColor(0xFFB96D91.toInt());background=bgd(palettes[index],15)
                 layoutParams=LinearLayout.LayoutParams(dp(48),dp(48)).apply{rightMargin=dp(12)}
             }
             val col=LinearLayout(this).apply{orientation=1}
@@ -349,6 +487,15 @@ class MainActivity : Activity() {
         gap(r,6)
         val note=label("这里不教冷暴力、忽冷忽热或制造焦虑。我们练习的是自我尊重、真实表达、安全感与双向选择。",11f,muted)
         note.setPadding(dp(13),dp(12),dp(13),dp(12));note.background=bgd(0xFFF5EFF8.toInt(),15);r.addView(note)
+        show(r)
+    }
+    private fun knowledge(){
+        val r=page("📚 小美知识库","原创整理 · 关系沟通 · 女性成长 · 安全边界")
+        val content=try{assets.open("chat_knowledge.md").bufferedReader().use{it.readText()}}catch(e:Exception){"知识库文件暂未安装，请更新到包含知识库资源的版本。"}
+        val intro=label("这里收录聊天方法、情绪理解、边界表达、关系筛选和安全约会等内容。书籍部分采用原创摘要与方法归纳，不复制受版权保护的整本书或付费课程。",12f,muted)
+        card(r,intro)
+        val body=label(content,13f,ink).apply{setPadding(dp(16),dp(16),dp(16),dp(16));background=bgd(Color.WHITE,18)}
+        r.addView(body)
         show(r)
     }
     private fun lesson(index:Int){
