@@ -128,7 +128,7 @@ BEGIN
       RAISE;
     END IF;
   END;
-  UPDATE orders SET provider_order_id = NULL WHERE id = order_id_value;
+  provider_order_id_value := wrong_provider_order_id;
   BEGIN
     PERFORM heart_finalize_verified_payment(
       event_id_value, order_id_value, provider_order_id_value, 990, 'CNY', wrong_event_digest
