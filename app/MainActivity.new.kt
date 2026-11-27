@@ -32,7 +32,12 @@ class MainActivity : Activity() {
     private val icons = listOf("🌷","📸","💎","💬","🧸","✨")
     private val desc = listOf("学习自然建立吸引力","优化照片、资料与个人介绍","识别契合点与需要核实的问题","理解对话并生成自然回复","记住对象、话题和交流进度","安全邀约与关系复盘")
 
-    override fun onCreate(state: Bundle?) { super.onCreate(state); home() }
+    override fun onCreate(state: Bundle?) { super.onCreate(state); routeIntent(intent) }
+    override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); routeIntent(intent) }
+    private fun routeIntent(intent: Intent?) {
+        val module = intent?.getIntExtra("xiaomei_module", -1) ?: -1
+        if (module in 0..5) open(module) else home()
+    }
     private fun dp(n:Int) = (n*resources.displayMetrics.density).toInt()
     private fun bgd(c:Int,r:Int=18):GradientDrawable = GradientDrawable().apply { setColor(c); cornerRadius=dp(r).toFloat() }
     private fun label(s:String,size:Float=14f,c:Int=ink,b:Boolean=false)=TextView(this).apply {
