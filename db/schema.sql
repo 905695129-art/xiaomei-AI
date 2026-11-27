@@ -212,8 +212,9 @@ FOR EACH ROW EXECUTE FUNCTION heart_entitlement_matches_paid_order();
 
 -- Current MVP refund policy is full-order refunds only. A successful refund
 -- revokes the associated paid order, which in turn blocks entitlement reads.
-CREATE UNIQUE INDEX IF NOT EXISTS payment_refunds_one_success_per_order
-  ON payment_refunds(order_id) WHERE status = 'succeeded';
+DROP INDEX IF EXISTS payment_refunds_one_success_per_order;
+CREATE UNIQUE INDEX IF NOT EXISTS payment_refunds_one_active_per_order
+  ON payment_refunds(order_id) WHERE status IN ('pending','succeeded');
 
 CREATE OR REPLACE FUNCTION heart_validate_full_refund()
 RETURNS trigger LANGUAGE plpgsql AS $$
@@ -277,3 +278,44 @@ DROP TRIGGER IF EXISTS payment_refunds_guard_transition ON payment_refunds;
 CREATE TRIGGER payment_refunds_guard_transition
 BEFORE UPDATE OF status ON payment_refunds
 FOR EACH ROW EXECUTE FUNCTION heart_guard_refund_transition();
+
+
+
+-- A provider event's identity and digest are immutable. Processed events are terminal;
+-- failed events may be retried after operational review.
+CREATE OR REPLACE FUNCTION heart_guard_provider_event()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.provider IS DISTINCT FROM OLD.provider
+     OR NEW.provider_event_id IS DISTINCT FROM OLD.provider_event_id
+     OR NEW.event_type IS DISTINCT FROM OLD.event_type
+     OR NEW.payload_sha256 IS DISTINCT FROM OLD.payload_sha256 THEN
+    RAISE EXCEPTION 'PAYMENT_EVENT_IDENTITY_IMMUTABLE';
+  END IF;
+  IF OLD.processing_status = 'processed'
+     AND NEW.processing_status IS DISTINCT FROM 'processed' THEN
+    RAISE EXCEPTION 'PROCESSED_PAYMENT_EVENT_IS_TERMINAL';
+  END IF;
+  IF OLD.processing_status = 'received'
+     AND NEW.processing_status NOT IN ('received','processing','failed') THEN
+    RAISE EXCEPTION 'INVALID_PAYMENT_EVENT_TRANSITION';
+  END IF;
+  IF OLD.processing_status = 'processing'
+     AND NEW.processing_status NOT IN ('processing','processed','failed') THEN
+    RAISE EXCEPTION 'INVALID_PAYMENT_EVENT_TRANSITION';
+  END IF;
+  IF OLD.processing_status = 'failed'
+     AND NEW.processing_status NOT IN ('failed','processing') THEN
+    RAISE EXCEPTION 'INVALID_PAYMENT_EVENT_TRANSITION';
+  END IF;
+  IF NEW.processing_status = 'processed' AND NEW.processed_at IS NULL THEN
+    NEW.processed_at := now();
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS payment_events_guard ON payment_provider_events;
+CREATE TRIGGER payment_events_guard
+BEFORE UPDATE ON payment_provider_events
+FOR EACH ROW EXECUTE FUNCTION heart_guard_provider_event();
