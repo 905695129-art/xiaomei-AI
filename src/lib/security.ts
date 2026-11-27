@@ -1,7 +1,7 @@
 /**
- * Reject cross-origin browser writes that could ride an authenticated creator cookie.
- * Requests without an Origin header remain available to non-browser clients; browser
- * POST/PATCH/PUT requests normally include Origin and must match the request host.
+ * Fail closed for browser write requests unless their source is demonstrably same-origin.
+ * Origin is authoritative when present. If absent, only Fetch Metadata explicitly marked
+ * same-origin is accepted; missing metadata is not treated as trusted.
  */
 export function isSameOriginWrite(request: Request): boolean {
   const origin = request.headers.get("origin");
@@ -12,6 +12,5 @@ export function isSameOriginWrite(request: Request): boolean {
       return false;
     }
   }
-  const fetchSite = request.headers.get("sec-fetch-site");
-  return fetchSite !== "cross-site";
+  return request.headers.get("sec-fetch-site") === "same-origin";
 }
