@@ -19,6 +19,8 @@ export default function PublicExperiencePage() {
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<Level | null>(null);
   const [notice, setNotice] = useState("");
+  const [privateContent, setPrivateContent] = useState("");
+  const [checkingLevel, setCheckingLevel] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -37,9 +39,31 @@ export default function PublicExperiencePage() {
 
   const total = useMemo(() => experience?.levels.reduce((sum, level) => sum + level.priceMinor, 0) ?? 0, [experience]);
 
-  function beginUnlock(level: Level) {
+  async function beginUnlock(level: Level) {
     setSelected(level);
-    setNotice("本关价格已展示，但创作者的合规收款通道尚未开通。现在不会发起支付、创建订单或解锁私密内容。");
+    setPrivateContent("");
+    setCheckingLevel(true);
+    setNotice("正在确认这台设备是否已经解锁过本关…");
+    try {
+      const session = await fetch("/api/buyer/session", { method: "POST" });
+      if (!session.ok) throw new Error("体验者身份暂时不可用，请稍后再试。");
+      const response = await fetch(`/api/experiences/${encodeURIComponent(slug)}/levels/${encodeURIComponent(level.id)}`, { cache: "no-store" });
+      const data = await response.json();
+      if (response.ok) {
+        setPrivateContent(typeof data.content === "string" ? data.content : "");
+        setNotice("已确认解锁成功。这是你此前购买的专属内容。");
+      } else if (response.status === 403 && data.error === "PURCHASE_REQUIRED") {
+        setNotice("你还没有解锁这一关。当前版本尚未开通合规支付，因此不会向你收款，也不会创建订单。");
+      } else if (response.status === 503) {
+        setNotice("内容服务暂时未配置，请稍后再试。");
+      } else {
+        setNotice("暂时无法确认本关状态，请稍后再试。");
+      }
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "暂时无法确认本关状态。");
+    } finally {
+      setCheckingLevel(false);
+    }
   }
 
   async function share() {
@@ -68,11 +92,11 @@ export default function PublicExperiencePage() {
         <div className="journeyList">{experience.levels.map((level, index) => <article className={selected?.id === level.id ? "journeyCard activeJourney" : "journeyCard"} key={level.id}>
           <div className="journeyNumber">{String(level.position || index + 1).padStart(2, "0")}</div>
           <div className="journeyCopy"><span className="journeyLabel">A LITTLE SECRET</span><h3>{level.title}</h3><p>{level.teaser || "一份为你准备的小惊喜，打开后就能看到更多。"}</p></div>
-          <div className="journeyAction"><strong>{money(level.priceMinor, experience.currency || "CNY")}</strong><button onClick={() => beginUnlock(level)}>{selected?.id === level.id ? "查看本关" : "了解这一关"} <span>♡</span></button></div>
+          <div className="journeyAction"><strong>{money(level.priceMinor, experience.currency || "CNY")}</strong><button onClick={() => beginUnlock(level)}>{checkingLevel && selected?.id === level.id ? "确认中…" : selected?.id === level.id ? "查看本关" : "了解这一关"} <span>♡</span></button></div>
         </article>)}</div>}
       <div className="journeyTotal"><span>全部关卡合计（仅供参考）</span><strong>{money(total, experience.currency || "CNY")}</strong></div>
     </section>
-    {selected && <section className="unlockNotice" aria-live="polite"><div className="noticeIcon">♡</div><div><b>{selected.title}</b><p>{notice || "选择了这一关。"}</p></div><button onClick={() => setSelected(null)} aria-label="关闭">×</button></section>}
+    {selected && <section className="unlockNotice" aria-live="polite"><div className="noticeIcon">♡</div><div><b>{selected.title}</b><p>{notice || "选择了这一关。"}</p>{privateContent && <div className="privateContentView">{privateContent}</div>}</div><button onClick={() => setSelected(null)} aria-label="关闭">×</button></section>}
     <footer className="publicFooter"><span>用一点点心意，开启一段小旅程。</span><b>HEART STUDIO ♡</b><small>展示页面 · 真实支付暂未开通</small></footer>
   </main>;
 }
