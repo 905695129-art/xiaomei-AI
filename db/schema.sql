@@ -398,3 +398,30 @@ DROP TRIGGER IF EXISTS orders_validate_new ON orders;
 CREATE TRIGGER orders_validate_new
 BEFORE INSERT ON orders
 FOR EACH ROW EXECUTE FUNCTION heart_validate_new_order();
+
+
+
+-- Order commercial identity is immutable after creation. A provider order ID may
+-- be attached once, but never replaced; callbacks must compare provider amounts
+-- with this server-created amount_minor snapshot.
+CREATE OR REPLACE FUNCTION heart_guard_order_identity()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.experience_id IS DISTINCT FROM OLD.experience_id
+     OR NEW.level_id IS DISTINCT FROM OLD.level_id
+     OR NEW.creator_id IS DISTINCT FROM OLD.creator_id
+     OR NEW.buyer_ref IS DISTINCT FROM OLD.buyer_ref
+     OR NEW.amount_minor IS DISTINCT FROM OLD.amount_minor
+     OR NEW.currency IS DISTINCT FROM OLD.currency
+     OR NEW.provider IS DISTINCT FROM OLD.provider
+     OR (OLD.provider_order_id IS NOT NULL AND NEW.provider_order_id IS DISTINCT FROM OLD.provider_order_id) THEN
+    RAISE EXCEPTION 'ORDER_COMMERCIAL_IDENTITY_IMMUTABLE';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS orders_guard_identity ON orders;
+CREATE TRIGGER orders_guard_identity
+BEFORE UPDATE ON orders
+FOR EACH ROW EXECUTE FUNCTION heart_guard_order_identity();
