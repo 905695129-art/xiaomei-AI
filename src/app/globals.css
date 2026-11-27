@@ -42,3 +42,7 @@
 .coverPositionPicker{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.coverPositionPicker span{font-size:10px;color:#987b84;margin-right:3px}.coverPositionPicker button{border:1px solid #eadbdd;background:#fff;border-radius:20px;padding:6px 12px;color:#9c7d86;font-size:10px}.coverPositionPicker button.active{border-color:#c47d91;background:#fff0f4;color:#a45f74}
 
 .coverRemoveButton{justify-self:start;border:0;background:transparent;color:#b78d99;padding:2px 0;font-size:10px;text-decoration:underline;cursor:pointer}.coverRemoveButton:disabled{opacity:.5;cursor:default}
+
+
+/* Clear payment availability notice on shared experiences */
+.paymentStatusNotice{display:flex;align-items:flex-start;gap:12px;margin:0 0 18px;padding:14px 16px;border:1px solid #f0d9df;border-radius:15px;background:linear-gradient(135deg,#fff4f6,#fffafb)}.paymentStatusNotice>span{display:grid;place-items:center;flex:0 0 29px;height:29px;border-radius:50%;background:#f8e4ea;color:#b87589;font-size:16px}.paymentStatusNotice b{display:block;color:#805b67;font-size:12px}.paymentStatusNotice p{margin:5px 0 0;color:#a1848d;font-size:11px;line-height:1.7}.journeyAction .levelPriceCaption{display:block;margin-top:2px;color:#b49ca1;font-size:9px;text-align:right}@media(max-width:520px){.paymentStatusNotice{padding:12px}.paymentStatusNotice p{font-size:10px}}
