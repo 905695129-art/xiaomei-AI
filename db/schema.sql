@@ -4,6 +4,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT UNIQUE,
+  password_hash TEXT,
   display_name TEXT NOT NULL DEFAULT '',
   role TEXT NOT NULL DEFAULT 'creator' CHECK (role IN ('creator','admin')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
