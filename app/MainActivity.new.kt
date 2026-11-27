@@ -432,44 +432,22 @@ class MainActivity : Activity() {
     }
     private fun settings(){
         val box=LinearLayout(this).apply{orientation=1;setPadding(dp(16),0,dp(16),0)}
-        box.addView(label("选择 AI 服务商",12f,muted))
-        val provider=Spinner(this).apply{
-            adapter=ArrayAdapter(this@MainActivity,android.R.layout.simple_spinner_dropdown_item,listOf("豆包（火山方舟·中国大陆）","OpenRouter（国际模型）"))
-            setSelection(if(prefs.getString("provider","doubao")=="openrouter")1 else 0)
-        }
-        val endpoint=field("API 地址",prefs.getString("endpoint","https://ark.cn-beijing.volces.com/api/v3/chat/completions").orEmpty())
-        val model=field("模型 / Endpoint ID（豆包通常为 ep- 开头）",prefs.getString("model","").orEmpty())
-        val tier=Spinner(this).apply{
-            adapter=ArrayAdapter(this@MainActivity,android.R.layout.simple_spinner_dropdown_item,listOf("免费模型（如账户有免费额度）","付费模型（按量计费）"))
-            setSelection(if(prefs.getString("tier","free")=="paid")1 else 0)
-        }
-        val key=field("API Key",prefs.getString("key","").orEmpty()).apply{inputType=129}
-        box.addView(provider);box.addView(label("模型类型（OpenRouter 使用；豆包按方舟账号额度/计费）",11f,muted));box.addView(tier)
-        box.addView(endpoint);box.addView(model);box.addView(key)
-        box.addView(label("豆包：在火山方舟创建推理接入点并复制 Endpoint ID 和 API Key。OpenRouter：免费默认 openrouter/free，付费填写对应模型 ID。",11f,muted))
-        provider.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener{
-            override fun onNothingSelected(parent:android.widget.AdapterView<*>?){}
-            override fun onItemSelected(parent:android.widget.AdapterView<*>?,view:android.view.View?,position:Int,id:Long){
-                if(position==0){
-                    endpoint.setText("https://ark.cn-beijing.volces.com/api/v3/chat/completions")
-                    model.hint="豆包 Endpoint ID（ep- 开头）"
-                }else{
-                    endpoint.setText("https://openrouter.ai/api/v1/chat/completions")
-                    model.hint="例如 openrouter/free 或供应商模型 ID"
-                    if(model.text.isNullOrBlank())model.setText("openrouter/free")
-                }
-            }
-        }
-        AlertDialog.Builder(this).setTitle("AI 服务设置").setView(box)
+        box.addView(label("小美 AI 只使用豆包模型",15f,deep,true))
+        box.addView(label("聊天辅助直接连接中国大陆火山方舟，不再要求你选择其他 AI 平台。",12f,muted))
+        val endpoint=field("豆包 API 地址",prefs.getString("endpoint","https://ark.cn-beijing.volces.com/api/v3/chat/completions").orEmpty())
+        val model=field("豆包模型 / Endpoint ID（通常为 ep- 开头）",prefs.getString("model","").orEmpty())
+        val key=field("火山方舟 API Key",prefs.getString("key","").orEmpty()).apply{inputType=129}
+        addField(box,"API 地址（一般保持默认）",endpoint)
+        addField(box,"模型接入点 ID",model)
+        addField(box,"API Key",key)
+        box.addView(label("只需在火山方舟创建 API Key 和模型推理接入点，然后填入这里。API 调用由火山方舟提供，可能产生费用；小美不会替你创建或代付账户。",11f,muted))
+        AlertDialog.Builder(this).setTitle("豆包 AI 设置").setView(box)
             .setPositiveButton("保存"){_,_->
-                val isOpen=provider.selectedItemPosition==1
-                val chosen=if(tier.selectedItemPosition==0)"free" else "paid"
-                val defaultEndpoint=if(isOpen)"https://openrouter.ai/api/v1/chat/completions" else "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
-                prefs.edit().putString("provider",if(isOpen)"openrouter" else "doubao")
-                    .putString("endpoint",endpoint.text.toString().trim().ifBlank{defaultEndpoint})
-                    .putString("model",model.text.toString().trim()).putString("tier",chosen)
+                prefs.edit().putString("provider","doubao")
+                    .putString("endpoint",endpoint.text.toString().trim().ifBlank{"https://ark.cn-beijing.volces.com/api/v3/chat/completions"})
+                    .putString("model",model.text.toString().trim())
                     .putString("key",key.text.toString().trim()).apply()
-                toast(if(isOpen)"OpenRouter 配置已保存" else "豆包配置已保存")
+                toast("豆包配置已保存")
             }
             .setNeutralButton("开启聊天内容识别"){_,_->
                 prefs.edit().putBoolean("capture_enabled",true).apply()
