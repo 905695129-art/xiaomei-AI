@@ -23,3 +23,5 @@
 .publicNavActions{display:flex;align-items:center;gap:12px}@media(max-width:520px){.publicNavActions{gap:7px}.buyerCreatorLink{font-size:10px}}
 
 .privateContentView{white-space:pre-wrap;margin-top:12px;padding:14px 15px;border-radius:13px;border:1px solid #efd9df;background:#fff;color:#795965;font-size:13px;line-height:1.9;overflow-wrap:anywhere}.journeyAction button:disabled{opacity:.55;cursor:wait}
+
+.levelEditorControls{display:flex;align-items:center;gap:8px}.moveLevel{border:1px solid #efdde1;background:#fff8f9;color:#a87584;border-radius:15px;padding:6px 10px;font-size:10px;cursor:pointer}.moveLevel:disabled{opacity:.3;cursor:not-allowed}@media(max-width:520px){.levelEditorControls{gap:5px}.moveLevel{padding:6px 8px}}
