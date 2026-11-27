@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 
 type Level = { id: string; position: number; title: string; teaser: string | null; priceMinor: number };
-type Experience = { slug: string; title: string; description: string | null; coverUrl: string | null; currency: string; levels: Level[] };
+type Experience = { slug: string; title: string; description: string | null; coverUrl: string | null; currency: string; theme?: "rose" | "cream" | "lavender"; levels: Level[] };
 
 function money(minor: number, currency: string) {
   try { return new Intl.NumberFormat("zh-CN", { style: "currency", currency }).format(minor / 100); }
