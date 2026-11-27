@@ -15,7 +15,9 @@ export async function GET(_request: Request, context: { params: { slug: string; 
     const sessions = await db.unsafe("SELECT buyer_ref FROM buyer_sessions WHERE token_hash = $1 AND expires_at > now() LIMIT 1", [tokenHash]);
     if (!sessions.length) return NextResponse.json({ error: "PURCHASE_REQUIRED" }, { status: 403 });
     const buyerRef = sessions[0].buyer_ref;
-    const rows = await db.unsafe("SELECT l.title, l.private_content FROM experiences e JOIN experience_levels l ON l.experience_id = e.id JOIN entitlements en ON en.level_id = l.id AND en.buyer_ref = $1 JOIN orders o ON o.id = en.order_id AND o.status = 'paid' WHERE e.slug = $2 AND e.status = 'published' AND l.id = $3::uuid AND l.is_active = true LIMIT 1", [buyerRef, context.params.slug, context.params.levelId]);
+    // Previously purchased versions remain readable after a creator edits a level.
+    // The paid-order entitlement is still mandatory; inactive only means not publicly listed.
+    const rows = await db.unsafe("SELECT l.title, l.private_content FROM experiences e JOIN experience_levels l ON l.experience_id = e.id JOIN entitlements en ON en.level_id = l.id AND en.buyer_ref = $1 JOIN orders o ON o.id = en.order_id AND o.status = 'paid' WHERE e.slug = $2 AND e.status = 'published' AND l.id = $3::uuid LIMIT 1", [buyerRef, context.params.slug, context.params.levelId]);
     if (!rows.length) return NextResponse.json({ error: "PURCHASE_REQUIRED" }, { status: 403 });
     return NextResponse.json({ title: rows[0].title, content: rows[0].private_content }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
