@@ -506,3 +506,62 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+
+
+-- One live checkout per buyer and level. Failed/cancelled/refunded orders do not
+-- block a later legitimate retry or repurchase.
+CREATE UNIQUE INDEX IF NOT EXISTS orders_one_live_buyer_level
+  ON orders(buyer_ref, level_id)
+  WHERE status IN ('pending','paid');
+
+-- Require a real, unexpired server-issued buyer session for any new order.
+CREATE OR REPLACE FUNCTION heart_validate_new_order()
+RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+  experience_row experiences%ROWTYPE;
+  level_row experience_levels%ROWTYPE;
+  buyer_exists BOOLEAN;
+BEGIN
+  IF NEW.status <> 'pending' THEN
+    RAISE EXCEPTION 'NEW_ORDER_MUST_START_PENDING';
+  END IF;
+  SELECT EXISTS (
+    SELECT 1 FROM buyer_sessions
+    WHERE buyer_ref = NEW.buyer_ref AND expires_at > now()
+  ) INTO buyer_exists;
+  IF NOT buyer_exists THEN
+    RAISE EXCEPTION 'ORDER_BUYER_SESSION_REQUIRED';
+  END IF;
+  IF NEW.amount_minor <= 0 THEN
+    RAISE EXCEPTION 'PAID_ORDER_AMOUNT_MUST_BE_POSITIVE';
+  END IF;
+
+  SELECT * INTO experience_row FROM experiences WHERE id = NEW.experience_id FOR SHARE;
+  IF NOT FOUND OR experience_row.status <> 'published' THEN
+    RAISE EXCEPTION 'EXPERIENCE_NOT_PUBLISHED';
+  END IF;
+  IF experience_row.creator_id <> NEW.creator_id OR experience_row.currency <> NEW.currency THEN
+    RAISE EXCEPTION 'ORDER_CREATOR_OR_CURRENCY_MISMATCH';
+  END IF;
+
+  SELECT * INTO level_row
+  FROM experience_levels
+  WHERE id = NEW.level_id AND experience_id = NEW.experience_id
+  FOR SHARE;
+  IF NOT FOUND OR NOT level_row.is_active THEN
+    RAISE EXCEPTION 'LEVEL_NOT_AVAILABLE';
+  END IF;
+  IF level_row.price_minor <> NEW.amount_minor THEN
+    RAISE EXCEPTION 'ORDER_AMOUNT_MISMATCH';
+  END IF;
+  IF NEW.provider IS NULL OR NEW.provider = 'disabled' THEN
+    RAISE EXCEPTION 'PAYMENT_PROVIDER_NOT_CONFIGURED';
+  END IF;
+
+  NEW.level_title_snapshot := level_row.title;
+  NEW.level_position_snapshot := level_row.position;
+  NEW.private_content_snapshot := level_row.private_content;
+  RETURN NEW;
+END;
+$$;
