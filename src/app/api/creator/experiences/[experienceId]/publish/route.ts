@@ -10,6 +10,10 @@ export async function POST(_request: Request, context: { params: { experienceId:
     const creator = await getCurrentCreator();
     if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
     const db = requireDb();
+    if (process.env.REQUIRE_VERIFIED_EMAIL === "true") {
+      const [account] = await db`SELECT email_verified_at FROM users WHERE id = ${creator.id} LIMIT 1`;
+      if (!account?.email_verified_at) return NextResponse.json({ error: "EMAIL_NOT_VERIFIED" }, { status: 403 });
+    }
     const result = await db`
       UPDATE experiences e SET status = 'published', updated_at = now()
       WHERE e.id = ${context.params.experienceId}::uuid AND e.creator_id = ${creator.id}
