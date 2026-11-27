@@ -29,7 +29,7 @@ class MainActivity : Activity() {
   box.addView(TextView(this).apply{text="找人 → 识别需求 → 判断意向 → 个性化开场 → 记录反馈";textSize=13f;setPadding(0,dp(8),0,dp(12))})
   kw=EditText(this).apply{hint="获客关键词，如：情感咨询、相亲、脱单";setText(p.getString("kw","情感咨询"))}
   box.addView(kw)
-  box.addView(Button(this).apply{text="一键开始：打开抖音关键词搜索";setOnClickListener{
+  box.addView(Button(this).apply{text="一键开始：打开 Soul";setOnClickListener{
    val q=kw.text.toString().trim();if(q.isEmpty()){toast("请先填写关键词");return@setOnClickListener}
    p.edit().putString("kw",q).apply()
    if(!android.provider.Settings.canDrawOverlays(this@MainActivity)){
@@ -39,19 +39,19 @@ class MainActivity : Activity() {
    }
    try{
     startService(Intent(this@MainActivity, OverlayService::class.java))
-    val launch=packageManager.getLaunchIntentForPackage("com.ss.android.ugc.aweme")
-    if(launch!=null){launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);startActivity(launch);state.text="小美已缩为悬浮窗。请在抖音内搜索：$q"}
-    else{startActivity(Intent(Intent.ACTION_VIEW,Uri.parse("https://www.douyin.com/search/"+Uri.encode(q)+"?type=general")));state.text="未检测到抖音 App，已打开网页版。"}
+    val launch=packageManager.getLaunchIntentForPackage("cn.soulapp.android")
+    if(launch!=null){launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);startActivity(launch);state.text="小美已缩为悬浮窗。请在 Soul 内搜索关键词：$q"}
+    else{toast("未检测到 Soul，请先安装 Soul");state.text="未检测到 Soul App，请安装后重试。"}
    }catch(e:Exception){toast("启动失败："+e.message)}
   }})
   box.addView(Button(this).apply{text="开启屏幕文字读取权限";setOnClickListener{startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))}})
-  box.addView(Button(this).apply{text="读取当前抖音页面可见评论";setOnClickListener{
+  box.addView(Button(this).apply{text="读取当前 Soul 页面可见内容";setOnClickListener{
    val s=p.getString("screen_snapshot","").orEmpty()
    if(s.isBlank())toast("未读到文字：先授权无障碍，再打开评论区")
    else{raw.setText(s);state.text="已读取可见文字，请检查内容。"}
   }})
   box.addView(TextView(this).apply{text="评论内容";textSize=17f;setTextColor(0xFF9C4772.toInt());setPadding(0,dp(12),0,dp(4))})
-  raw=EditText(this).apply{hint="读取或粘贴公开可见评论；昵称和时间只记录页面明确显示的内容";minLines=5;gravity=android.view.Gravity.TOP}
+  raw=EditText(this).apply{hint="读取或粘贴 Soul 页面公开可见内容；昵称和时间只记录页面明确显示的内容";minLines=5;gravity=android.view.Gravity.TOP}
   box.addView(raw,ViewGroup.LayoutParams(-1,dp(145)))
   box.addView(Button(this).apply{text="分析潜在客户并生成逐人私信草稿";setOnClickListener{val t=raw.text.toString().trim();if(t.isEmpty())toast("请先读取或粘贴评论")else analyze(t)}})
   box.addView(Button(this).apply{text="保存本次分析";setOnClickListener{
@@ -78,7 +78,7 @@ class MainActivity : Activity() {
   if(ep.isBlank()||mo.isBlank()||k.isBlank()){out.text=local(t)+"\n\n配置模型后可启用深度 AI 分析。";return}
   out.text="正在分析公开评论……"
   Thread{try{
-   val prompt="你是谨慎的客户需求分析助手。逐条分析以下公开评论，提取页面明确可见的昵称和时间（不得猜测），标注需求证据、意向高/中/低/未知、理由、自然个性化开场草稿。排除广告、无关、未成年人、明确拒绝联系者。不要推断敏感属性，不编造信息。给出优先级及停止联系条件。关键词："+kw.text+"。评论：\n"+t
+   val prompt="你是谨慎的客户需求分析助手。逐条分析以下公开评论，提取页面明确可见的昵称和时间（不得猜测），标注需求证据、意向高/中/低/未知、理由、自然个性化开场草稿。排除广告、无关、未成年人、明确拒绝联系者。不要推断敏感属性，不编造信息。给出优先级及停止联系条件。平台：Soul。关键词："+kw.text+"。页面内容：\n"+t
    val a=AiClient.chat(ep,mo,k,prompt);h.post{out.text=a}
   }catch(e:Exception){h.post{out.text="AI 调用失败："+e.message+"\n\n"+local(t)}}}.start()
  }
