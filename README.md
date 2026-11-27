@@ -10,17 +10,20 @@
 - 产品设计目标是不对创作者与体验者之间的关卡交易抽佣；真实结算须使用获准的商户/服务商及子商户方案。
 
 ## 当前已实现
-- /creator：创作者邮箱注册、登录、作品创建与作品列表。
-- /creator/[experienceId]：关卡编辑、删除、添加、价格设置、私密内容编辑、保存与发布。
-- /p/[slug]：体验者分享页，展示每关标题、提示和独立价格，并支持分享链接。
-- GET /api/experiences/:slug：只返回已发布作品的公开元数据。
-- GET/PUT /api/creator/experiences/:id/levels：验证作品归属后读取或保存关卡。
-- POST /api/creator/experiences/:id/publish：发布作品。
-- GET /api/experiences/:slug/levels/:levelId：只有当前买家会话拥有已支付 entitlement 时才返回私密内容。
-- POST /api/orders：真实支付渠道未配置前明确返回 503 PAYMENTS_NOT_CONFIGURED。
+- `/creator`：创作者邮箱注册、登录、作品创建与作品列表；支持归档和恢复草稿。
+- `/creator/[experienceId]`：关卡编辑、删除、添加、价格设置、私密内容编辑、保存与发布。
+- `/creator/orders`：创作者订单记录和真实订单汇总；只读取数据库记录，不生成模拟收入。
+- `/p/[slug]`：体验者分享页，展示每关标题、提示和独立价格，并支持分享链接。
+- `GET /api/experiences/:slug`：只返回已发布作品的公开元数据，归档作品不会公开访问。
+- `GET/PUT /api/creator/experiences/:id/levels`：验证作品归属后读取或保存关卡。
+- `PATCH /api/creator/experiences/:id`：创作者本人可修改作品标题/描述、归档或恢复草稿。
+- `GET /api/creator/orders`：按当前创作者身份读取订单及汇总。
+- `POST /api/creator/experiences/:id/publish`：发布作品。
+- `GET /api/experiences/:slug/levels/:levelId`：只有当前买家会话拥有已支付 entitlement 时才返回私密内容。
+- `POST /api/orders`：真实支付渠道未配置前明确返回 503 `PAYMENTS_NOT_CONFIGURED`。
 
 ## 重要限制
-**目前尚未开通真实收款，也不是可投入商业运营的生产服务。** 分享页的价格仅作展示；点击关卡不会发起支付、创建虚假订单或解锁内容。不要用当前版本向体验者收取真实款项。
+**目前尚未开通真实收款，也不是可投入商业运营的生产服务。** 分享页的价格仅作展示；点击关卡不会发起支付、创建虚假订单或解锁内容。不要用当前版本向体验者收取真实款项。订单页面仅展示数据库中的真实订单记录；在支付尚未接入时通常为空。
 
 正式上线前仍需完成：
 1. 配置并迁移生产 PostgreSQL 数据库。
