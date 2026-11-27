@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       await requireDb()`DELETE FROM creator_sessions WHERE token_hash = ${hash}`;
     } catch { /* Cookie is still cleared if the database is temporarily unavailable. */ }
   }
-  const response = NextResponse.json({ ok: true });
+  const response = NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store, private", Vary: "Cookie" } });
   response.cookies.set("heart_session", "", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 0 });
   return response;
 }
