@@ -48,7 +48,7 @@ export async function GET() {
       ORDER BY o.paid_at DESC NULLS LAST, o.created_at DESC
       LIMIT 100
     `;
-    return NextResponse.json({ purchases });
+    return NextResponse.json({ purchases }, { headers: { "Cache-Control": "private, no-store", "Vary": "Cookie" } });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
     const status = code === "DATABASE_NOT_CONFIGURED" ? 503 : 500;
