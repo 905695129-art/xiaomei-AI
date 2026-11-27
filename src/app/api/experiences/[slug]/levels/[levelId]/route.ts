@@ -21,7 +21,7 @@ export async function GET(_request: Request, context: { params: { slug: string; 
     // purchase-time snapshots so later edits cannot change what was bought.
     const rows = await db.unsafe("SELECT COALESCE(en.level_title_snapshot, l.title) AS title, COALESCE(en.private_content_snapshot, l.private_content) AS private_content FROM experiences e JOIN experience_levels l ON l.experience_id = e.id JOIN entitlements en ON en.level_id = l.id AND en.buyer_ref = $1 JOIN orders o ON o.id = en.order_id AND o.status = 'paid' AND o.buyer_ref = en.buyer_ref AND o.level_id = l.id WHERE e.slug = $2 AND l.id = $3::uuid LIMIT 1", [buyerRef, context.params.slug, context.params.levelId]);
     if (!rows.length) return NextResponse.json({ error: "PURCHASE_REQUIRED" }, { status: 403 });
-    return NextResponse.json({ title: rows[0].title, content: rows[0].private_content }, { headers: { "Cache-Control": "private, no-store" } });
+    return NextResponse.json({ title: rows[0].title, content: rows[0].private_content }, { headers: { "Cache-Control": "private, no-store", "Vary": "Cookie" } });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
     const status = code === "DATABASE_NOT_CONFIGURED" ? 503 : 400;
