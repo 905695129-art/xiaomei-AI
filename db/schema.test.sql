@@ -11,6 +11,9 @@ DECLARE
   order_id_value UUID;
   entitlement_id UUID;
   refund_id UUID;
+  event_id_value UUID;
+  provider_order_id_value TEXT := 'ci-provider-' || gen_random_uuid()::text;
+  event_digest CHAR(64) := encode(digest(gen_random_uuid()::text, 'sha256'), 'hex');
   found_count INTEGER;
 BEGIN
   INSERT INTO users (display_name, role)
@@ -74,10 +77,33 @@ BEGIN
     NULL;
   END;
 
-  UPDATE orders SET status = 'paid', paid_at = now() WHERE id = order_id_value;
-  INSERT INTO entitlements (order_id, level_id, buyer_ref)
-  VALUES (order_id_value, level_id, buyer_ref_value)
-  RETURNING id INTO entitlement_id;
+  INSERT INTO payment_provider_events (provider, provider_event_id, event_type, payload_sha256, processing_status)
+  VALUES ('ci-test', 'ci-event-' || gen_random_uuid()::text, 'payment.succeeded', event_digest, 'processing')
+  RETURNING id INTO event_id_value;
+
+  BEGIN
+    PERFORM heart_finalize_verified_payment(
+      event_id_value, order_id_value, provider_order_id_value, 980, 'CNY', event_digest
+    );
+    RAISE EXCEPTION 'WRONG_PROVIDER_AMOUNT_WAS_ACCEPTED';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM <> 'PROVIDER_AMOUNT_OR_CURRENCY_MISMATCH' THEN
+      RAISE;
+    END IF;
+  END;
+
+  PERFORM heart_finalize_verified_payment(
+    event_id_value, order_id_value, provider_order_id_value, 990, 'CNY', event_digest
+  );
+  -- Replaying the same already-processed event is a harmless no-op.
+  PERFORM heart_finalize_verified_payment(
+    event_id_value, order_id_value, provider_order_id_value, 990, 'CNY', event_digest
+  );
+
+  SELECT id INTO entitlement_id FROM entitlements WHERE order_id = order_id_value;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'VERIFIED_CALLBACK_DID_NOT_CREATE_ENTITLEMENT';
+  END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM entitlements
