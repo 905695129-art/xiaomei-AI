@@ -46,6 +46,22 @@ export async function PUT(request: Request, context: { params: { experienceId: s
         if (ownedLevels.length !== submittedIds.length) return "INVALID_LEVEL_IDS";
       }
 
+      // Freeze the exact level content and amount for every historical paid entitlement
+      // before mutating or deactivating the creator's current version.
+      await tx`
+        UPDATE entitlements ent
+        SET level_title_snapshot = COALESCE(ent.level_title_snapshot, l.title),
+            level_position_snapshot = COALESCE(ent.level_position_snapshot, l.position),
+            private_content_snapshot = COALESCE(ent.private_content_snapshot, l.private_content),
+            price_minor_snapshot = COALESCE(ent.price_minor_snapshot, o.amount_minor),
+            currency_snapshot = COALESCE(ent.currency_snapshot, o.currency)
+        FROM experience_levels l
+        JOIN orders o ON o.level_id = l.id AND o.status = 'paid'
+        WHERE ent.level_id = l.id
+          AND ent.order_id = o.id
+          AND l.experience_id = ${context.params.experienceId}::uuid
+      `;
+
       // Temporarily deactivate active rows to avoid position-index conflicts while reordering.
       // Keep existing row IDs stable so previously granted purchase entitlements remain valid.
       await tx`UPDATE experience_levels SET is_active = false, updated_at = now() WHERE experience_id = ${context.params.experienceId}::uuid AND is_active = true`;
