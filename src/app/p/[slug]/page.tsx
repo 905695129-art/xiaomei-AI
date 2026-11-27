@@ -18,7 +18,6 @@ export default function PublicExperiencePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<Level | null>(null);
-  const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -38,16 +37,9 @@ export default function PublicExperiencePage() {
 
   const total = useMemo(() => experience?.levels.reduce((sum, level) => sum + level.priceMinor, 0) ?? 0, [experience]);
 
-  async function beginUnlock(level: Level) {
+  function beginUnlock(level: Level) {
     setSelected(level);
-    setNotice("真实支付尚未开通。当前可以查看关卡介绍与价格，但不能付款或解锁私密内容。");
-    setCheckoutBusy(true);
-    try {
-      const response = await fetch("/api/orders", { method: "POST" });
-      if (response.status === 503) setNotice("创作者收款通道尚未完成合规配置，因此本关暂不能付款。不会扣款，也不会假装解锁。");
-    } catch {
-      setNotice("暂时无法连接支付服务。没有发生扣款。");
-    } finally { setCheckoutBusy(false); }
+    setNotice("本关价格已展示，但创作者的合规收款通道尚未开通。现在不会发起支付、创建订单或解锁私密内容。");
   }
 
   async function share() {
@@ -81,7 +73,6 @@ export default function PublicExperiencePage() {
       <div className="journeyTotal"><span>全部关卡合计（仅供参考）</span><strong>{money(total, experience.currency || "CNY")}</strong></div>
     </section>
     {selected && <section className="unlockNotice" aria-live="polite"><div className="noticeIcon">♡</div><div><b>{selected.title}</b><p>{notice || "选择了这一关。"}</p></div><button onClick={() => setSelected(null)} aria-label="关闭">×</button></section>}
-    {checkoutBusy && <p className="checkoutStatus">正在确认支付服务状态…</p>}
     <footer className="publicFooter"><span>用一点点心意，开启一段小旅程。</span><b>HEART STUDIO ♡</b><small>展示页面 · 真实支付暂未开通</small></footer>
   </main>;
 }
