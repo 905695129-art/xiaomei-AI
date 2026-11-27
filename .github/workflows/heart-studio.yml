@@ -43,6 +43,8 @@ jobs:
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/schema.sql
       - name: Verify schema migration is repeatable
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/schema.sql
+      - name: Test purchase, snapshot, duplicate-order and refund invariants
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/schema.test.sql
       - uses: actions/setup-node@v4
         with:
           node-version: 20
