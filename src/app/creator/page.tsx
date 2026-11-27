@@ -63,7 +63,7 @@ export default function CreatorPage() {
     try{
       const r=await fetch("/api/auth/password",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({currentPassword,newPassword})});
       const d=await r.json();
-      if(!r.ok)throw new Error(({INVALID_CURRENT_PASSWORD:"当前密码不正确。",PASSWORD_UNCHANGED:"新密码不能与当前密码相同。",INVALID_INPUT:"新密码至少需要 10 位。",UNAUTHORIZED:"登录状态已失效，请重新登录。"} as Record<string,string>)[d.error]||"密码修改失败，请稍后重试。");
+      if(!r.ok)throw new Error(({INVALID_CURRENT_PASSWORD:"当前密码不正确。",PASSWORD_UNCHANGED:"新密码不能与当前密码相同。",INVALID_INPUT:"新密码至少需要 10 位。",TOO_MANY_ATTEMPTS:"修改密码尝试次数过多，请 15 分钟后再试。",UNAUTHORIZED:"登录状态已失效，请重新登录。"} as Record<string,string>)[d.error]||"密码修改失败，请稍后重试。");
       setCurrentPassword("");setNewPassword("");await load();setMessage("密码已更新，其他设备的登录会话也已撤销。");
     }catch(e){setMessage(e instanceof Error?e.message:"操作失败");}finally{setBusy(false);}
   }
