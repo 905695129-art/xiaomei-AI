@@ -212,7 +212,8 @@ jobs:
               }
               private fun generateFromLatest(mode:Int,type:Int){
                   val prefs=getSharedPreferences("xiaomei",MODE_PRIVATE)
-                  val context=prefs.getString("screen_snapshot","").orEmpty()\n                  val previous=prefs.getString("dialogue_memory","").orEmpty()
+                  val context=prefs.getString("screen_snapshot","").orEmpty()
+                  val previous=prefs.getString("dialogue_memory","").orEmpty()
                   val key=prefs.getString("key","").orEmpty()
                   val endpoint=prefs.getString("endpoint","https://ark.cn-beijing.volces.com/api/v3/chat/completions").orEmpty()
                   val model=prefs.getString("model","").orEmpty()
@@ -243,7 +244,8 @@ jobs:
                           val clean=content.removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
                           val arr=JSONArray(clean);(0 until arr.length()).map{arr.optString(it)}.filter{it.isNotBlank()}.take(6)
                       }catch(e:Exception){listOf("生成失败："+(e.message?: "请检查网络和AI设置"))}
-                      handler.post{\n                          val mem=(previous+"\\n本轮页面："+context+"\\n本轮建议："+result.joinToString(" / ")).takeLast(5000)\n                          prefs.edit().putString("dialogue_memory",mem).apply()\n                          showResults(result,type)\n                      }
+                      handler.post{
+                          val mem=(previous+"\\n本轮页面："+context+"\\n本轮建议："+result.joinToString(" / ")).takeLast(5000)\n                          prefs.edit().putString("dialogue_memory",mem).apply()\n                          showResults(result,type)\n                      }
                   }.start()
               }
               private fun showResults(items:List<String>,type:Int){
