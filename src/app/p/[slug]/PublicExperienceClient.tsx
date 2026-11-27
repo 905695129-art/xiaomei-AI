@@ -132,7 +132,7 @@ export default function PublicExperiencePage() {
 
   return <main className={`publicShell publicTheme-${experience.theme || "rose"}`}> 
     <header className="publicNav"><a href="/" className="publicBrand"><span>♡</span> 心意闯关</a><div className="publicNavActions"><a href="/purchases" className="buyerCreatorLink">我的已解锁</a><button onClick={share} className="shareButton">{copied ? "已复制链接 ✓" : "分享这份心意 ↗"}</button></div></header>
-    <section className="publicHero">
+    <section className="publicHero">{experience.coverUrl&&!experience.coverUrl.startsWith("preset:")?<img className="publicCoverImage" src={experience.coverUrl} alt="这份心意的专属封面"/>:experience.coverUrl?<div className={`publicCoverPreset publicCover-${experience.coverUrl.slice(7)}`}>♡</div>:null}
       <div className="publicHalo">♡</div>
       <p className="publicEyebrow">A LITTLE JOURNEY FOR YOU</p>
       <h1>{experience.title}</h1>
