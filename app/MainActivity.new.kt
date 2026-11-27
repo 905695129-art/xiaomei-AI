@@ -142,17 +142,31 @@ class MainActivity : Activity() {
         foot.gravity=Gravity.CENTER;r.addView(foot);show(r)
     }
     private fun open(i:Int){when(i){0->course();1->profile();2->screening();3->chat();4->journal();5->date()}}
+    private val lessonTitles = ["停止讨好：把注意力放回自己","真实展示：让别人看见你的魅力","温柔而坚定：建立清晰边界","轻松吸引：让交流有来有往","适度留白：保留自己的生活节奏","识别双向奔赴：选择值得的人"]
+    private val lessonBodies = ["【核心讲解】吸引力的起点不是争取所有人的认可，而是拥有稳定的自我评价。马基雅维利相关网络内容常谈权力、距离与不讨好；放进亲密关系，我们保留自我主权，不采用故意冷落、忽冷忽热或制造焦虑的操控方式。\n【生活案例】对方几个小时没回复，你反复打开聊天框，连原本安排好的事情也做不下去。新的做法：先回到自己的生活安排，有空、有话想说时再回复，而不是用延迟回复惩罚对方。\n【练习】写下三件即使没有恋爱也会认真经营的事，以及你在关系里最不愿牺牲的三项原则。\n【自测】我是否把对方的回复速度当成对自我价值的判决？","【核心讲解】展示不是包装成另一个人，而是帮助别人理解真实的你。照片、简介、兴趣和生活方式应彼此一致。\n【实操】准备清晰自然的头像、日常生活照、兴趣场景照、全身或环境照。避免盗用他人照片、过度修图或虚构职业收入。\n【简介结构】一句生活态度 + 两个真实兴趣 + 一项愿意分享的体验 + 对相处方式的期待。\n【示例】“平时喜欢城市散步和做饭，周末会去看展或找一家新咖啡馆。希望认识真诚、有好奇心，也愿意认真沟通的人。”\n【练习】挑选三张代表不同生活侧面的真实照片，写出每张希望传达的特点。","【核心讲解】边界不是冷漠，也不是控制别人。边界是清楚说明什么适合我、什么不适合我，以及如何照顾自己。\n【表达模板】“谢谢你想到我，不过这件事我不太方便。”“我愿意继续了解你，但我更喜欢循序渐进。”“我理解你的想法，不过我的感受也很重要。”\n【案例】对方临时要求你深夜见面。你可以提出白天、公共场所的替代安排，不必为了证明喜欢而勉强自己。\n【练习】把最近一次勉强答应的事情，改写成礼貌、明确、不攻击对方的表达。","【核心讲解】聊天不是面试，也不需要靠套路制造神秘感。有效交流包含观察、分享、提问和回应。\n【四步法】观察对方明确表达的细节；分享一点真实经历；提出容易回答的轻问题；接住回答自然延展。\n【示例】“你照片里那家书店看起来很舒服。我最近也在找适合慢慢逛的地方，你更喜欢独立书店还是大型书店？”\n【练习】找一个对方公开资料里的具体兴趣，写一条“观察 + 自己的分享 + 一个轻问题”。","【核心讲解】留白是给彼此空间，不是故意制造不确定和焦虑。自己的生活、朋友、兴趣和计划不应因刚开始的关系全部暂停。\n【实操】保持原有作息；不为测试对方而故意消失；忙碌时简短说明；不把回复速度当作唯一感情指标。\n【案例】周末已有安排，对方临时邀约。说明已有计划，并提出另一个双方方便的时间。\n【练习】规划一周中属于自己的时间，保留至少两项不依赖恋爱关系的活动。","【核心讲解】判断关系是否有真实的双向投入，而不是一味追逐结果。\n【观察维度】主动性：双方是否都愿意发起交流；一致性：言行是否一致；尊重：是否尊重拒绝、时间和边界；可靠性：是否认真对待约定；契合度：生活方式和未来期待是否兼容。\n【决策提示】有好感可以继续了解，但不必过早承诺；长期只有一方努力，可以降低投入并观察；出现威胁、羞辱、控制或金钱索取时，优先保护自己。\n【练习】回顾最近三次互动，记录对方实际行动、你的感受和仍需核实的信息。"]
     private fun course(){
-        val r=page("🌷 吸引力课程","从自我认知到自然建立关系")
-        val lessons=listOf(
-            "第1课｜明确自己的择偶期待\n区分外在条件、生活方式、价值观和长期目标。",
-            "第2课｜理解真实吸引力\n不是讨好或表演，而是清晰表达特点、兴趣和边界。",
-            "第3课｜认识适合自己的男性\n观察资料真实性、言行一致性、尊重程度和生活目标。",
-            "第4课｜自然开启交流\n从共同兴趣和具体细节切入，分享与提问保持平衡。",
-            "第5课｜判断是否值得继续\n关注持续行动、沟通质量、尊重程度和现实安排。",
-            "第6课｜安全推进关系\n充分了解后再约见，首次见面选择公共场所。"
-        )
-        lessons.forEach{val t=label(it,14f);t.setPadding(dp(13),dp(13),dp(13),dp(13));t.background=bgd(Color.WHITE,15);r.addView(t,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(9)})};show(r)
+        val r=page("🌷 吸引力成长课","温柔、有边界、有自我：从讨好走向双向吸引")
+        val hero=LinearLayout(this).apply{orientation=1;setPadding(dp(17),dp(17),dp(17),dp(17));background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(0xFFFFE0EC.toInt(),0xFFF4EAFE.toInt())).apply{cornerRadius=dp(22).toFloat()}}
+        hero.addView(label("不必追着谁证明自己值得被爱。",18f,deep,true));gap(hero,7)
+        hero.addView(label("课程借鉴马基雅维利相关公开内容中关于自我主权、边界与不讨好的讨论，并将其转化为健康、温暖、可实践的关系能力。",12f,muted))
+        r.addView(hero);gap(r,17);r.addView(label("课程目录 · 6 个单元",18f,deep,true));gap(r,5)
+        r.addView(label("每课包含讲解、生活案例和练习。点击进入学习。",12f,muted));gap(r,12)
+        lessonTitles.forEachIndexed{index,title->
+            val tile=LinearLayout(this).apply{orientation=0;gravity=Gravity.CENTER_VERTICAL;setPadding(dp(15),dp(14),dp(14),dp(14));background=bgd(Color.WHITE,18);elevation=dp(2).toFloat();setOnClickListener{lesson(index)}}
+            val num=TextView(this).apply{text=String.format("%02d",index+1);textSize=16f;setTextColor(pink);gravity=Gravity.CENTER;background=bgd(0xFFFFEAF2.toInt(),14);layoutParams=LinearLayout.LayoutParams(dp(43),dp(43)).apply{rightMargin=dp(12)}}
+            val textCol=LinearLayout(this).apply{orientation=1;addView(label(title,14f,deep,true));gap(this,4);addView(label(listOf("自我价值与注意力","真实资料与个人表达","表达偏好与拒绝","观察、分享与提问","生活节奏与留白","行动、尊重与契合度")[index],11f,muted))}
+            tile.addView(num);tile.addView(textCol,LinearLayout.LayoutParams(0,-2,1f));tile.addView(label("›",25f,pink))
+            r.addView(tile,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(10)})
+        }
+        gap(r,8);r.addView(label("课程原则：不教冷暴力、不制造焦虑、不把关系变成输赢。吸引力来自自我完整、真实表达和双方自愿。",11f,muted));show(r)
+    }
+    private fun lesson(index:Int){
+        val r=page("第 "+(index+1)+" 课",lessonTitles[index]+" · 讲解 / 案例 / 练习")
+        val body=label(lessonBodies[index],14f,ink);body.setPadding(dp(17),dp(17),dp(17),dp(17));body.background=bgd(Color.WHITE,20)
+        r.addView(body);gap(r,14)
+        r.addView(button("完成本课，记录学习进度"){
+            val done=prefs.getStringSet("course_done",emptySet())!!.toMutableSet();done.add(index.toString());prefs.edit().putStringSet("course_done",done).apply();toast("已记录本课进度")
+        });gap(r,9);r.addView(button("返回课程目录"){course()});show(r)
     }
     private fun profile(){
         val r=page("📸 展示面工坊","让真实的你清晰、有记忆点")
