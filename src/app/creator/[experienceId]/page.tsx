@@ -98,7 +98,7 @@ export default function ExperienceEditor() {
     try{
       const r=await fetch(`/api/creator/experiences/${experienceId}/publish`,{method:"POST"});
       const d=await r.json();
-      if(!r.ok) throw new Error(d.error==="UNAUTHORIZED"?"请先登录。":"发布失败：请先至少保存一关内容。");
+      if(!r.ok) throw new Error(d.error==="UNAUTHORIZED"?"请先登录。":d.error==="EMAIL_NOT_VERIFIED"?"请先到工作台验证邮箱，再发布作品。":"发布失败：请先至少保存一关内容。");
       const url=window.location.origin+d.shareUrl;setShareUrl(url);setMessage("作品已发布，可以复制链接分享。");
     }catch(e){setMessage(e instanceof Error?e.message:"发布失败");}finally{setBusy(false);}
   }
