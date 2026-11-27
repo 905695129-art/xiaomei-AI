@@ -110,3 +110,45 @@ CREATE TABLE IF NOT EXISTS auth_rate_limits (
   window_started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0)
 );
+
+
+-- Provider webhook idempotency ledger. Store identifiers and hashes, not raw card/payment secrets.
+CREATE TABLE IF NOT EXISTS payment_provider_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  provider TEXT NOT NULL,
+  provider_event_id TEXT NOT NULL,
+  event_type TEXT NOT NULL,
+  payload_sha256 CHAR(64) NOT NULL,
+  processing_status TEXT NOT NULL DEFAULT 'received'
+    CHECK (processing_status IN ('received','processing','processed','failed')),
+  order_id UUID REFERENCES orders(id),
+  received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  processed_at TIMESTAMPTZ,
+  last_error_code TEXT,
+  UNIQUE (provider, provider_event_id)
+);
+CREATE INDEX IF NOT EXISTS payment_events_order_idx
+  ON payment_provider_events(order_id, received_at DESC);
+
+-- Refund records are separate from orders so partial/multiple refund attempts remain auditable.
+CREATE TABLE IF NOT EXISTS payment_refunds (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id UUID NOT NULL REFERENCES orders(id),
+  provider TEXT NOT NULL,
+  provider_refund_id TEXT,
+  idempotency_key TEXT NOT NULL UNIQUE,
+  amount_minor INTEGER NOT NULL CHECK (amount_minor > 0),
+  currency CHAR(3) NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending','succeeded','failed','cancelled')),
+  reason_code TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completed_at TIMESTAMPTZ,
+  UNIQUE (provider, provider_refund_id)
+);
+CREATE INDEX IF NOT EXISTS payment_refunds_order_idx
+  ON payment_refunds(order_id, created_at DESC);
+
+-- Audit timestamps for order state transitions; additive for existing installations.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS refunded_at TIMESTAMPTZ;
