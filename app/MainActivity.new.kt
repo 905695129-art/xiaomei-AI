@@ -25,11 +25,11 @@ class MainActivity : Activity() {
  override fun onCreate(b:Bundle?){super.onCreate(b); showHome()}
  private fun showHome(){
   val box=LinearLayout(this).apply{orientation=1;setPadding(dp(18),dp(22),dp(18),dp(24));setBackgroundColor(0xFFFFF4F8.toInt())}
-  box.addView(TextView(this).apply{text="小美 AI ✿\nSoul 智能社交助手";textSize=27f;setTextColor(0xFF9C4772.toInt())})
+  box.addView(TextView(this).apply{text="小美 AI ✿\n牵手智能社交助手";textSize=27f;setTextColor(0xFF9C4772.toInt())})
   box.addView(TextView(this).apply{text="找人 → 识别需求 → 判断意向 → 个性化开场 → 记录反馈";textSize=13f;setPadding(0,dp(8),0,dp(12))})
-  kw=EditText(this).apply{hint="Soul 寻客方向，如：兴趣、交友、情感话题";setText(p.getString("kw","情感咨询"))}
+  kw=EditText(this).apply{hint="牵手筛选方向，如：兴趣、交友、情感话题";setText(p.getString("kw","情感咨询"))}
   box.addView(kw)
-  box.addView(Button(this).apply{text="一键开始：打开 Soul";setOnClickListener{
+  box.addView(Button(this).apply{text="一键开始：打开牵手";setOnClickListener{
    val q=kw.text.toString().trim();if(q.isEmpty()){toast("请先填写关键词");return@setOnClickListener}
    p.edit().putString("kw",q).apply()
    if(!android.provider.Settings.canDrawOverlays(this@MainActivity)){
@@ -39,18 +39,18 @@ class MainActivity : Activity() {
    }
    try{
     startService(Intent(this@MainActivity, OverlayService::class.java))
-    val launch=packageManager.getLaunchIntentForPackage("cn.soulapp.android")
-    if(launch!=null){launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);startActivity(launch);state.text="小美已缩为悬浮窗。请在 Soul 内搜索关键词：$q"}
-    else{toast("未检测到 Soul，请先安装 Soul");state.text="未检测到 Soul App，请安装后重试。"}
+    val launch=packageManager.getLaunchIntentForPackage("com.tantan.x")
+    if(launch!=null){launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);startActivity(launch);state.text="小美已缩为悬浮窗。请在牵手内查看推荐用户：$q"}
+    else{toast("未检测到牵手，请先安装牵手");state.text="未检测到牵手 App，请安装后重试。"}
    }catch(e:Exception){toast("启动失败："+e.message)}
   }})
   box.addView(Button(this).apply{text="开启屏幕文字读取权限";setOnClickListener{startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))}})
-  box.addView(Button(this).apply{text="读取当前 Soul 页面可见内容";setOnClickListener{
+  box.addView(Button(this).apply{text="读取当前牵手页面可见内容";setOnClickListener{
    val s=p.getString("screen_snapshot","").orEmpty()
    if(s.isBlank())toast("未读到文字：先授权无障碍，再打开评论区")
    else{raw.setText(s);state.text="已读取可见文字，请检查内容。"}
   }})
-  box.addView(TextView(this).apply{text="Soul 页面内容";textSize=17f;setTextColor(0xFF9C4772.toInt());setPadding(0,dp(12),0,dp(4))})
+  box.addView(TextView(this).apply{text="牵手页面内容";textSize=17f;setTextColor(0xFF9C4772.toInt());setPadding(0,dp(12),0,dp(4))})
   raw=EditText(this).apply{hint="读取或粘贴 Soul 页面公开可见内容；只分析页面明确展示的信息";minLines=5;gravity=android.view.Gravity.TOP}
   box.addView(raw,ViewGroup.LayoutParams(-1,dp(145)))
   box.addView(Button(this).apply{text="分析页面内容并生成个性化聊天建议";setOnClickListener{val t=raw.text.toString().trim();if(t.isEmpty())toast("请先读取或粘贴评论")else analyze(t)}})
@@ -62,10 +62,10 @@ class MainActivity : Activity() {
   box.addView(Button(this).apply{text="安排下一次线索复核（随机1–10分钟）";setOnClickListener{
    val delay=(60L..600L).random()*1000L
    state.text="已安排复核提醒，约 "+(delay/60000)+" 分钟后提醒你检查下一条线索。此计时不代表自动浏览或自动发送。"
-   h.postDelayed({ if(!isFinishing){state.text="复核提醒：可以检查 Soul 当前页面或处理下一条线索。";toast("小美提醒：可以复核下一条线索了")} },delay)
+   h.postDelayed({ if(!isFinishing){state.text="复核提醒：可以检查牵手当前页面或处理下一条线索。";toast("小美提醒：可以复核下一条线索了")} },delay)
   }})
   box.addView(Button(this).apply{text="AI 模型设置（首次配置）";setOnClickListener{settings()}})
-  state=TextView(this).apply{text="准备就绪。支持 Soul 页面识别、资料分析、聊天建议和本地线索记录。发送行为遵守 Soul 规则并尊重对方意愿。";textSize=13f;setPadding(0,dp(12),0,dp(6))}
+  state=TextView(this).apply{text="准备就绪。支持 牵手页面识别、资料分析、聊天建议和本地线索记录。发送行为遵守 牵手平台规则并尊重对方意愿。";textSize=13f;setPadding(0,dp(12),0,dp(6))}
   box.addView(state)
   out=TextView(this).apply{text="分析结果显示在这里。";textSize=14f;setPadding(0,dp(10),0,dp(18))}
   box.addView(out)
@@ -82,9 +82,9 @@ class MainActivity : Activity() {
  private fun analyze(t:String){
   val ep=p.getString("endpoint","").orEmpty();val mo=p.getString("model","").orEmpty();val k=p.getString("key","").orEmpty()
   if(ep.isBlank()||mo.isBlank()||k.isBlank()){out.text=local(t)+"\n\n配置模型后可启用深度 AI 分析。";return}
-  out.text="正在分析公开评论……"
+  out.text="正在分析公开资料……"
   Thread{try{
-   val prompt="你是谨慎的 Soul 社交交流分析助手。逐条分析用户主动提供的页面可见资料，提取明确展示的兴趣和话题，不推断性别、年龄或敏感属性，不编造信息。判断是否存在自然交流切入点，生成不重复、口语化、默认不带标点的聊天建议，并说明依据。排除未成年人、广告和明确拒绝联系者。不得建议骚扰、批量触达或规避平台限制。关键词："+kw.text+"。页面内容：\n"+t
+   val prompt="你是谨慎的 牵手社交交流分析助手。逐条分析用户主动提供的页面可见资料，提取明确展示的兴趣和话题，不推断性别、年龄或敏感属性，不编造信息。判断是否存在自然交流切入点，生成不重复、口语化、默认不带标点的聊天建议，并说明依据。排除未成年人、广告和明确拒绝联系者。不得建议骚扰、批量触达或规避平台限制。关键词："+kw.text+"。页面内容：\n"+t
    val a=AiClient.chat(ep,mo,k,prompt);h.post{out.text=a}
   }catch(e:Exception){h.post{out.text="AI 调用失败："+e.message+"\n\n"+local(t)}}}.start()
  }
