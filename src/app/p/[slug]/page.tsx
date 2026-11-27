@@ -92,7 +92,7 @@ export default function PublicExperiencePage() {
         <div className="journeyList">{experience.levels.map((level, index) => <article className={selected?.id === level.id ? "journeyCard activeJourney" : "journeyCard"} key={level.id}>
           <div className="journeyNumber">{String(level.position || index + 1).padStart(2, "0")}</div>
           <div className="journeyCopy"><span className="journeyLabel">A LITTLE SECRET</span><h3>{level.title}</h3><p>{level.teaser || "一份为你准备的小惊喜，打开后就能看到更多。"}</p></div>
-          <div className="journeyAction"><strong>{money(level.priceMinor, experience.currency || "CNY")}</strong><button onClick={() => beginUnlock(level)}>{checkingLevel && selected?.id === level.id ? "确认中…" : selected?.id === level.id ? "查看本关" : "了解这一关"} <span>♡</span></button></div>
+          <div className="journeyAction"><strong>{money(level.priceMinor, experience.currency || "CNY")}</strong><button disabled={checkingLevel} onClick={() => beginUnlock(level)}>{checkingLevel && selected?.id === level.id ? "确认中…" : selected?.id === level.id ? "查看本关" : "了解这一关"} <span>♡</span></button></div>
         </article>)}</div>}
       <div className="journeyTotal"><span>全部关卡合计（仅供参考）</span><strong>{money(total, experience.currency || "CNY")}</strong></div>
     </section>
