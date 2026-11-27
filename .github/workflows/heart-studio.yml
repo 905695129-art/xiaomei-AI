@@ -10,6 +10,11 @@ on:
       - 'docs/**'
       - 'README.md'
       - 'package.json'
+      - 'next.config.mjs'
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - '.dockerignore'
+      - '.env.example'
       - 'tsconfig.json'
       - '.github/workflows/heart-studio.yml'
   pull_request:
@@ -19,6 +24,11 @@ on:
       - 'docs/**'
       - 'README.md'
       - 'package.json'
+      - 'next.config.mjs'
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - '.dockerignore'
+      - '.env.example'
       - 'tsconfig.json'
       - '.github/workflows/heart-studio.yml'
 jobs:
