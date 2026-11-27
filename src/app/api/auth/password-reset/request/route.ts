@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireDb } from "@/lib/db";
 import { escapeEmailHtml, isEmailDeliveryConfigured, sendTransactionalEmail } from "@/lib/email";
-import { isSameOriginWrite } from "@/lib/security";
+import { isSameOriginWrite, readJsonLimited } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "no-store, private" };
@@ -13,9 +13,9 @@ export async function POST(request: Request) {
   if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403, headers });
   if (!isEmailDeliveryConfigured()) return NextResponse.json({ error: "EMAIL_DELIVERY_NOT_CONFIGURED" }, { status: 503, headers });
   try {
-    const length = Number(request.headers.get("content-length") ?? 0);
-    if (Number.isFinite(length) && length > 16 * 1024) return NextResponse.json({ error: "REQUEST_TOO_LARGE" }, { status: 413, headers });
-    const parsed = schema.safeParse(await request.json());
+    const body = await readJsonLimited(request);
+    if (!body.ok) return NextResponse.json({ error: body.error }, { status: body.error === "REQUEST_TOO_LARGE" ? 413 : 400, headers });
+    const parsed = schema.safeParse(body.value);
     if (!parsed.success) return NextResponse.json({ error: "INVALID_INPUT" }, { status: 400, headers });
     const { email } = parsed.data;
     const db = requireDb();
