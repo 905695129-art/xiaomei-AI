@@ -22,7 +22,7 @@ export async function GET() {
       FROM experiences WHERE creator_id = ${user.id}
       ORDER BY updated_at DESC
     `;
-    return NextResponse.json({ experiences: rows });
+    return NextResponse.json({ experiences: rows }, { headers: { "Cache-Control": "private, no-store", "Vary": "Cookie" } });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
     return NextResponse.json({ error: code === "DATABASE_NOT_CONFIGURED" ? "SERVICE_NOT_CONFIGURED" : "INTERNAL_ERROR" }, { status: code === "DATABASE_NOT_CONFIGURED" ? 503 : 500 });
