@@ -1,4 +1,7 @@
 name: Heart Studio checks
+concurrency:
+  group: heart-studio-${{ github.ref }}
+  cancel-in-progress: true
 on:
   push:
     paths:
