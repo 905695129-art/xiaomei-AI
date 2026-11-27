@@ -88,6 +88,14 @@ export default function PublicExperiencePage() {
     }
   }
 
+  useEffect(() => {
+    if (!experience) return;
+    const requestedLevel = new URLSearchParams(window.location.search).get("level");
+    if (!requestedLevel) return;
+    const level = experience.levels.find(item => item.id === requestedLevel);
+    if (level) void beginUnlock(level);
+  }, [experience, slug]);
+
   async function share() {
     const url = window.location.href;
     try {
