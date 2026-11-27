@@ -4,6 +4,23 @@ BEGIN;
 
 DO $$
 DECLARE
+  function_acl ACLITEM[];
+BEGIN
+  SELECT proacl INTO function_acl
+  FROM pg_proc
+  WHERE oid = 'heart_finalize_verified_payment(uuid,uuid,text,integer,character,char)'::regprocedure;
+
+  IF EXISTS (
+    SELECT 1
+    FROM aclexplode(COALESCE(function_acl, acldefault('f', (SELECT proowner FROM pg_proc WHERE oid = 'heart_finalize_verified_payment(uuid,uuid,text,integer,character,char)'::regprocedure))))
+    WHERE grantee = 0 AND privilege_type = 'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'PAYMENT_FINALIZER_PUBLIC_EXECUTE_NOT_REVOKED';
+  END IF;
+END $$;
+
+DO $$
+DECLARE
   creator_id UUID;
   experience_id UUID;
   level_id UUID;
