@@ -46,7 +46,7 @@ export async function GET(_request: Request, context: { params: { slug: string }
           teaser: r.teaser, priceMinor: r.price_minor
         }))
       }
-    }, { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" } });
+    }, { headers: { "Cache-Control": buyerRef ? "private, no-store" : "public, s-maxage=30, stale-while-revalidate=60" } });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
     const status = code === "DATABASE_NOT_CONFIGURED" ? 503 : 500;
