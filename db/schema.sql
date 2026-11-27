@@ -111,6 +111,13 @@ CREATE TABLE IF NOT EXISTS auth_rate_limits (
   attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0)
 );
 
+-- Rate-limit authenticated password-change attempts independently per creator account.
+CREATE TABLE IF NOT EXISTS password_change_rate_limits (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  window_started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0)
+);
+
 
 -- Provider webhook idempotency ledger. Store identifiers and hashes, not raw card/payment secrets.
 CREATE TABLE IF NOT EXISTS payment_provider_events (
