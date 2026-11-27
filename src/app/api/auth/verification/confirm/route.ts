@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { requireDb } from "@/lib/db";
-import { isSameOriginWrite } from "@/lib/security";
+import { isSameOriginWrite, readJsonLimited } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "no-store, private" };
@@ -9,9 +9,9 @@ const headers = { "Cache-Control": "no-store, private" };
 export async function POST(request: Request) {
   if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403, headers });
   try {
-    const length = Number(request.headers.get("content-length") ?? 0);
-    if (Number.isFinite(length) && length > 16 * 1024) return NextResponse.json({ error: "REQUEST_TOO_LARGE" }, { status: 413, headers });
-    const body = await request.json() as { token?: unknown };
+    const parsedBody = await readJsonLimited(request);
+    if (!parsedBody.ok) return NextResponse.json({ error: parsedBody.error }, { status: parsedBody.error === "REQUEST_TOO_LARGE" ? 413 : 400, headers });
+    const body = parsedBody.value as { token?: unknown };
     if (typeof body.token !== "string" || body.token.length < 20 || body.token.length > 200) {
       return NextResponse.json({ error: "INVALID_OR_EXPIRED_TOKEN" }, { status: 400, headers });
     }
