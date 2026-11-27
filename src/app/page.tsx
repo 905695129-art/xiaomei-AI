@@ -27,6 +27,6 @@ export default function Home() {
       <div className="grid">{features.map((feature,index)=><article key={feature}><span>0{index+1}</span><b>{feature}</b></article>)}</div>
       <div className="actions"><a className="primary" href="/creator">进入创作者工作台</a></div>
     </section>
-    <footer>Heart Studio · 体验页面与关卡编辑已开发 · 真实收款尚未开通</footer>
+    <footer>Heart Studio · 体验页面与关卡编辑已开发 · 真实收款尚未开通<br/><a href="/privacy">隐私政策（草案）</a><span> · </span><a href="/terms">服务条款（草案）</a></footer>
   </main>;
 }
