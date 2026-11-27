@@ -43,11 +43,7 @@ export default function PublicExperiencePage() {
     setNotice("真实支付尚未开通。当前可以查看关卡介绍与价格，但不能付款或解锁私密内容。");
     setCheckoutBusy(true);
     try {
-      await fetch("/api/buyer/session", { method: "POST" });
-      const response = await fetch("/api/orders", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ experienceSlug: slug, levelId: level.id })
-      });
+      const response = await fetch("/api/orders", { method: "POST" });
       if (response.status === 503) setNotice("创作者收款通道尚未完成合规配置，因此本关暂不能付款。不会扣款，也不会假装解锁。");
     } catch {
       setNotice("暂时无法连接支付服务。没有发生扣款。");
