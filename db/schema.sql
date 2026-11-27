@@ -258,3 +258,22 @@ DROP TRIGGER IF EXISTS payment_refunds_apply_success ON payment_refunds;
 CREATE TRIGGER payment_refunds_apply_success
 AFTER INSERT OR UPDATE OF status ON payment_refunds
 FOR EACH ROW EXECUTE FUNCTION heart_apply_successful_refund();
+
+
+CREATE OR REPLACE FUNCTION heart_guard_refund_transition()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF OLD.status = 'succeeded' AND NEW.status IS DISTINCT FROM OLD.status THEN
+    RAISE EXCEPTION 'SUCCESSFUL_REFUND_IS_TERMINAL';
+  END IF;
+  IF OLD.status IN ('failed','cancelled') AND NEW.status NOT IN (OLD.status) THEN
+    RAISE EXCEPTION 'TERMINAL_REFUND_STATUS';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS payment_refunds_guard_transition ON payment_refunds;
+CREATE TRIGGER payment_refunds_guard_transition
+BEFORE UPDATE OF status ON payment_refunds
+FOR EACH ROW EXECUTE FUNCTION heart_guard_refund_transition();
