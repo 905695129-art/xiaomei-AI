@@ -15,8 +15,8 @@ const allowedTypes: Record<string, string> = {
   "image/gif": "gif"
 };
 
-export async function POST(request: Request, context: {
-  if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403 }); params: { experienceId: string } }) {
+export async function POST(request: Request, context: { params: { experienceId: string } }) {
+  if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403 });
   try {
     const creator = await getCurrentCreator();
     if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
