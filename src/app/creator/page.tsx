@@ -8,6 +8,8 @@ export default function CreatorPage() {
   const [user,setUser] = useState<{email:string;displayName:string}|null>(null);
   const [experiences,setExperiences] = useState<Experience[]>([]);
   const [title,setTitle] = useState(""); const [slug,setSlug] = useState("");
+  const [editingId,setEditingId] = useState<string|null>(null);
+  const [editTitle,setEditTitle] = useState(""); const [editDescription,setEditDescription] = useState("");
   const [message,setMessage] = useState("正在检查登录状态…"); const [busy,setBusy] = useState(false);
 
   async function load() {
@@ -33,18 +35,34 @@ export default function CreatorPage() {
       setTitle("");setSlug("");await load();setMessage("作品创建成功。现在可以进入作品卡片编辑关卡。");
     }catch(e){setMessage(e instanceof Error?e.message:"请求失败");}finally{setBusy(false);}
   }
+  function beginEdit(x:Experience){setEditingId(x.id);setEditTitle(x.title);setEditDescription(x.description||"");}
+  async function saveDetails(e:React.FormEvent){
+    e.preventDefault();if(!editingId)return;setBusy(true);setMessage("");
+    try{
+      const r=await fetch(`/api/creator/experiences/${editingId}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:editTitle,description:editDescription})});
+      const d=await r.json();if(!r.ok)throw new Error(d.error==="INVALID_INPUT"?"标题不能为空，简介最多 1000 字。":"保存作品信息失败，请稍后重试。");
+      setEditingId(null);await load();setMessage("作品名称和介绍已更新。");
+    }catch(e){setMessage(e instanceof Error?e.message:"保存失败");}finally{setBusy(false);}
+  }
   async function archive(x:Experience) {
     const next=x.status==="archived"?"draft":"archived";
     if(next==="archived"&&!window.confirm("归档后，体验者将无法通过分享链接打开此作品；已有订单记录会保留。确定归档吗？")) return;
     setBusy(true);setMessage("");
     try {
       const r=await fetch(`/api/creator/experiences/${x.id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status:next})});
-      const d=await r.json();if(!r.ok)throw new Error("操作失败，请刷新后重试。");
+      if(!r.ok)throw new Error("操作失败，请刷新后重试。");
       await load();setMessage(next==="archived"?"作品已归档，历史记录保留。":"作品已恢复为草稿。");
     } catch(e){setMessage(e instanceof Error?e.message:"操作失败");} finally{setBusy(false);}
   }
-  async function logout(){await fetch("/api/auth/logout",{method:"POST"});setUser(null);setExperiences([]);setMessage("已退出登录。");}
+  async function logout(){await fetch("/api/auth/logout",{method:"POST"});setUser(null);setExperiences([]);setMessage("已退出登录。")}
   return <main className="creatorShell"><a href="/" className="back">♡ 心意闯关</a><section className="creatorCard"><p className="eyebrow">CREATOR STUDIO</p><h1>创作者工作台</h1><p className="sub">创建你的专属心意作品，再逐步设计每一道关卡。</p>
-  {!user ? <><div className="switch"><button className={mode==="register"?"chosen":""} onClick={()=>setMode("register")}>注册</button><button className={mode==="login"?"chosen":""} onClick={()=>setMode("login")}>登录</button></div><form onSubmit={auth} className="form">{mode==="register"&&<label>显示昵称<input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="怎么称呼你" maxLength={40}/></label>}<label>邮箱<input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="name@example.com"/></label><label>密码<input type="password" required minLength={10} value={password} onChange={e=>setPassword(e.target.value)} placeholder="至少 10 位"/></label><button className="primary" disabled={busy}>{busy?"请稍候…":mode==="register"?"创建创作者账户":"登录工作台"}</button></form></>:<><div className="welcome"><b>{user.displayName||user.email}</b><div className="welcomeActions"><a href="/creator/orders">订单记录 ↗</a><button onClick={logout}>退出</button></div></div><form onSubmit={create} className="form createForm"><label>作品名称<input required maxLength={80} value={title} onChange={e=>setTitle(e.target.value)} placeholder="例如：给你的一场心意旅行"/></label><label>分享标识<input required minLength={3} maxLength={48} value={slug} onChange={e=>setSlug(e.target.value)} placeholder="my-heart-story"/></label><button className="primary" disabled={busy}>＋ 创建作品</button></form><h2>我的作品</h2>{experiences.length===0?<p className="empty">还没有作品，创建第一份心意吧。</p>:<div className="experienceList">{experiences.map(x=><article className="experience experienceItem" key={x.id}><div><b>{x.title}</b><span>{x.status==="published"?"已发布":x.status==="archived"?"已归档":"草稿"} · /{x.slug}</span></div><div className="experienceActions">{x.status!=="archived"&&<a href={`/creator/${x.id}`}>编辑关卡 →</a>}{x.status==="published"&&<a href={`/p/${x.slug}`} target="_blank" rel="noreferrer">预览分享页 ↗</a>}<button type="button" disabled={busy} onClick={()=>archive(x)}>{x.status==="archived"?"恢复草稿":"归档"}</button></div></article>)}</div>}</>}
+  {!user ? <><div className="switch"><button className={mode==="register"?"chosen":""} onClick={()=>setMode("register")}>注册</button><button className={mode==="login"?"chosen":""} onClick={()=>setMode("login")}>登录</button></div><form onSubmit={auth} className="form">{mode==="register"&&<label>显示昵称<input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="怎么称呼你" maxLength={40}/></label>}<label>邮箱<input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="name@example.com"/></label><label>密码<input type="password" required minLength={10} value={password} onChange={e=>setPassword(e.target.value)} placeholder="至少 10 位"/></label><button className="primary" disabled={busy}>{busy?"请稍候…":mode==="register"?"创建创作者账户":"登录工作台"}</button></form></>:<>
+    <div className="welcome"><b>{user.displayName||user.email}</b><div className="welcomeActions"><a href="/creator/orders">订单记录 ↗</a><button onClick={logout}>退出</button></div></div>
+    <form onSubmit={create} className="form createForm"><label>作品名称<input required maxLength={80} value={title} onChange={e=>setTitle(e.target.value)} placeholder="例如：给你的一场心意旅行"/></label><label>分享标识<input required minLength={3} maxLength={48} value={slug} onChange={e=>setSlug(e.target.value)} placeholder="my-heart-story"/></label><button className="primary" disabled={busy}>＋ 创建作品</button></form>
+    <h2>我的作品</h2>{experiences.length===0?<p className="empty">还没有作品，创建第一份心意吧。</p>:<div className="experienceList">{experiences.map(x=><div className="experienceWrap" key={x.id}>
+      <article className="experience experienceItem"><div><b>{x.title}</b><span>{x.status==="published"?"已发布":x.status==="archived"?"已归档":"草稿"} · /{x.slug}</span></div><div className="experienceActions"><button type="button" disabled={busy} onClick={()=>beginEdit(x)}>编辑信息</button>{x.status!=="archived"&&<a href={`/creator/${x.id}`}>编辑关卡 →</a>}{x.status==="published"&&<a href={`/p/${x.slug}`} target="_blank" rel="noreferrer">预览分享页 ↗</a>}<button type="button" disabled={busy} onClick={()=>archive(x)}>{x.status==="archived"?"恢复草稿":"归档"}</button></div></article>
+      {editingId===x.id&&<form className="detailsEditor" onSubmit={saveDetails}><label>作品名称<input required maxLength={80} value={editTitle} onChange={e=>setEditTitle(e.target.value)}/></label><label>作品介绍<textarea maxLength={1000} rows={3} value={editDescription} onChange={e=>setEditDescription(e.target.value)} placeholder="写一段分享页上展示的介绍…"/></label><div><button className="saveDetails" disabled={busy}>保存信息</button><button type="button" className="cancelDetails" onClick={()=>setEditingId(null)}>取消</button></div></form>}
+    </div>)}</div>}
+  </>}
   {message&&<p className="notice" role="status">{message}</p>}<p className="disclaimer">当前版本尚未开通真实支付。请勿在此收取真实款项。</p></section></main>;
 }
