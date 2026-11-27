@@ -152,3 +152,59 @@ CREATE INDEX IF NOT EXISTS payment_refunds_order_idx
 -- Audit timestamps for order state transitions; additive for existing installations.
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS refunded_at TIMESTAMPTZ;
+
+
+-- Order lifecycle transition guard. Payment integrations must update status through
+-- these allowed transitions; paid/refunded states cannot be reopened as pending.
+CREATE OR REPLACE FUNCTION heart_orders_guard_transition()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.status IS DISTINCT FROM OLD.status THEN
+    IF OLD.status = 'pending' AND NEW.status NOT IN ('paid','failed','cancelled') THEN
+      RAISE EXCEPTION 'INVALID_ORDER_STATUS_TRANSITION';
+    ELSIF OLD.status = 'paid' AND NEW.status NOT IN ('refunded') THEN
+      RAISE EXCEPTION 'INVALID_ORDER_STATUS_TRANSITION';
+    ELSIF OLD.status IN ('failed','cancelled','refunded') THEN
+      RAISE EXCEPTION 'TERMINAL_ORDER_STATUS';
+    END IF;
+  END IF;
+
+  IF OLD.status = 'paid' AND NEW.status = 'refunded' AND NEW.refunded_at IS NULL THEN
+    NEW.refunded_at := now();
+  END IF;
+  IF NEW.status = 'paid' AND NEW.paid_at IS NULL THEN
+    NEW.paid_at := now();
+  END IF;
+  NEW.updated_at := now();
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS orders_guard_transition ON orders;
+CREATE TRIGGER orders_guard_transition
+BEFORE UPDATE OF status ON orders
+FOR EACH ROW EXECUTE FUNCTION heart_orders_guard_transition();
+
+-- Keep order/entitlement identity aligned even if a future integration writes directly.
+CREATE OR REPLACE FUNCTION heart_entitlement_matches_paid_order()
+RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+  matched_count INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO matched_count
+  FROM orders o
+  WHERE o.id = NEW.order_id
+    AND o.status = 'paid'
+    AND o.level_id = NEW.level_id
+    AND o.buyer_ref = NEW.buyer_ref;
+  IF matched_count <> 1 THEN
+    RAISE EXCEPTION 'ENTITLEMENT_REQUIRES_MATCHING_PAID_ORDER';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS entitlements_require_paid_order ON entitlements;
+CREATE TRIGGER entitlements_require_paid_order
+BEFORE INSERT OR UPDATE OF order_id, level_id, buyer_ref ON entitlements
+FOR EACH ROW EXECUTE FUNCTION heart_entitlement_matches_paid_order();
