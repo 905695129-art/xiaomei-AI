@@ -3,7 +3,8 @@ import { cookies } from "next/headers";
 import { requireDb } from "@/lib/db";
 
 export async function getCurrentCreator() {
-  const token = cookies().get("heart_session")?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get("heart_session")?.value;
   if (!token) return null;
   const db = requireDb();
   const tokenHash = createHash("sha256").update(token).digest("hex");
