@@ -21,3 +21,26 @@ Next.js + TypeScript、PostgreSQL、Drizzle、安全会话认证、私有对象�
 
 ## 本地启动
 待应用脚手架文件提交后执行 npm install && npm run dev。
+
+
+## Heart Studio MVP backend (work in progress)
+
+### Local setup
+
+1. Install Node.js 20+ and PostgreSQL 15+.
+2. Copy `.env.example` to `.env.local` and set `DATABASE_URL` to a private PostgreSQL database URL.
+3. Install dependencies with `npm install`.
+4. Apply the schema with `npm run db:migrate`.
+5. Start the app with `npm run dev`.
+
+### Implemented API foundation
+
+- `GET /api/experiences/:slug`: published experience metadata and active level titles, teasers and prices only.
+- `POST /api/buyer/session`: creates an opaque buyer identity in an HttpOnly cookie.
+- `GET /api/experiences/:slug/levels/:levelId`: returns private level content only when the buyer session has a paid entitlement.
+- `GET/POST /api/creator/experiences`: creator-owned list/create endpoints, requiring a valid server-side creator session.
+- `POST /api/orders`: intentionally returns `503 PAYMENTS_NOT_CONFIGURED` until an approved provider and verified callback flow are implemented.
+
+### Important deployment gates
+
+This repository is not yet a production-ready paid service. The database schema must be applied to a managed PostgreSQL instance; creator login/session issuance and editor APIs are still incomplete; payment provider onboarding, sub-merchant settlement, signed callback verification, refunds and end-to-end tests are not implemented. Do not collect money or represent demo checkout as real payment. The public experience API intentionally excludes private level content.
