@@ -565,3 +565,93 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+
+
+-- Atomic finalization primitive for a callback that the application has already
+-- authenticated with the provider's signature/certificate. This function does NOT
+-- verify signatures; only the trusted server callback handler may call it.
+CREATE OR REPLACE FUNCTION heart_finalize_verified_payment(
+  p_event_id UUID,
+  p_order_id UUID,
+  p_provider_order_id TEXT,
+  p_amount_minor INTEGER,
+  p_currency CHAR(3),
+  p_payload_sha256 CHAR(64)
+)
+RETURNS VOID LANGUAGE plpgsql AS $$
+DECLARE
+  event_row payment_provider_events%ROWTYPE;
+  order_row orders%ROWTYPE;
+BEGIN
+  SELECT * INTO event_row
+  FROM payment_provider_events
+  WHERE id = p_event_id
+  FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'PAYMENT_EVENT_NOT_FOUND';
+  END IF;
+
+  IF event_row.payload_sha256 <> p_payload_sha256 THEN
+    RAISE EXCEPTION 'PAYMENT_EVENT_DIGEST_MISMATCH';
+  END IF;
+
+  IF event_row.processing_status = 'processed' THEN
+    IF event_row.order_id = p_order_id THEN
+      RETURN;
+    END IF;
+    RAISE EXCEPTION 'PAYMENT_EVENT_ALREADY_BOUND_TO_ANOTHER_ORDER';
+  END IF;
+
+  IF event_row.processing_status <> 'processing' THEN
+    RAISE EXCEPTION 'PAYMENT_EVENT_NOT_CLAIMED';
+  END IF;
+
+  SELECT * INTO order_row
+  FROM orders
+  WHERE id = p_order_id
+  FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'PAYMENT_ORDER_NOT_FOUND';
+  END IF;
+
+  IF event_row.provider <> order_row.provider THEN
+    RAISE EXCEPTION 'PAYMENT_PROVIDER_MISMATCH';
+  END IF;
+  IF event_row.order_id IS NOT NULL AND event_row.order_id <> p_order_id THEN
+    RAISE EXCEPTION 'PAYMENT_EVENT_ORDER_MISMATCH';
+  END IF;
+  IF p_provider_order_id IS NULL OR length(trim(p_provider_order_id)) = 0 THEN
+    RAISE EXCEPTION 'PROVIDER_ORDER_ID_REQUIRED';
+  END IF;
+  IF order_row.amount_minor <> p_amount_minor OR order_row.currency <> p_currency THEN
+    RAISE EXCEPTION 'PROVIDER_AMOUNT_OR_CURRENCY_MISMATCH';
+  END IF;
+
+  IF order_row.status = 'paid' THEN
+    IF order_row.provider_order_id IS DISTINCT FROM p_provider_order_id THEN
+      RAISE EXCEPTION 'PAID_ORDER_PROVIDER_ID_MISMATCH';
+    END IF;
+  ELSIF order_row.status = 'pending' THEN
+    UPDATE orders
+    SET status = 'paid',
+        provider_order_id = COALESCE(provider_order_id, p_provider_order_id),
+        paid_at = COALESCE(paid_at, now()),
+        updated_at = now()
+    WHERE id = p_order_id;
+  ELSE
+    RAISE EXCEPTION 'ORDER_NOT_PAYABLE';
+  END IF;
+
+  INSERT INTO entitlements (order_id, level_id, buyer_ref)
+  VALUES (order_row.id, order_row.level_id, order_row.buyer_ref)
+  ON CONFLICT (order_id) DO NOTHING;
+
+  UPDATE payment_provider_events
+  SET order_id = p_order_id,
+      processing_status = 'processed',
+      processed_at = COALESCE(processed_at, now()),
+      last_error_code = NULL
+  WHERE id = p_event_id;
+END;
+$$;
