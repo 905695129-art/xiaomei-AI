@@ -251,7 +251,7 @@ BEGIN
 END $$;
 
 
-DO $
+DO $email_token_test$
 DECLARE
   test_user UUID;
   verify_id UUID;
@@ -296,6 +296,6 @@ BEGIN
      OR EXISTS (SELECT 1 FROM password_reset_tokens WHERE id = reset_id) THEN
     RAISE EXCEPTION 'ACCOUNT_DELETE_DID_NOT_CASCADE_EMAIL_TOKENS';
   END IF;
-END $;
+END $email_token_test$;
 
 ROLLBACK;
