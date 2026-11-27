@@ -11,6 +11,7 @@ export default function ExperienceEditor() {
   const [busy,setBusy] = useState(false);
   const [message,setMessage] = useState("");
   const [shareUrl,setShareUrl] = useState("");
+  const [isDirty,setIsDirty] = useState(false);
   useEffect(()=>{
     fetch(`/api/creator/experiences/${experienceId}/levels`).then(async r=>{
       const d=await r.json();
@@ -44,16 +45,16 @@ export default function ExperienceEditor() {
   async function copy(){if(shareUrl){await navigator.clipboard.writeText(shareUrl);setMessage("分享链接已复制。");}}
   if(loading)return <main className="creatorShell"><p className="notice">正在加载关卡…</p></main>;
   return <main className="creatorShell"><a href="/creator" className="back">← 返回工作台</a><section className="creatorCard editorCard"><p className="eyebrow">DESIGN YOUR JOURNEY</p><h1>关卡设计</h1><p className="sub">每一关都可以单独定价。公开页面只展示标题、提示和价格，私密内容仅在真实付款验证后开放。</p>
-    {levels.map((level,index)=><article className="levelEditor" key={index}><div className="levelEditorTop"><b>第 {index+1} 关</b><button type="button" className="removeLevel" disabled={levels.length===1} onClick={()=>setLevels(old=>old.filter((_,i)=>i!==index))}>删除此关</button></div>
+    {levels.map((level,index)=><article className="levelEditor" key={index}><div className="levelEditorTop"><b>第 {index+1} 关</b><button type="button" className="removeLevel" disabled={levels.length===1} onClick={()=>{setIsDirty(true);setLevels(old=>old.filter((_,i)=>i!==index));}}>删除此关</button></div>
       <label>关卡标题<input value={level.title} maxLength={80} onChange={e=>change(index,"title",e.target.value)} placeholder="例如：第一份小惊喜"/></label>
       <label>关卡提示（对方付款前可见）<textarea value={level.teaser} maxLength={240} onChange={e=>change(index,"teaser",e.target.value)} placeholder="写一小段提示，让对方知道这一关有什么期待…" rows={2}/></label>
       <label>本关价格（人民币）<div className="priceInput"><span>¥</span><input type="number" min="0" max="1000000" step="0.01" value={(level.priceMinor/100).toFixed(2)} onChange={e=>change(index,"priceMinor",Math.round(Number(e.target.value||0)*100))}/></div></label>
       <label>解锁后的私密内容<textarea value={level.privateContent} maxLength={20000} onChange={e=>change(index,"privateContent",e.target.value)} placeholder="写下只有对方完成本关付款后才能看到的内容…" rows={5}/></label>
     </article>)}
-    <button className="addLevel" type="button" disabled={levels.length>=30} onClick={()=>setLevels(old=>[...old,blank()])}>＋ 添加下一关（最多 30 关）</button>
-    <div className="editorActions"><button className="primary" disabled={busy} onClick={save}>{busy?"处理中…":"保存所有关卡"}</button><button className="publishButton" disabled={busy} onClick={publish}>发布并生成分享链接 ↗</button></div>
+    <button className="addLevel" type="button" disabled={levels.length>=30} onClick={()=>{setIsDirty(true);setLevels(old=>[...old,blank()]);}}>＋ 添加下一关（最多 30 关）</button>
+    <div className="editorActions"><button className="primary" disabled={busy} onClick={save}>{busy?"处理中…":isDirty?"保存修改 · 有未保存内容":"保存所有关卡"}</button><button className="publishButton" disabled={busy||isDirty} onClick={publish}>发布并生成分享链接 ↗</button></div>
     {shareUrl&&<div className="shareResult"><span>{shareUrl}</span><button onClick={copy}>复制链接</button><a href={shareUrl} target="_blank" rel="noreferrer">预览</a></div>}
-    {message&&<p className="notice" role="status">{message}</p>}
+    {isDirty&&<p className="notice" role="status">你有尚未保存的修改。离开页面前请先保存；发布按钮会在保存后开放。</p>}\n    {message&&<p className="notice" role="status">{message}</p>}
     <p className="disclaimer">重要：真实支付尚未接入。当前发布仅用于展示关卡介绍与价格，不能向体验者收款或解锁私密内容。</p>
   </section></main>;
 }
