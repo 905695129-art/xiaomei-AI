@@ -2,6 +2,7 @@ import { randomBytes, scryptSync, timingSafeEqual, createHash } from "node:crypt
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireDb } from "@/lib/db";
+import { isSameOriginWrite } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 const inputSchema = z.object({
@@ -16,12 +17,8 @@ function safeEqual(a: string, b: string) {
   const aa = Buffer.from(a, "hex"), bb = Buffer.from(b, "hex");
   return aa.length === bb.length && timingSafeEqual(aa, bb);
 }
-function originAllowed(request: Request) {
-  const origin = request.headers.get("origin");
-  return !origin || origin === new URL(request.url).origin;
-}
 export async function POST(request: Request) {
-  if (!originAllowed(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403 });
+  if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403 });
   const parsed = inputSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "INVALID_INPUT", message: "邮箱格式不正确，密码至少 10 位。" }, { status: 400 });
   try {
