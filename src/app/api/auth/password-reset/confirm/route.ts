@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireDb } from "@/lib/db";
 import { isSameOriginWrite, readJsonLimited } from "@/lib/security";
+import { sendTransactionalEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "no-store, private" };
@@ -25,9 +26,9 @@ export async function POST(request: Request) {
     const db = requireDb();
     const result = await db.begin(async tx => {
       const [reset] = await tx`
-        SELECT id, user_id FROM password_reset_tokens
+        SELECT password_reset_tokens.id, password_reset_tokens.user_id, users.email FROM password_reset_tokens JOIN users ON users.id = password_reset_tokens.user_id
         WHERE token_hash = ${tokenHash} AND consumed_at IS NULL AND expires_at > now()
-        FOR UPDATE
+        FOR UPDATE OF password_reset_tokens
       `;
       if (!reset) return false;
       await tx`UPDATE users SET password_hash = ${passwordHash}, email_verified_at = COALESCE(email_verified_at, now()) WHERE id = ${reset.user_id}`;
@@ -35,9 +36,19 @@ export async function POST(request: Request) {
       await tx`DELETE FROM password_reset_tokens WHERE user_id = ${reset.user_id} AND id <> ${reset.id}`;
       await tx`DELETE FROM creator_sessions WHERE user_id = ${reset.user_id}`;
       await tx`DELETE FROM password_change_rate_limits WHERE user_id = ${reset.user_id}`;
-      return true;
+      return { email: reset.email as string };
     });
     if (!result) return NextResponse.json({ error: "INVALID_OR_EXPIRED_TOKEN" }, { status: 400, headers });
+    // The password change is already committed. A notification failure must not
+    // undo the reset or expose whether the mail provider is temporarily unavailable.
+    try {
+      await sendTransactionalEmail({
+        to: result.email,
+        subject: "心意闯关：账户密码已更新",
+        text: "你的心意闯关账户密码刚刚完成重置。如果这不是你本人操作，请立即联系网站支持并采取账户保护措施。",
+        html: "<div style=\"font-family:Arial,sans-serif;line-height:1.8;color:#654f58\"><h2>账户密码已更新</h2><p>你的心意闯关账户密码刚刚完成重置。</p><p>如果这不是你本人操作，请立即联系网站支持并采取账户保护措施。</p></div>"
+      });
+    } catch { /* Password reset remains successful even if the notification email fails. */ }
     return NextResponse.json({ ok: true, message: "密码已重置，请使用新密码重新登录。" }, { headers });
   } catch {
     return NextResponse.json({ error: "RESET_FAILED" }, { status: 500, headers });
