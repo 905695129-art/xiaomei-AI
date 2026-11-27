@@ -59,7 +59,7 @@ class MainActivity : Activity() {
         val scroller = ScrollView(this).apply { addView(root) }
         val header = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
         val logo = TextView(this).apply {
-            text = "♡"; textSize = 36f; gravity = Gravity.CENTER; setTextColor(Color.WHITE)
+            text = "♥"; textSize = 34f; gravity = Gravity.CENTER; setTextColor(Color.WHITE)
             background = GradientDrawable(GradientDrawable.Orientation.TL_BR,
                 intArrayOf(0xFFFF9EC8.toInt(), 0xFFE65A98.toInt())).apply { cornerRadius = dp(20).toFloat() }
             layoutParams = LinearLayout.LayoutParams(dp(58), dp(58)).apply { rightMargin = dp(14) }
@@ -76,12 +76,12 @@ class MainActivity : Activity() {
                 intArrayOf(0xFFFFD8E9.toInt(), 0xFFFFF0F6.toInt(), 0xFFEFE5FF.toInt())).apply { cornerRadius = dp(28).toFloat() }
         }
         hero.addView(text("你好呀～", 23f, deep, true)); gap(hero, 7)
-        hero.addView(text("先说说你正在经历什么，\n我会一步一步陪你理清。", 17f, deep, true)); gap(hero, 10)
+        hero.addView(text("把你的情况告诉我，\n我来帮你分析并找到下一步。", 17f, deep, true)); gap(hero, 10)
         hero.addView(text("不需要一次填写很多资料。我们从最重要的问题开始。", 13f, muted)); gap(hero, 15)
         hero.addView(button("开始分析  ›") { openModule("情感挽回") })
         root.addView(hero); gap(root, 24)
         root.addView(text("选择你现在需要的帮助", 19f, deep, true)); gap(root, 5)
-        root.addView(text("每个板块都会由 AI 逐步提问、分析并跟进", 12f, muted)); gap(root, 14)
+        root.addView(text("少问无关问题，先分析，再给你能执行的办法", 12f, muted)); gap(root, 14)
 
         val modules = listOf(
             Triple("💗", "情感挽回", "分手、冷战、失联，梳理原因与修复路径"),
@@ -119,7 +119,7 @@ class MainActivity : Activity() {
         })
         val title = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         title.addView(text(module, 21f, deep, true))
-        title.addView(text("情感助手 · 分步引导模式", 11f, muted))
+        title.addView(text("情感助手 · 主动分析与行动建议", 11f, muted))
         header.addView(title); root.addView(header)
         gap(root, 12)
         scroll = ScrollView(this).apply { isFillViewport = true }
@@ -147,9 +147,9 @@ class MainActivity : Activity() {
     }
 
     private fun firstQuestion(): String = when (module) {
-        "情感挽回" -> "我先了解一下关系现状。你们现在属于哪一种情况？\n① 刚分手  ② 冷战中  ③ 失联/断联  ④ 对方提出分开但还在联系"
-        "关系推进" -> "我们先确认你们目前的阶段。\n① 刚认识  ② 正在暧昧  ③ 已经约会  ④ 已恋爱但关系停滞"
-        else -> "我们先从真实需求开始。你希望讨论哪一种经济投入？\n① 礼物  ② 约会/共同消费  ③ 旅行预算  ④ 日常经济支持"
+        "情感挽回" -> "先别急着做挽回动作。通常最重要的是分清：对方是在情绪上想暂时拉开距离，还是已经对关系作出决定。你可以先告诉我发生了什么，我会帮你判断眼下最稳妥的一步。"
+        "关系推进" -> "关系推进不靠一味主动，而是看互动有没有形成来回。把最近一次互动告诉我，我先帮你判断对方的投入程度，再给你一个自然的下一步。"
+        else -> "谈经济投入，关键不是让对方掏钱，而是把需求、能力和双方认可的分担方式说清楚。告诉我你现在想商量的具体事情，我会帮你整理成直接、得体又不施压的表达。"
     }
 
     private fun addBubble(who: String, message: String) {
@@ -172,29 +172,38 @@ class MainActivity : Activity() {
         val old = prefs.getString("chat_$module", "").orEmpty()
         prefs.edit().putString("chat_$module", (old + "\\n我：" + answer).takeLast(8000)).apply()
         stage++
-        val reply = when (module) {
-            "情感挽回" -> listOf(
-                "明白了。分开/冷淡大概持续多久了？",
-                "这段时间里，对方有没有明确说过最在意或最无法接受的原因？尽量用对方原话描述。",
-                "最近一次你们有交流是什么时候？当时双方分别说了什么？",
-                "我先帮你梳理：哪些是已确认事实，哪些是你的猜测。你觉得目前最难改变的卡点是什么？"
-            )
-            "关系推进" -> listOf(
-                "了解。你们最近一次互动是什么时候？是谁主动开启的？",
-                "对方通常会怎样回应你？是积极延展话题、礼貌回复，还是经常中断？",
-                "你希望关系自然走到哪一步？例如继续聊天、约见面，还是确认彼此想法？",
-                "我会优先考虑双方舒适度。你觉得对方目前释放出的最明确积极信号是什么？"
-            )
-            else -> listOf(
-                "这个需求对你来说最重要的原因是什么？是实际需要、共同体验，还是希望感受到对方的重视？",
-                "你们之前谈过金钱和消费观念吗？对方当时怎么表达？",
-                "你希望提出一个怎样具体、合理且双方都能承担的安排？",
-                "我们可以把表达整理成清楚、真诚、不施压的沟通方式。对方如果拒绝，你能接受怎样的替代方案？"
-            )
+        val response = when (module) {
+            "情感挽回" -> when {
+                answer.contains("分手") || answer.contains("分开") || answer.contains("不想") ->
+                    "从你说的情况看，现在最重要的不是马上解释或挽回，而是先弄清对方提出分开的核心原因。\n\n建议你先暂停连续追问和长篇解释，避免让对方更有压力。接下来可以发：\n「我听到了你的想法，我不会逼你现在给答案。我也想认真看看我们之间到底出了什么问题，等彼此平静一点再谈。」\n\n这一步的目的不是保证复合，而是先稳住沟通空间。"
+                answer.length < 18 ->
+                    "我先给你一个初步判断：目前信息还不够下定论，但不建议急着连续发消息或用承诺换回应。先保持沟通克制，把注意力放在对方明确表达过的原因上。\n\n如果方便，把对方最近说过的关键一句话发给我，我可以据此把方案收窄。"
+                else ->
+                    "我把你刚才说的情况整理了一下。眼下优先处理的不是所有矛盾，而是最影响关系走向的那个核心问题。\n\n先做三件事：暂停情绪化追问；把事实和自己的猜测分开；选择一个双方都能平静沟通的时机。你可以把这段话作为开场：\n「我想把事情谈清楚，不是为了争输赢，而是想知道我们是否还有一起调整的意愿。」"
+            }
+            "关系推进" -> when {
+                answer.contains("不回") || answer.contains("冷淡") || answer.contains("慢") ->
+                    "如果对方回复变慢，先别用更高频率的消息去补。更有效的做法是发一条轻松、具体、容易回应的内容，然后观察对方是否主动延展话题。\n\n可以这样说：\n「刚看到一个东西让我想到你，感觉你可能会喜欢。」\n\n发出后先留出空间，不要紧接着追问。"
+                else ->
+                    "从关系推进的角度，建议你先做一个低压力、具体的小动作，而不是急着确认关系。\n\n可以试试：「这周我想去试试那家店，感觉你可能也会喜欢。你有兴趣一起去吗？」\n\n对方如果积极回应，就把时间地点落实；如果含糊或拒绝，就尊重节奏，不连续施压。"
+            }
+            else -> when {
+                answer.contains("礼物") ->
+                    "礼物需求可以直说，重点是表达偏好，而不是把礼物当作感情考试。可以说：\n「我其实挺喜欢有心意的小礼物。如果你愿意在特别的日子准备一份，我会很开心。当然也想听听你对这件事的看法。」\n\n先看双方对心意和消费的理解是否一致。"
+                answer.contains("旅行") || answer.contains("预算") ->
+                    "旅行费用最好在出发前讲清楚。可以直接说：\n「这次旅行我估算总预算大约是____，我希望我们提前商量怎么分担，按各自能力和实际安排来定。你觉得怎样比较合适？」\n\n明确金额和分担方式，比用暗示让对方猜更容易达成共识。"
+                else ->
+                    "你可以把经济需求说清楚，同时给对方真实选择空间。建议表达为：\n「我想和你商量一件实际的事：____。这对我来说确实重要，我希望知道你是否愿意、也是否有能力一起承担。我们可以讨论一个双方都舒服的方式。」\n\n对方的回应也能帮助你判断双方的价值观和投入是否匹配。"
+            }
         }
-        val response = reply[(stage - 1).coerceAtMost(reply.lastIndex)]
-        addBubble("ai", response)
-        val updated = prefs.getString("chat_$module", "").orEmpty()
-        prefs.edit().putString("chat_$module", (updated + "\\nAI：" + response).takeLast(8000)).apply()
+        val typing = text("正在整理思路…", 12f, muted).apply { setPadding(dp(10), dp(4), dp(10), dp(8)) }
+        chat.addView(typing)
+        scroll.post { scroll.fullScroll(View.FOCUS_DOWN) }
+        android.os.Handler(mainLooper).postDelayed({
+            chat.removeView(typing)
+            addBubble("ai", response)
+            val updated = prefs.getString("chat_$module", "").orEmpty()
+            prefs.edit().putString("chat_$module", (updated + "\\nAI：" + response).takeLast(8000)).apply()
+        }, (850L + response.length.coerceAtMost(180) * 12L))
     }
 }
