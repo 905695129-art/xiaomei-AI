@@ -11,6 +11,22 @@ const updateSchema = z.object({
   status: z.enum(["draft", "archived"]).optional()
 }).refine(value => Object.keys(value).length > 0);
 
+
+export async function GET(_request: Request, context: { params: { experienceId: string } }) {
+  try {
+    const creator = await getCurrentCreator();
+    if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+    const db = requireDb();
+    const [experience] = await db\`SELECT id, slug, title, description, status FROM experiences WHERE id = ${context.params.experienceId}::uuid AND creator_id = ${creator.id} LIMIT 1\`;
+    if (!experience) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
+    return NextResponse.json({ experience });
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "UNKNOWN";
+    const status = code === "DATABASE_NOT_CONFIGURED" ? 503 : 500;
+    return NextResponse.json({ error: status === 503 ? "SERVICE_NOT_CONFIGURED" : "INTERNAL_ERROR" }, { status });
+  }
+}
+
 export async function PATCH(request: Request, context: { params: { experienceId: string } }) {
   try {
     const creator = await getCurrentCreator();
