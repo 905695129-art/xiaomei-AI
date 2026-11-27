@@ -25,9 +25,9 @@ class MainActivity : Activity() {
  override fun onCreate(b:Bundle?){super.onCreate(b); showHome()}
  private fun showHome(){
   val box=LinearLayout(this).apply{orientation=1;setPadding(dp(18),dp(22),dp(18),dp(24));setBackgroundColor(0xFFFFF4F8.toInt())}
-  box.addView(TextView(this).apply{text="小美 AI ✿\n智能获客助手";textSize=27f;setTextColor(0xFF9C4772.toInt())})
+  box.addView(TextView(this).apply{text="小美 AI ✿\nSoul 智能社交助手";textSize=27f;setTextColor(0xFF9C4772.toInt())})
   box.addView(TextView(this).apply{text="找人 → 识别需求 → 判断意向 → 个性化开场 → 记录反馈";textSize=13f;setPadding(0,dp(8),0,dp(12))})
-  kw=EditText(this).apply{hint="获客关键词，如：情感咨询、相亲、脱单";setText(p.getString("kw","情感咨询"))}
+  kw=EditText(this).apply{hint="Soul 寻客方向，如：兴趣、交友、情感话题";setText(p.getString("kw","情感咨询"))}
   box.addView(kw)
   box.addView(Button(this).apply{text="一键开始：打开 Soul";setOnClickListener{
    val q=kw.text.toString().trim();if(q.isEmpty()){toast("请先填写关键词");return@setOnClickListener}
@@ -50,16 +50,22 @@ class MainActivity : Activity() {
    if(s.isBlank())toast("未读到文字：先授权无障碍，再打开评论区")
    else{raw.setText(s);state.text="已读取可见文字，请检查内容。"}
   }})
-  box.addView(TextView(this).apply{text="评论内容";textSize=17f;setTextColor(0xFF9C4772.toInt());setPadding(0,dp(12),0,dp(4))})
-  raw=EditText(this).apply{hint="读取或粘贴 Soul 页面公开可见内容；昵称和时间只记录页面明确显示的内容";minLines=5;gravity=android.view.Gravity.TOP}
+  box.addView(TextView(this).apply{text="Soul 页面内容";textSize=17f;setTextColor(0xFF9C4772.toInt());setPadding(0,dp(12),0,dp(4))})
+  raw=EditText(this).apply{hint="读取或粘贴 Soul 页面公开可见内容；只分析页面明确展示的信息";minLines=5;gravity=android.view.Gravity.TOP}
   box.addView(raw,ViewGroup.LayoutParams(-1,dp(145)))
-  box.addView(Button(this).apply{text="分析潜在客户并生成逐人私信草稿";setOnClickListener{val t=raw.text.toString().trim();if(t.isEmpty())toast("请先读取或粘贴评论")else analyze(t)}})
+  box.addView(Button(this).apply{text="分析页面内容并生成个性化聊天建议";setOnClickListener{val t=raw.text.toString().trim();if(t.isEmpty())toast("请先读取或粘贴评论")else analyze(t)}})
   box.addView(Button(this).apply{text="保存本次分析";setOnClickListener{
    val s=out.text.toString();if(s.isBlank())toast("暂无分析结果")else{val old=p.getString("history","").orEmpty();p.edit().putString("history",(old+"\n\n---\n"+s).takeLast(20000)).apply();toast("已保存在本机")}
   }})
   box.addView(Button(this).apply{text="查看历史线索";setOnClickListener{out.text=p.getString("history","暂无历史线索")}})
+
+  box.addView(Button(this).apply{text="安排下一次线索复核（随机1–10分钟）";setOnClickListener{
+   val delay=(60L..600L).random()*1000L
+   state.text="已安排复核提醒，约 "+(delay/60000)+" 分钟后提醒你检查下一条线索。此计时不代表自动浏览或自动发送。"
+   h.postDelayed({ if(!isFinishing){state.text="复核提醒：可以检查 Soul 当前页面或处理下一条线索。";toast("小美提醒：可以复核下一条线索了")} },delay)
+  }})
   box.addView(Button(this).apply{text="AI 模型设置（首次配置）";setOnClickListener{settings()}})
-  state=TextView(this).apply{text="准备就绪。只辅助筛选和起草，不自动发送私信；请逐人核对、遵守平台规则和对方意愿。";textSize=13f;setPadding(0,dp(12),0,dp(6))}
+  state=TextView(this).apply{text="准备就绪。支持 Soul 页面识别、资料分析、聊天建议和本地线索记录。发送行为遵守 Soul 规则并尊重对方意愿。";textSize=13f;setPadding(0,dp(12),0,dp(6))}
   box.addView(state)
   out=TextView(this).apply{text="分析结果显示在这里。";textSize=14f;setPadding(0,dp(10),0,dp(18))}
   box.addView(out)
@@ -78,7 +84,7 @@ class MainActivity : Activity() {
   if(ep.isBlank()||mo.isBlank()||k.isBlank()){out.text=local(t)+"\n\n配置模型后可启用深度 AI 分析。";return}
   out.text="正在分析公开评论……"
   Thread{try{
-   val prompt="你是谨慎的客户需求分析助手。逐条分析以下公开评论，提取页面明确可见的昵称和时间（不得猜测），标注需求证据、意向高/中/低/未知、理由、自然个性化开场草稿。排除广告、无关、未成年人、明确拒绝联系者。不要推断敏感属性，不编造信息。给出优先级及停止联系条件。平台：Soul。关键词："+kw.text+"。页面内容：\n"+t
+   val prompt="你是谨慎的 Soul 社交交流分析助手。逐条分析用户主动提供的页面可见资料，提取明确展示的兴趣和话题，不推断性别、年龄或敏感属性，不编造信息。判断是否存在自然交流切入点，生成不重复、口语化、默认不带标点的聊天建议，并说明依据。排除未成年人、广告和明确拒绝联系者。不得建议骚扰、批量触达或规避平台限制。关键词："+kw.text+"。页面内容：\n"+t
    val a=AiClient.chat(ep,mo,k,prompt);h.post{out.text=a}
   }catch(e:Exception){h.post{out.text="AI 调用失败："+e.message+"\n\n"+local(t)}}}.start()
  }
