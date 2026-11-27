@@ -21,7 +21,7 @@ export async function POST(request: Request) {
         "SELECT buyer_ref FROM buyer_sessions WHERE token_hash = $1 AND expires_at > now() LIMIT 1",
         [existingHash]
       );
-      if (existing.length) return NextResponse.json({ ok: true, existing: true });
+      if (existing.length) return NextResponse.json({ ok: true, existing: true }, { headers: { "Cache-Control": "no-store, private", Vary: "Cookie" } });
     }
 
     const token = randomBytes(32).toString("base64url");
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       "INSERT INTO buyer_sessions (buyer_ref, token_hash, expires_at) VALUES ($1, $2, now() + interval '180 days')",
       [buyerRef, tokenHash]
     );
-    const response = NextResponse.json({ ok: true, existing: false });
+    const response = NextResponse.json({ ok: true, existing: false }, { headers: { "Cache-Control": "no-store, private", Vary: "Cookie" } });
     response.cookies.set("heart_buyer", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
