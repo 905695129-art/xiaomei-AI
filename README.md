@@ -61,7 +61,7 @@
 
 ## 容器部署
 
-已提供 `Dockerfile`、`docker-compose.yml` 和 `.dockerignore`，可用 Docker Compose 启动 PostgreSQL、执行数据库迁移并运行 Next.js standalone 应用。完整的服务器准备、HTTPS 反向代理、邮件/对象存储配置、备份恢复和上线验收步骤见 [`docs/deployment.md`](docs/deployment.md)。容器配置不会自动创建云服务器、域名或服务商账户；真实支付仍保持关闭。
+已提供 `Dockerfile`、`docker-compose.yml` 和 `.dockerignore`，可用 Docker Compose 启动 PostgreSQL、执行数据库迁移并运行 Next.js standalone 应用；`/api/health` 会检查数据库连通性。CI 会执行 Compose 配置校验和完整容器启动冒烟测试。应用端口默认只绑定 `127.0.0.1:3000`。完整的服务器准备、HTTPS 反向代理、邮件/对象存储配置、备份恢复和上线验收步骤见 [`docs/deployment.md`](docs/deployment.md)。容器配置不会自动创建云服务器、域名或服务商账户；真实支付仍保持关闭。
 
 ## 本地开发
 需要 Node.js 20+ 与 PostgreSQL 15+。
