@@ -20,10 +20,12 @@ export async function GET() {
     `;
     const orders = await db`
       SELECT o.id, o.amount_minor, o.currency, o.status, o.created_at, o.paid_at,
-        e.title AS experience_title, l.title AS level_title
+        e.title AS experience_title,
+        COALESCE(ent.level_title_snapshot, l.title) AS level_title
       FROM orders o
       JOIN experiences e ON e.id = o.experience_id
       JOIN experience_levels l ON l.id = o.level_id
+      LEFT JOIN entitlements ent ON ent.order_id = o.id AND ent.level_id = o.level_id AND ent.buyer_ref = o.buyer_ref
       WHERE o.creator_id = ${creator.id}
       ORDER BY o.created_at DESC
       LIMIT 100
