@@ -60,6 +60,26 @@ export async function POST(request: Request) {
 
   try {
     const db = requireDb();
+    await db`DELETE FROM password_change_rate_limits WHERE window_started_at < now() - interval '1 day'`;
+    const [limit] = await db`
+      INSERT INTO password_change_rate_limits (user_id, window_started_at, attempts)
+      VALUES (${creator.id}, now(), 1)
+      ON CONFLICT (user_id) DO UPDATE SET
+        attempts = CASE
+          WHEN password_change_rate_limits.window_started_at < now() - interval '15 minutes' THEN 1
+          ELSE password_change_rate_limits.attempts + 1
+        END,
+        window_started_at = CASE
+          WHEN password_change_rate_limits.window_started_at < now() - interval '15 minutes' THEN now()
+          ELSE password_change_rate_limits.window_started_at
+        END
+      RETURNING attempts, window_started_at
+    `;
+    if (Number(limit.attempts) > 5) {
+      const elapsedMs = Date.now() - new Date(limit.window_started_at).getTime();
+      const retryAfter = Math.max(1, Math.ceil((15 * 60 * 1000 - elapsedMs) / 1000));
+      return NextResponse.json({ error: "TOO_MANY_ATTEMPTS" }, { status: 429, headers: { ...headers, "Retry-After": String(retryAfter) } });
+    }
     const [user] = await db`SELECT password_hash FROM users WHERE id = ${creator.id} LIMIT 1`;
     if (!user?.password_hash?.startsWith("scrypt:")) return NextResponse.json({ error: "PASSWORD_NOT_AVAILABLE" }, { status: 409, headers });
     const [, salt, stored] = user.password_hash.split(":");
@@ -75,6 +95,7 @@ export async function POST(request: Request) {
     await db.begin(async tx => {
       await tx`UPDATE users SET password_hash = ${nextHash} WHERE id = ${creator.id}`;
       await tx`DELETE FROM creator_sessions WHERE user_id = ${creator.id} AND token_hash <> ${tokenHash}`;
+      await tx`DELETE FROM password_change_rate_limits WHERE user_id = ${creator.id}`;
     });
     return NextResponse.json({ ok: true, otherSessionsRevoked: true }, { headers });
   } catch {
