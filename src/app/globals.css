@@ -51,3 +51,5 @@
 .sessionPanel{margin-top:22px;padding:18px 20px;background:#fff9f7;border:1px solid #f0e1e2;border-radius:16px}.sessionPanel h2{margin:0 0 7px!important;font:20px Georgia,"Songti SC",serif!important;color:#805d68}.sessionPanel p,.sessionPanel>span{font-size:11px;line-height:1.7;color:#a38b92}.sessionPanel ul{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:10px}.sessionPanel li{display:grid;gap:4px;padding:11px 12px;background:#fff;border:1px solid #f1e5e5;border-radius:12px;font-size:11px;color:#a18a90}.sessionPanel li b{color:#bd7b8e;font-size:12px}.sessionPanel li span{color:#a18a90}
 
 .passwordPanel{margin-top:22px;padding:20px;background:#fff9f7;border:1px solid #f0e1e2;border-radius:16px}.passwordPanel h2{margin:0 0 8px!important;font:20px Georgia,"Songti SC",serif!important;color:#805d68}.passwordPanel .form{margin-top:12px}.passwordPanel>p{font-size:11px;color:#a38b92;line-height:1.7}
+
+.forgotPasswordLink{display:block;text-align:right;margin-top:-4px;color:#b8798e;font-size:12px;text-decoration:none}.forgotPasswordLink:hover{text-decoration:underline}
