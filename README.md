@@ -21,7 +21,8 @@
 - `GET /api/creator/orders`：按当前创作者身份读取订单及汇总。
 - `GET /api/buyer/purchases`：仅凭 HttpOnly 买家会话读取当前买家已付款且已发放 entitlement 的购买记录，不接受客户端传入买家 ID。
 - `POST /api/creator/experiences/:id/publish`：发布作品。
-- `GET /api/experiences/:slug/levels/:levelId`：只有当前买家会话拥有已支付 entitlement 时才返回私密内容。
+- `GET /api/experiences/:slug/levels/:levelId`：只有当前买家会话拥有已支付 entitlement 时才返回私密内容；分享页点击关卡会先检查历史解锁状态。
+- `POST /api/buyer/session`：复用当前有效体验者会话，避免每次访问都创建新身份。
 - `POST /api/orders`：真实支付渠道未配置前明确返回 503 `PAYMENTS_NOT_CONFIGURED`。
 
 ## 重要限制
