@@ -19,6 +19,14 @@ CREATE TABLE IF NOT EXISTS creator_sessions (
 CREATE INDEX IF NOT EXISTS creator_sessions_user_idx ON creator_sessions(user_id);
 CREATE INDEX IF NOT EXISTS creator_sessions_expiry_idx ON creator_sessions(expires_at);
 
+CREATE TABLE IF NOT EXISTS buyer_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  buyer_ref TEXT NOT NULL UNIQUE,
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS experiences (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   creator_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
