@@ -30,6 +30,8 @@ DECLARE
   refund_id UUID;
   event_id_value UUID;
   provider_order_id_value TEXT := 'ci-provider-' || gen_random_uuid()::text;
+  wrong_provider_order_id TEXT := 'ci-other-' || gen_random_uuid()::text;
+  non_success_event_id UUID;
   event_digest CHAR(64) := encode(digest(gen_random_uuid()::text, 'sha256'), 'hex');
   wrong_event_digest CHAR(64) := encode(digest(gen_random_uuid()::text, 'sha256'), 'hex');
   event_provider_id TEXT := 'ci-event-' || gen_random_uuid()::text;
@@ -100,6 +102,33 @@ BEGIN
   VALUES ('ci-test', event_provider_id, 'payment.succeeded', event_digest, 'processing')
   RETURNING id INTO event_id_value;
 
+  INSERT INTO payment_provider_events (provider, provider_event_id, event_type, payload_sha256, processing_status)
+  VALUES ('ci-test', 'ci-nonsuccess-' || gen_random_uuid()::text, 'payment.pending', event_digest, 'processing')
+  RETURNING id INTO non_success_event_id;
+
+  BEGIN
+    PERFORM heart_finalize_verified_payment(
+      non_success_event_id, order_id_value, provider_order_id_value, 990, 'CNY', event_digest
+    );
+    RAISE EXCEPTION 'NON_SUCCESS_EVENT_WAS_ACCEPTED';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM <> 'PAYMENT_EVENT_TYPE_NOT_SUCCESS' THEN
+      RAISE;
+    END IF;
+  END;
+
+  UPDATE orders SET provider_order_id = wrong_provider_order_id WHERE id = order_id_value;
+  BEGIN
+    PERFORM heart_finalize_verified_payment(
+      event_id_value, order_id_value, provider_order_id_value, 990, 'CNY', event_digest
+    );
+    RAISE EXCEPTION 'DIFFERENT_PROVIDER_ORDER_ID_WAS_ACCEPTED';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM <> 'PROVIDER_ORDER_ID_MISMATCH' THEN
+      RAISE;
+    END IF;
+  END;
+  UPDATE orders SET provider_order_id = NULL WHERE id = order_id_value;
   BEGIN
     PERFORM heart_finalize_verified_payment(
       event_id_value, order_id_value, provider_order_id_value, 990, 'CNY', wrong_event_digest
