@@ -5,7 +5,7 @@ import { getCurrentCreator } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 export async function POST(_request: Request, context: {
-  if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403 }); params: { experienceId: string } }) {
+  if (!isSameOriginWrite(_request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403 }); params: { experienceId: string } }) {
   try {
     const creator = await getCurrentCreator();
     if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
