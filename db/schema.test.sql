@@ -14,6 +14,8 @@ DECLARE
   event_id_value UUID;
   provider_order_id_value TEXT := 'ci-provider-' || gen_random_uuid()::text;
   event_digest CHAR(64) := encode(digest(gen_random_uuid()::text, 'sha256'), 'hex');
+  wrong_event_digest CHAR(64) := encode(digest(gen_random_uuid()::text, 'sha256'), 'hex');
+  event_provider_id TEXT := 'ci-event-' || gen_random_uuid()::text;
   found_count INTEGER;
 BEGIN
   INSERT INTO users (display_name, role)
@@ -78,8 +80,27 @@ BEGIN
   END;
 
   INSERT INTO payment_provider_events (provider, provider_event_id, event_type, payload_sha256, processing_status)
-  VALUES ('ci-test', 'ci-event-' || gen_random_uuid()::text, 'payment.succeeded', event_digest, 'processing')
+  VALUES ('ci-test', event_provider_id, 'payment.succeeded', event_digest, 'processing')
   RETURNING id INTO event_id_value;
+
+  BEGIN
+    PERFORM heart_finalize_verified_payment(
+      event_id_value, order_id_value, provider_order_id_value, 990, 'CNY', wrong_event_digest
+    );
+    RAISE EXCEPTION 'CALLBACK_DIGEST_MISMATCH_WAS_ACCEPTED';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM <> 'PAYMENT_EVENT_DIGEST_MISMATCH' THEN
+      RAISE;
+    END IF;
+  END;
+
+  BEGIN
+    INSERT INTO payment_provider_events (provider, provider_event_id, event_type, payload_sha256, processing_status)
+    VALUES ('ci-test', event_provider_id, 'payment.succeeded', event_digest, 'received');
+    RAISE EXCEPTION 'DUPLICATE_PROVIDER_EVENT_WAS_ACCEPTED';
+  EXCEPTION WHEN unique_violation THEN
+    NULL;
+  END;
 
   BEGIN
     PERFORM heart_finalize_verified_payment(
@@ -125,9 +146,27 @@ BEGIN
     END IF;
   END;
 
+  BEGIN
+    INSERT INTO payment_refunds (order_id, provider, idempotency_key, amount_minor, currency, status)
+    VALUES (order_id_value, 'ci-test', 'ci-refund-wrong-' || gen_random_uuid()::text, 989, 'CNY', 'pending');
+    RAISE EXCEPTION 'PARTIAL_REFUND_WAS_ACCEPTED';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM <> 'REFUND_AMOUNT_MUST_MATCH_ORDER' THEN
+      RAISE;
+    END IF;
+  END;
+
   INSERT INTO payment_refunds (order_id, provider, idempotency_key, amount_minor, currency, status)
   VALUES (order_id_value, 'ci-test', 'ci-refund-' || gen_random_uuid()::text, 990, 'CNY', 'pending')
   RETURNING id INTO refund_id;
+
+  BEGIN
+    INSERT INTO payment_refunds (order_id, provider, idempotency_key, amount_minor, currency, status)
+    VALUES (order_id_value, 'ci-test', 'ci-refund-duplicate-' || gen_random_uuid()::text, 990, 'CNY', 'pending');
+    RAISE EXCEPTION 'CONCURRENT_ACTIVE_REFUND_WAS_ACCEPTED';
+  EXCEPTION WHEN unique_violation THEN
+    NULL;
+  END;
 
   UPDATE payment_refunds SET status = 'succeeded', completed_at = now() WHERE id = refund_id;
 
