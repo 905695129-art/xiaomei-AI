@@ -35,11 +35,13 @@ CREATE TABLE IF NOT EXISTS experiences (
   title TEXT NOT NULL,
   description TEXT NOT NULL DEFAULT '',
   cover_url TEXT,
+  cover_position TEXT NOT NULL DEFAULT 'center' CHECK (cover_position IN ('top','center','bottom')),
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','published','archived')),
   currency CHAR(3) NOT NULL DEFAULT 'CNY',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE experiences ADD COLUMN IF NOT EXISTS cover_position TEXT NOT NULL DEFAULT 'center';
 CREATE INDEX IF NOT EXISTS experiences_creator_idx ON experiences(creator_id, updated_at DESC);
 CREATE INDEX IF NOT EXISTS experiences_public_idx ON experiences(slug, status);
 
