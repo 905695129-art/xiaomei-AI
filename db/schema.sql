@@ -320,3 +320,81 @@ DROP TRIGGER IF EXISTS payment_events_guard ON payment_provider_events;
 CREATE TRIGGER payment_events_guard
 BEFORE UPDATE ON payment_provider_events
 FOR EACH ROW EXECUTE FUNCTION heart_guard_provider_event();
+
+
+
+-- Bind each order to the exact creator-owned experience and level. Composite
+-- foreign keys prevent mismatched IDs even if a future API has a validation bug.
+CREATE UNIQUE INDEX IF NOT EXISTS experiences_id_creator_unique
+  ON experiences(id, creator_id);
+CREATE UNIQUE INDEX IF NOT EXISTS experiences_id_currency_unique
+  ON experiences(id, currency);
+CREATE UNIQUE INDEX IF NOT EXISTS levels_id_experience_unique
+  ON experience_levels(id, experience_id);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'orders_experience_creator_fk') THEN
+    ALTER TABLE orders ADD CONSTRAINT orders_experience_creator_fk
+      FOREIGN KEY (experience_id, creator_id) REFERENCES experiences(id, creator_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'orders_level_experience_fk') THEN
+    ALTER TABLE orders ADD CONSTRAINT orders_level_experience_fk
+      FOREIGN KEY (level_id, experience_id) REFERENCES experience_levels(id, experience_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'orders_experience_currency_fk') THEN
+    ALTER TABLE orders ADD CONSTRAINT orders_experience_currency_fk
+      FOREIGN KEY (experience_id, currency) REFERENCES experiences(id, currency);
+  END IF;
+END $$;
+
+-- Validate server-created pending orders against the locked, current published
+-- level. amount_minor is the immutable amount snapshot stored on the order.
+CREATE OR REPLACE FUNCTION heart_validate_new_order()
+RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+  experience_row experiences%ROWTYPE;
+  level_row experience_levels%ROWTYPE;
+BEGIN
+  IF NEW.status <> 'pending' THEN
+    RAISE EXCEPTION 'NEW_ORDER_MUST_START_PENDING';
+  END IF;
+  IF NEW.buyer_ref IS NULL OR length(trim(NEW.buyer_ref)) < 16 THEN
+    RAISE EXCEPTION 'ORDER_BUYER_SESSION_REQUIRED';
+  END IF;
+  IF NEW.amount_minor <= 0 THEN
+    RAISE EXCEPTION 'PAID_ORDER_AMOUNT_MUST_BE_POSITIVE';
+  END IF;
+
+  SELECT * INTO experience_row
+  FROM experiences
+  WHERE id = NEW.experience_id
+  FOR SHARE;
+  IF NOT FOUND OR experience_row.status <> 'published' THEN
+    RAISE EXCEPTION 'EXPERIENCE_NOT_PUBLISHED';
+  END IF;
+  IF experience_row.creator_id <> NEW.creator_id OR experience_row.currency <> NEW.currency THEN
+    RAISE EXCEPTION 'ORDER_CREATOR_OR_CURRENCY_MISMATCH';
+  END IF;
+
+  SELECT * INTO level_row
+  FROM experience_levels
+  WHERE id = NEW.level_id AND experience_id = NEW.experience_id
+  FOR SHARE;
+  IF NOT FOUND OR NOT level_row.is_active THEN
+    RAISE EXCEPTION 'LEVEL_NOT_AVAILABLE';
+  END IF;
+  IF level_row.price_minor <> NEW.amount_minor THEN
+    RAISE EXCEPTION 'ORDER_AMOUNT_MISMATCH';
+  END IF;
+  IF NEW.provider IS NULL OR NEW.provider = 'disabled' THEN
+    RAISE EXCEPTION 'PAYMENT_PROVIDER_NOT_CONFIGURED';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS orders_validate_new ON orders;
+CREATE TRIGGER orders_validate_new
+BEFORE INSERT ON orders
+FOR EACH ROW EXECUTE FUNCTION heart_validate_new_order();
