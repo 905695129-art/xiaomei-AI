@@ -19,11 +19,11 @@ import android.view.View
 import android.widget.*
 
 class MainActivity : Activity() {
-    private val pink = Color.rgb(222,112,157)
-    private val deep = Color.rgb(126,65,94)
-    private val ink = Color.rgb(78,59,68)
-    private val muted = Color.rgb(154,130,141)
-    private val bg = Color.rgb(255,247,250)
+    private val pink = Color.rgb(211,103,151)
+    private val deep = Color.rgb(112,55,83)
+    private val ink = Color.rgb(65,49,59)
+    private val muted = Color.rgb(145,119,132)
+    private val bg = Color.rgb(250,244,248)
     private val prefs by lazy { getSharedPreferences("xiaomei", MODE_PRIVATE) }
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var result: TextView
@@ -45,17 +45,31 @@ class MainActivity : Activity() {
         text=s; textSize=size; setTextColor(c); if(b)setTypeface(typeface,Typeface.BOLD); setLineSpacing(dp(2).toFloat(),1f)
     }
     private fun button(s:String,action:()->Unit)=Button(this).apply {
-        text=s; textSize=14f; isAllCaps=false; setTextColor(Color.WHITE); background=bgd(pink,15); setOnClickListener{action()}
+        text=s; textSize=14f; isAllCaps=false; setTextColor(Color.WHITE)
+        typeface=Typeface.DEFAULT_BOLD; minHeight=dp(54); setPadding(dp(18),dp(12),dp(18),dp(12))
+        background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(0xFFE58AB2.toInt(),0xFFD36A98.toInt())).apply{cornerRadius=dp(17).toFloat()}
+        elevation=dp(3).toFloat(); setOnClickListener{action()}
     }
     private fun field(h:String,v:String="",lines:Int=1)=EditText(this).apply {
         hint=h; setText(v); textSize=14f; setTextColor(ink); setHintTextColor(0xFFBDAAB5.toInt())
-        setPadding(dp(13),dp(10),dp(13),dp(10)); background=bgd(Color.WHITE,14)
+        setPadding(dp(15),dp(13),dp(15),dp(13))
+        background=GradientDrawable().apply{setColor(Color.WHITE);cornerRadius=dp(15).toFloat();setStroke(dp(1),0xFFF0E2E9.toInt())}
         minLines=lines; gravity=if(lines>1) Gravity.TOP else Gravity.CENTER_VERTICAL
     }
-    private fun column()=LinearLayout(this).apply { orientation=1; setPadding(dp(18),dp(14),dp(18),dp(24)); setBackgroundColor(bg) }
+    private fun column()=LinearLayout(this).apply {
+        orientation=1; setPadding(dp(20),dp(18),dp(20),dp(30))
+        background=GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(0xFFFFF9FC.toInt(),bg,0xFFF7F0F6.toInt()))
+    }
     private fun gap(parent:LinearLayout,n:Int=12){ parent.addView(View(this),LinearLayout.LayoutParams(1,dp(n))) }
     private fun show(v:android.view.View){ setContentView(ScrollView(this).apply{isFillViewport=true;addView(v)}) }
-    private fun card(parent:LinearLayout,v:View){ val box=LinearLayout(this).apply{orientation=1;setPadding(dp(15),dp(15),dp(15),dp(15));background=bgd(Color.WHITE,20);elevation=dp(2).toFloat()};box.addView(v);parent.addView(box,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(12)}) }
+    private fun card(parent:LinearLayout,v:View){
+        val box=LinearLayout(this).apply{
+            orientation=1;setPadding(dp(18),dp(18),dp(18),dp(18))
+            background=GradientDrawable().apply{setColor(Color.WHITE);cornerRadius=dp(22).toFloat();setStroke(dp(1),0xFFF1E4EB.toInt())}
+            elevation=dp(4).toFloat()
+        }
+        box.addView(v);parent.addView(box,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(15)})
+    }
     private fun page(title:String,sub:String):LinearLayout{
         val r=column(); val h=LinearLayout(this).apply{orientation=0;gravity=Gravity.CENTER_VERTICAL}
         h.addView(label("‹",34f,deep).apply{setPadding(0,0,dp(14),0);setOnClickListener{home()}})
@@ -65,24 +79,67 @@ class MainActivity : Activity() {
     private fun home(){
         val r=column()
         val head=LinearLayout(this).apply{orientation=0;gravity=Gravity.CENTER_VERTICAL}
-        val name=LinearLayout(this).apply{orientation=1};name.addView(label("小美 AI",28f,deep,true));name.addView(label("女性成长 · 展示面 · 高质量交友",12f,muted))
-        head.addView(name,LinearLayout.LayoutParams(0,-2,1f));head.addView(label("⚙",24f,deep).apply{setOnClickListener{settings()}});r.addView(head);gap(r,16)
-        val hero=LinearLayout(this).apply{orientation=1;setPadding(dp(19),dp(19),dp(19),dp(19));background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(0xFFFFDCE9.toInt(),0xFFFFEFF5.toInt(),0xFFF0E7FF.toInt())).apply{cornerRadius=dp(24).toFloat()}}
-        hero.addView(label("🧸  先成为自己喜欢的样子",19f,deep,true));gap(hero,7)
-        hero.addView(label("学习展示真实魅力，识别适合自己的对象，用舒服自然的方式建立关系。",13f,0xFF8D667A.toInt()))
-        gap(hero,12);hero.addView(label("了解自己 → 优化展示 → 识别契合 → 自然交流 → 关系成长",11f,deep,true));r.addView(hero);gap(r,18)
-        r.addView(label("成长功能台",19f,deep,true));r.addView(label("六大模块，陪你走完整个交友流程",12f,muted));gap(r,10)
+        val mark=TextView(this).apply{
+            text="🧸";textSize=27f;gravity=Gravity.CENTER
+            background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(0xFFFFDCEB.toInt(),0xFFF5E5FF.toInt())).apply{cornerRadius=dp(18).toFloat()}
+            layoutParams=LinearLayout.LayoutParams(dp(54),dp(54)).apply{rightMargin=dp(12)}
+        }
+        val name=LinearLayout(this).apply{orientation=1}
+        name.addView(label("小美 AI",27f,deep,true));gap(name,2)
+        name.addView(label("让每一次相遇，都更从容",12f,muted))
+        head.addView(mark);head.addView(name,LinearLayout.LayoutParams(0,-2,1f))
+        head.addView(label("⚙",23f,deep).apply{setPadding(dp(10),dp(8),dp(5),dp(8));setOnClickListener{settings()}})
+        r.addView(head);gap(r,18)
+        val hero=LinearLayout(this).apply{
+            orientation=1;setPadding(dp(21),dp(22),dp(21),dp(20))
+            background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(0xFFFFD9E8.toInt(),0xFFFFEEF5.toInt(),0xFFF0E7FF.toInt())).apply{cornerRadius=dp(27).toFloat()}
+            elevation=dp(4).toFloat()
+        }
+        val tag=TextView(this).apply{
+            text="  YOUR GROWTH COMPANION  ";textSize=9f;letterSpacing=0.12f
+            setTextColor(0xFF9D5879.toInt());setPadding(dp(9),dp(6),dp(9),dp(6));background=bgd(0x66FFFFFF,20)
+        }
+        hero.addView(tag);gap(hero,13)
+        hero.addView(label("成为自己喜欢的样子。",23f,deep,true));gap(hero,7)
+        hero.addView(label("从真实展示到自然交流，陪你一步步建立自信，认识值得认真了解的人。",13f,0xFF8D667A.toInt()))
+        gap(hero,15);hero.addView(label("自我认知   ·   展示魅力   ·   识别契合   ·   关系成长",11f,deep,true))
+        r.addView(hero);gap(r,23)
+        val section=LinearLayout(this).apply{orientation=0;gravity=Gravity.CENTER_VERTICAL}
+        val heading=LinearLayout(this).apply{orientation=1}
+        heading.addView(label("探索成长",20f,deep,true));gap(heading,3)
+        heading.addView(label("为交友的每个阶段，准备一份小小助力",12f,muted))
+        section.addView(heading,LinearLayout.LayoutParams(0,-2,1f))
+        section.addView(label("6 个功能",11f,pink,true).apply{setPadding(dp(10),dp(6),dp(10),dp(6));background=bgd(0xFFFFE5EF.toInt(),20)})
+        r.addView(section);gap(r,13)
+        val tileColors=listOf(0xFFFFF0F5.toInt(),0xFFF2EDFF.toInt(),0xFFFFF5E9.toInt(),0xFFEDF7F5.toInt(),0xFFFFF0F2.toInt(),0xFFF1F1FF.toInt())
         for(i in 0..2){
             val row=LinearLayout(this).apply{orientation=0}
             for(j in 0..1){
                 val k=i*2+j
-                val tile=LinearLayout(this).apply{orientation=1;setPadding(dp(13),dp(13),dp(12),dp(13));background=bgd(Color.WHITE,19);elevation=dp(2).toFloat();setOnClickListener{open(k)}}
-                tile.addView(label(icons[k],25f));gap(tile,7);tile.addView(label(titles[k],15f,deep,true));gap(tile,4);tile.addView(label(desc[k],11f,muted))
-                row.addView(tile,LinearLayout.LayoutParams(0,dp(145),1f).apply{if(j==0)rightMargin=dp(7) else leftMargin=dp(7)})
-            };r.addView(row);gap(r,10)
+                val tile=LinearLayout(this).apply{
+                    orientation=1;setPadding(dp(15),dp(15),dp(14),dp(15))
+                    background=GradientDrawable().apply{setColor(Color.WHITE);cornerRadius=dp(21).toFloat();setStroke(dp(1),0xFFF0E3EA.toInt())}
+                    elevation=dp(3).toFloat();setOnClickListener{open(k)}
+                }
+                val icon=TextView(this).apply{
+                    text=icons[k];textSize=23f;gravity=Gravity.CENTER;background=bgd(tileColors[k],15)
+                    layoutParams=LinearLayout.LayoutParams(dp(46),dp(46))
+                }
+                tile.addView(icon);gap(tile,11);tile.addView(label(titles[k],15f,deep,true));gap(tile,5)
+                tile.addView(label(desc[k],11f,muted))
+                tile.addView(label("进入模块  ›",10f,pink,true).apply{setPadding(0,dp(10),0,0)})
+                row.addView(tile,LinearLayout.LayoutParams(0,dp(166),1f).apply{if(j==0)rightMargin=dp(7) else leftMargin=dp(7)})
+            }
+            r.addView(row);gap(r,11)
         }
-        card(r,LinearLayout(this).apply{orientation=1;addView(label("随时陪伴",16f,deep,true));gap(this,8);addView(button("💗 打开聊天辅助"){open(3)});gap(this,8);addView(button("🧸 开启悬浮小美"){floating()})})
-        val foot=label("真实展示自己 · 尊重彼此选择 · 不把技巧变成操纵",11f,muted);foot.gravity=Gravity.CENTER;r.addView(foot);show(r)
+        card(r,LinearLayout(this).apply{
+            orientation=1;addView(label("随身聊天搭档",17f,deep,true));gap(this,4)
+            addView(label("需要灵感时，随时切换六种聊天模式。",12f,muted));gap(this,13)
+            addView(button("💗  打开聊天辅助"){open(3)});gap(this,9)
+            addView(button("🧸  开启悬浮小美"){floating()})
+        })
+        val foot=label("真实展示自己  ·  尊重彼此选择  ·  自然建立连接",10f,muted)
+        foot.gravity=Gravity.CENTER;r.addView(foot);show(r)
     }
     private fun open(i:Int){when(i){0->course();1->profile();2->screening();3->chat();4->journal();5->date()}}
     private fun course(){
