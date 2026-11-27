@@ -6,7 +6,8 @@ import { getCurrentCreator } from "@/lib/session";
 export const dynamic = "force-dynamic";
 const updateSchema = z.object({
   title: z.string().trim().min(1).max(80).optional(),
-  description: z.string().max(1000).optional(),\n  theme: z.enum(["rose", "cream", "lavender"]).optional(),
+  description: z.string().max(1000).optional(),
+  theme: z.enum(["rose", "cream", "lavender"]).optional(),
   // Publishing is deliberately handled only by the dedicated publish endpoint.
   status: z.enum(["draft", "archived"]).optional()
 }).refine(value => Object.keys(value).length > 0);
@@ -37,7 +38,8 @@ export async function PATCH(request: Request, context: { params: { experienceId:
     const [updated] = await db`
       UPDATE experiences SET
         title = COALESCE(${parsed.data.title ?? null}, title),
-        description = COALESCE(${parsed.data.description ?? null}, description),\n        theme = COALESCE(${parsed.data.theme ?? null}, theme),
+        description = COALESCE(${parsed.data.description ?? null}, description),
+        theme = COALESCE(${parsed.data.theme ?? null}, theme),
         status = COALESCE(${parsed.data.status ?? null}, status),
         updated_at = now()
       WHERE id = ${context.params.experienceId}::uuid AND creator_id = ${creator.id}
