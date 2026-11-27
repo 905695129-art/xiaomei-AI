@@ -102,3 +102,11 @@ CREATE INDEX IF NOT EXISTS entitlements_lookup_idx ON entitlements(buyer_ref, le
 
 -- Additive migration for share-page appearance; safe to run on existing databases.
 ALTER TABLE experiences ADD COLUMN IF NOT EXISTS theme TEXT NOT NULL DEFAULT 'rose';
+
+
+-- Atomic per-email authentication throttling (10 attempts per 15-minute window).
+CREATE TABLE IF NOT EXISTS auth_rate_limits (
+  email TEXT PRIMARY KEY,
+  window_started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0)
+);
