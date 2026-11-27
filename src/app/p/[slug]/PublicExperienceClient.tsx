@@ -99,9 +99,32 @@ export default function PublicExperiencePage() {
   async function share() {
     const url = window.location.href;
     try {
-      if (navigator.share) await navigator.share({ title: experience?.title ?? "心意闯关", url });
-      else { await navigator.clipboard.writeText(url); setCopied(true); window.setTimeout(() => setCopied(false), 1800); }
-    } catch { /* sharing was dismissed */ }
+      if (navigator.share) {
+        await navigator.share({ title: experience?.title ?? "心意闯关", text: "有人为你准备了一段专属心意，来看看吧。", url });
+        return;
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+    }
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(url);
+      else {
+        const input = document.createElement("textarea");
+        input.value = url;
+        input.setAttribute("readonly", "");
+        input.style.position = "fixed";
+        input.style.opacity = "0";
+        document.body.appendChild(input);
+        input.select();
+        const ok = document.execCommand("copy");
+        input.remove();
+        if (!ok) throw new Error("COPY_FAILED");
+      }
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2200);
+    } catch {
+      setNotice("暂时无法自动复制，请长按浏览器地址栏复制分享链接。");
+    }
   }
 
   if (loading) return <main className="publicShell"><div className="publicLoading">正在打开这份心意… ♡</div></main>;
