@@ -117,6 +117,14 @@ jobs:
           p.write_text(s)
           PY
 
+      - name: Install curated relationship knowledge base
+        run: |
+          PROJECT="extracted/xiaomei-ai"
+          mkdir -p "$PROJECT/app/src/main/assets"
+          cp knowledge/chat_knowledge_v1.md "$PROJECT/app/src/main/assets/chat_knowledge.md"
+          echo "Installed curated knowledge base:"
+          wc -l "$PROJECT/app/src/main/assets/chat_knowledge.md"
+
       - name: Install new sweet launcher icon
         run: bash scripts/install_launcher_icon.sh
 
@@ -204,7 +212,7 @@ jobs:
               }
               private fun generateFromLatest(mode:Int,type:Int){
                   val prefs=getSharedPreferences("xiaomei",MODE_PRIVATE)
-                  val context=prefs.getString("screen_snapshot","").orEmpty()
+                  val context=prefs.getString("screen_snapshot","").orEmpty()\n                  val previous=prefs.getString("dialogue_memory","").orEmpty()
                   val key=prefs.getString("key","").orEmpty()
                   val endpoint=prefs.getString("endpoint","https://ark.cn-beijing.volces.com/api/v3/chat/completions").orEmpty()
                   val model=prefs.getString("model","").orEmpty()
@@ -223,7 +231,7 @@ jobs:
                               "根据上下文写六条轻松幽默的接话，不讽刺或贬低对方。",
                               "针对对方表达，写六条真诚、清楚、有边界的回应。"
                           )[mode]
-                          val prompt="你是温暖、尊重边界的中文聊天助手。"+guidance+"只返回JSON数组，恰好六个简短、可直接使用的中文句子，不要编号或解释。若聊天内容不足，给出不冒进的通用表达。不得操纵、羞辱、制造焦虑或绕过拒绝。当前页面可见文字："+context
+                          val prompt="你是持续陪伴式中文对话教练。你必须理解整段上下文，而不是只回复最后一句。"+guidance+"识别关系阶段、对方刚表达的事实与可能情绪、对话目前进展和用户目标。恰好生成六条：前3条是可直接发送的不同风格回应；后3条是回应之后自然延续话题的下一步问题或接话方向，帮助用户持续对话但不盘问。简短自然，不编造共同经历；信息不足时先给低压力澄清表达。只返回JSON数组，恰好六个中文字符串。尊重拒绝和停止联系，不操纵、不羞辱、不制造焦虑。此前对话辅助摘要："+previous+"；当前聊天窗口可见内容："+context
                           val conn=URL(endpoint).openConnection() as HttpURLConnection
                           conn.requestMethod="POST";conn.connectTimeout=18000;conn.readTimeout=35000;conn.doOutput=true
                           conn.setRequestProperty("Content-Type","application/json");conn.setRequestProperty("Authorization","Bearer "+key)
@@ -235,7 +243,7 @@ jobs:
                           val clean=content.removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
                           val arr=JSONArray(clean);(0 until arr.length()).map{arr.optString(it)}.filter{it.isNotBlank()}.take(6)
                       }catch(e:Exception){listOf("生成失败："+(e.message?: "请检查网络和AI设置"))}
-                      handler.post{showResults(result,type)}
+                      handler.post{\n                          val mem=(previous+"\\n本轮页面："+context+"\\n本轮建议："+result.joinToString(" / ")).takeLast(5000)\n                          prefs.edit().putString("dialogue_memory",mem).apply()\n                          showResults(result,type)\n                      }
                   }.start()
               }
               private fun showResults(items:List<String>,type:Int){
