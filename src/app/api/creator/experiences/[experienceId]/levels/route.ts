@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isSameOriginWrite } from "@/lib/security";
 import { z } from "zod";
 import { requireDb } from "@/lib/db";
 import { getCurrentCreator } from "@/lib/session";
@@ -28,7 +29,8 @@ export async function GET(_request: Request, context: { params: { experienceId: 
   }
 }
 
-export async function PUT(request: Request, context: { params: { experienceId: string } }) {
+export async function PUT(request: Request, context: {
+  if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403 }); params: { experienceId: string } }) {
   try {
     const creator = await getCurrentCreator();
     if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
