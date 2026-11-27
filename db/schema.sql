@@ -208,3 +208,53 @@ DROP TRIGGER IF EXISTS entitlements_require_paid_order ON entitlements;
 CREATE TRIGGER entitlements_require_paid_order
 BEFORE INSERT OR UPDATE OF order_id, level_id, buyer_ref ON entitlements
 FOR EACH ROW EXECUTE FUNCTION heart_entitlement_matches_paid_order();
+
+
+-- Current MVP refund policy is full-order refunds only. A successful refund
+-- revokes the associated paid order, which in turn blocks entitlement reads.
+CREATE UNIQUE INDEX IF NOT EXISTS payment_refunds_one_success_per_order
+  ON payment_refunds(order_id) WHERE status = 'succeeded';
+
+CREATE OR REPLACE FUNCTION heart_validate_full_refund()
+RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+  order_row orders%ROWTYPE;
+BEGIN
+  SELECT * INTO order_row FROM orders WHERE id = NEW.order_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'REFUND_ORDER_NOT_FOUND';
+  END IF;
+  IF order_row.status <> 'paid' THEN
+    RAISE EXCEPTION 'REFUND_REQUIRES_PAID_ORDER';
+  END IF;
+  IF NEW.amount_minor <> order_row.amount_minor OR NEW.currency <> order_row.currency THEN
+    RAISE EXCEPTION 'REFUND_AMOUNT_MUST_MATCH_ORDER';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS payment_refunds_validate ON payment_refunds;
+CREATE TRIGGER payment_refunds_validate
+BEFORE INSERT OR UPDATE OF order_id, amount_minor, currency ON payment_refunds
+FOR EACH ROW EXECUTE FUNCTION heart_validate_full_refund();
+
+CREATE OR REPLACE FUNCTION heart_apply_successful_refund()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.status = 'succeeded' AND (TG_OP = 'INSERT' OR OLD.status IS DISTINCT FROM 'succeeded') THEN
+    UPDATE orders
+    SET status = 'refunded', refunded_at = COALESCE(refunded_at, now()), updated_at = now()
+    WHERE id = NEW.order_id AND status = 'paid';
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'REFUND_ORDER_NOT_PAID';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS payment_refunds_apply_success ON payment_refunds;
+CREATE TRIGGER payment_refunds_apply_success
+AFTER INSERT OR UPDATE OF status ON payment_refunds
+FOR EACH ROW EXECUTE FUNCTION heart_apply_successful_refund();
