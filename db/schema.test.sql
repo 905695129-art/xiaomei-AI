@@ -138,6 +138,28 @@ BEGIN
     event_id_value, order_id_value, provider_order_id_value, 990, 'CNY', event_digest
   );
 
+  BEGIN
+    PERFORM heart_finalize_verified_payment(
+      event_id_value, order_id_value, provider_order_id_value, 989, 'CNY', event_digest
+    );
+    RAISE EXCEPTION 'PROCESSED_EVENT_ACCEPTED_DIFFERENT_AMOUNT';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM <> 'PROVIDER_AMOUNT_OR_CURRENCY_MISMATCH' THEN
+      RAISE;
+    END IF;
+  END;
+
+  BEGIN
+    PERFORM heart_finalize_verified_payment(
+      event_id_value, order_id_value, provider_order_id_value || '-tampered', 990, 'CNY', event_digest
+    );
+    RAISE EXCEPTION 'PROCESSED_EVENT_ACCEPTED_DIFFERENT_PROVIDER_ORDER_ID';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM <> 'PAYMENT_EVENT_ALREADY_PROCESSED_WITH_DIFFERENT_ORDER_STATE' THEN
+      RAISE;
+    END IF;
+  END;
+
   SELECT id INTO entitlement_id FROM entitlements WHERE order_id = order_id_value;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'VERIFIED_CALLBACK_DID_NOT_CREATE_ENTITLEMENT';
