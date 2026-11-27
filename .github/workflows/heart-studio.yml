@@ -13,6 +13,8 @@ on:
     paths:
       - 'src/**'
       - 'db/**'
+      - 'docs/**'
+      - 'README.md'
       - 'package.json'
       - 'tsconfig.json'
       - '.github/workflows/heart-studio.yml'
