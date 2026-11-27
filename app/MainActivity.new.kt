@@ -462,7 +462,7 @@ class MainActivity : Activity() {
         r.addView(daily);gap(r,20)
 
         r.addView(label("循序渐进 · 12 个成长单元",18f,deep,true));gap(r,5)
-        r.addView(label("每一课都有目标、生活案例、表达方法和练习。",12f,muted));gap(r,12)
+        r.addView(label("每一课都有核心知识、生活案例、可用表达、练习与复盘；涵盖自我成长、沟通、情绪、边界和关系选择。",12f,muted));gap(r,12)
         val subtitles=listOf("找回自我价值与生活重心","真实照片、简介与个人表达","偏好表达、拒绝与协商","观察、分享、提问与倾听","保留自己的生活节奏","观察行动与双向契合","识别情绪、需要与触发点","深度倾听与核对理解","冲突降温、道歉与修复","理解安全感与依恋需求","长期契合、价值观与现实筛选","体面结束、恢复生活与自我照顾")
         val palettes=listOf(0xFFFFEFF5.toInt(),0xFFF1EDFF.toInt(),0xFFFFF4E9.toInt(),0xFFECF7F3.toInt(),0xFFFFF0F0.toInt(),0xFFF0F1FF.toInt(),0xFFFFEFF5.toInt(),0xFFF1EDFF.toInt(),0xFFFFF4E9.toInt(),0xFFECF7F3.toInt(),0xFFFFF0F0.toInt(),0xFFF0F1FF.toInt())
         lessonTitles.forEachIndexed{index,title->
