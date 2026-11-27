@@ -1,9 +1,11 @@
 import { createHash } from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { isSameOriginWrite } from "@/lib/security";
 import { requireDb } from "@/lib/db";
 
 export async function POST(request: Request) {
+  if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403 });
   const token = cookies().get("heart_session")?.value;
   if (token) {
     try {
