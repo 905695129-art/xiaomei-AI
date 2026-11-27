@@ -120,61 +120,173 @@ jobs:
       - name: Install new sweet launcher icon
         run: bash scripts/install_launcher_icon.sh
 
-      - name: Add six-option floating XiaoMei menu
+      - name: Install floating chat assistant and optional accessibility reader
         run: |
           PROJECT="extracted/xiaomei-ai"
           SRC="$PROJECT/app/src/main/java/com/xiaomei/ai"
-          mkdir -p "$SRC"
+          RES="$PROJECT/app/src/main/res/xml"
+          mkdir -p "$SRC" "$RES"
           cat > "$SRC/OverlayService.kt" <<'EOF'
           package com.xiaomei.ai
           import android.app.Service
-          import android.content.Intent
+          import android.content.*
           import android.graphics.Color
           import android.graphics.PixelFormat
           import android.graphics.drawable.GradientDrawable
-          import android.os.Build
-          import android.os.IBinder
+          import android.os.*
           import android.view.Gravity
           import android.view.WindowManager
-          import android.widget.LinearLayout
-          import android.widget.TextView
+          import android.widget.*
+          import org.json.JSONArray
+          import org.json.JSONObject
+          import java.net.HttpURLConnection
+          import java.net.URL
+          import java.io.OutputStreamWriter
           class OverlayService : Service() {
-              private var wm: WindowManager? = null
-              private var bubble: TextView? = null
-              private var panel: LinearLayout? = null
+              private var wm:WindowManager?=null
+              private var bubble:TextView?=null
+              private var panel:LinearLayout?=null
+              private val handler=Handler(Looper.getMainLooper())
+              private val modes=listOf("轻松开场","兴趣破冰","自然邀约","暖心回应","幽默接话","认真沟通")
               private fun dp(n:Int)=(n*resources.displayMetrics.density).toInt()
-              private fun shape(c:Int)=GradientDrawable().apply{setColor(c);cornerRadius=dp(18).toFloat()}
+              private fun shape(c:Int,r:Int=18)=GradientDrawable().apply{setColor(c);cornerRadius=dp(r).toFloat()}
               override fun onBind(intent:Intent?):IBinder?=null
               override fun onCreate(){
                   super.onCreate();wm=getSystemService(WINDOW_SERVICE) as WindowManager
-                  val type=if(Build.VERSION.SDK_INT>=26) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE
-                  val lp=WindowManager.LayoutParams(-2,-2,type,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT).apply{gravity=Gravity.TOP or Gravity.END;x=dp(16);y=dp(180)}
-                  bubble=TextView(this).apply{text="🧸 小美";textSize=15f;setTextColor(Color.WHITE);setPadding(dp(15),dp(12),dp(15),dp(12));background=shape(0xFFE58AB2.toInt());elevation=dp(10).toFloat();setOnClickListener{toggle(lp,type)};setOnLongClickListener{stopSelf();true}}
+                  val type=if(Build.VERSION.SDK_INT>=26)WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE
+                  val lp=WindowManager.LayoutParams(-2,-2,type,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT).apply{gravity=Gravity.TOP or Gravity.END;x=dp(15);y=dp(180)}
+                  bubble=TextView(this).apply{
+                      text="🧸";textSize=25f;gravity=Gravity.CENTER;setTextColor(Color.WHITE)
+                      setPadding(dp(11),dp(9),dp(11),dp(9));background=shape(0xFFE58AB2.toInt(),24);elevation=dp(10).toFloat()
+                      setOnClickListener{toggle(lp,type)};setOnLongClickListener{stopSelf();true}
+                  }
                   wm?.addView(bubble,lp)
+              }
+              private fun basePanel():LinearLayout=LinearLayout(this).apply{
+                  orientation=1;setPadding(dp(12),dp(12),dp(12),dp(12))
+                  background=GradientDrawable().apply{setColor(0xFFFFF6FA.toInt());cornerRadius=dp(23).toFloat();setStroke(dp(1),0xFFF0DCE6.toInt())}
+                  elevation=dp(15).toFloat()
+              }
+              private fun display(view:LinearLayout,type:Int){
+                  try{panel?.let{wm?.removeView(it)}}catch(_:Exception){}
+                  panel=view
+                  val p=WindowManager.LayoutParams(dp(300),-2,type,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT).apply{gravity=Gravity.TOP or Gravity.END;x=dp(12);y=dp(235)}
+                  try{wm?.addView(view,p)}catch(_:Exception){panel=null}
               }
               private fun toggle(anchor:WindowManager.LayoutParams,type:Int){
                   if(panel!=null){try{wm?.removeView(panel)}catch(_:Exception){};panel=null;return}
-                  val menu=LinearLayout(this).apply{orientation=1;setPadding(dp(11),dp(11),dp(11),dp(11));background=shape(0xFFFFF3F8.toInt());elevation=dp(14).toFloat()}
-                  val sections=listOf("主动发起对话","识别内容后回应")
-                  sections.forEach{ section ->
-                      menu.addView(TextView(this).apply{text=section;textSize=12f;setTextColor(0xFFB66B91.toInt());setPadding(dp(9),dp(8),dp(9),dp(5))})
-                      val modes=if(section=="主动发起对话") listOf("🌸 轻松开场","🫧 兴趣破冰","💗 自然邀约") else listOf("🌷 暖心回应","😄 幽默接话","🤍 认真沟通")
-                      modes.forEachIndexed{localIndex,title->
-                          val mode=if(section=="主动发起对话") localIndex else localIndex+3
-                          val item=TextView(this).apply{text=title;textSize=14f;setTextColor(0xFF7E415E.toInt());setPadding(dp(16),dp(12),dp(16),dp(12));background=shape(Color.WHITE);setOnClickListener{
-                              val i=packageManager.getLaunchIntentForPackage(packageName)
-                              i?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                              i?.putExtra("xiaomei_module",3);i?.putExtra("xiaomei_chat_mode",mode);if(i!=null)startActivity(i)
-                              try{wm?.removeView(panel)}catch(_:Exception){};panel=null
-                          }}
-                          menu.addView(item,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(6)})
+                  val menu=basePanel()
+                  menu.addView(TextView(this).apply{text="选择一种聊天方式";textSize=16f;setTypeface(null,1);setTextColor(0xFF78445E.toInt());setPadding(dp(8),dp(7),dp(8),dp(10))})
+                  menu.addView(TextView(this).apply{text="识别当前聊天页面内容，生成六条可复制建议";textSize=11f;setTextColor(0xFF9D8290.toInt());setPadding(dp(8),0,dp(8),dp(10))})
+                  listOf("主动发起对话","识别内容后回应").forEachIndexed{section,title->
+                      menu.addView(TextView(this).apply{text=title;textSize=12f;setTextColor(0xFFB66B91.toInt());setPadding(dp(8),dp(7),dp(8),dp(5))})
+                      for(i in 0..2){
+                          val index=section*3+i
+                          menu.addView(TextView(this).apply{
+                              text=listOf("🌸 轻松开场","🫧 兴趣破冰","💗 自然邀约","🌷 暖心回应","😄 幽默接话","🤍 认真沟通")[index]
+                              textSize=14f;setTextColor(0xFF7E415E.toInt());setPadding(dp(14),dp(12),dp(14),dp(12));background=shape(Color.WHITE,14)
+                              setOnClickListener{generate(index,type)}
+                          },LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(6)})
                       }
                   }
-                  val p=WindowManager.LayoutParams(-2,-2,type,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT).apply{gravity=Gravity.TOP or Gravity.END;x=dp(12);y=anchor.y+dp(58)}
-                  panel=menu;try{wm?.addView(menu,p)}catch(_:Exception){panel=null}
+                  display(menu,type)
+              }
+              private fun generate(mode:Int,type:Int){
+                  val prefs=getSharedPreferences("xiaomei",MODE_PRIVATE)
+                  val context=prefs.getString("screen_snapshot","").orEmpty()
+                  val key=prefs.getString("key","").orEmpty()
+                  val endpoint=prefs.getString("endpoint","https://api.openai.com/v1/chat/completions").orEmpty()
+                  val model=prefs.getString("model","gpt-4o-mini").orEmpty()
+                  val wait=basePanel()
+                  wait.addView(TextView(this).apply{text="正在为你整理六种表达…";textSize=15f;setTextColor(0xFF78445E.toInt());setPadding(dp(12),dp(18),dp(12),dp(18))})
+                  display(wait,type)
+                  if(key.isBlank()){showResults(listOf("请先在小美 AI 设置中配置 AI 服务。"),type);return}
+                  if(context.isBlank() && mode>=3){showResults(listOf("还没有识别到聊天文字。请先打开聊天页面，并在系统设置中允许小美读取当前屏幕文字。"),type);return}
+                  Thread{
+                      val result=try{
+                          val guidance=listOf(
+                              "根据上下文写六条自然、不冒犯的初次开场白。",
+                              "围绕聊天中明确出现的兴趣，写六条分享加轻问题的破冰表达。",
+                              "写六条清楚、轻松、可拒绝的邀约表达，不默认对方同意。",
+                              "识别对方情绪和事实，写六条共情但不过度承诺的回应。",
+                              "根据上下文写六条轻松幽默的接话，不讽刺或贬低对方。",
+                              "针对对方表达，写六条真诚、清楚、有边界的回应。"
+                          )[mode]
+                          val prompt="你是温暖、尊重边界的中文聊天助手。"+guidance+"只返回JSON数组，恰好六个简短、可直接使用的中文句子，不要编号或解释。若聊天内容不足，给出不冒进的通用表达。不得操纵、羞辱、制造焦虑或绕过拒绝。当前页面可见文字："+context
+                          val conn=URL(endpoint).openConnection() as HttpURLConnection
+                          conn.requestMethod="POST";conn.connectTimeout=18000;conn.readTimeout=35000;conn.doOutput=true
+                          conn.setRequestProperty("Content-Type","application/json");conn.setRequestProperty("Authorization","Bearer "+key)
+                          val body=JSONObject().put("model",model).put("messages",JSONArray().put(JSONObject().put("role","user").put("content",prompt))).put("temperature",0.75)
+                          OutputStreamWriter(conn.outputStream).use{it.write(body.toString())}
+                          val raw=(if(conn.responseCode in 200..299)conn.inputStream else conn.errorStream).bufferedReader().use{it.readText()}
+                          if(conn.responseCode !in 200..299)throw Exception("API "+conn.responseCode+": "+raw.take(250))
+                          val content=JSONObject(raw).getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content").trim()
+                          val clean=content.removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
+                          val arr=JSONArray(clean);(0 until arr.length()).map{arr.optString(it)}.filter{it.isNotBlank()}.take(6)
+                      }catch(e:Exception){listOf("生成失败："+(e.message?: "请检查网络和AI设置"))}
+                      handler.post{showResults(result,type)}
+                  }.start()
+              }
+              private fun showResults(items:List<String>,type:Int){
+                  val panelView=basePanel()
+                  panelView.addView(TextView(this).apply{text="为你准备的表达";textSize=16f;setTypeface(null,1);setTextColor(0xFF78445E.toInt());setPadding(dp(8),dp(7),dp(8),dp(10))})
+                  items.forEachIndexed{index,value->
+                      val row=LinearLayout(this).apply{orientation=1;setPadding(dp(11),dp(10),dp(11),dp(9));background=shape(Color.WHITE,14)}
+                      row.addView(TextView(this).apply{text=(index+1).toString()+". "+value;textSize=13f;setTextColor(0xFF5F4A55.toInt())})
+                      row.addView(TextView(this).apply{
+                          text="复制这条表达  ⧉";textSize=11f;gravity=Gravity.END;setTextColor(0xFFD16B98.toInt());setPadding(0,dp(8),0,0)
+                          setOnClickListener{
+                              val cm=getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+                              cm.setPrimaryClip(ClipData.newPlainText("小美聊天建议",value))
+                              Toast.makeText(this@OverlayService,"已复制，可以切回聊天框粘贴",Toast.LENGTH_SHORT).show()
+                          }
+                      })
+                      panelView.addView(row,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(7)})
+                  }
+                  panelView.addView(TextView(this).apply{text="重新选择模式";textSize=12f;gravity=Gravity.CENTER;setTextColor(0xFFB66B91.toInt());setPadding(dp(8),dp(10),dp(8),dp(6));setOnClickListener{toggle(WindowManager.LayoutParams(),type)}})
+                  display(panelView,type)
               }
               override fun onDestroy(){try{panel?.let{wm?.removeView(it)}}catch(_:Exception){};try{bubble?.let{wm?.removeView(it)}}catch(_:Exception){};panel=null;bubble=null;super.onDestroy()}
           }
+          EOF
+          cat > "$SRC/ChatCaptureAccessibilityService.kt" <<'EOF'
+          package com.xiaomei.ai
+          import android.accessibilityservice.AccessibilityService
+          import android.view.accessibility.AccessibilityEvent
+          import android.view.accessibility.AccessibilityNodeInfo
+          import android.content.Context
+          import android.os.SystemClock
+          class ChatCaptureAccessibilityService:AccessibilityService(){
+              private var last=0L
+              override fun onAccessibilityEvent(event:AccessibilityEvent?){
+                  if(event==null)return
+                  val now=SystemClock.elapsedRealtime();if(now-last<1200)return;last=now
+                  val prefs=getSharedPreferences("xiaomei",Context.MODE_PRIVATE)
+                  if(!prefs.getBoolean("capture_enabled",false))return
+                  if(event.packageName?.toString()==packageName)return
+                  val root=rootInActiveWindow?:return
+                  val parts=ArrayList<String>();collect(root,parts,0)
+                  val text=parts.distinct().joinToString("\n").take(6500)
+                  if(text.isNotBlank())prefs.edit().putString("screen_snapshot",text).putString("capture_package",event.packageName?.toString().orEmpty()).putLong("capture_time",System.currentTimeMillis()).apply()
+              }
+              private fun collect(node:AccessibilityNodeInfo,out:MutableList<String>,depth:Int){
+                  if(depth>18||out.size>300)return
+                  if(node.isPassword)return
+                  node.text?.toString()?.trim()?.takeIf{it.length>1}?.let{out.add(it)}
+                  node.contentDescription?.toString()?.trim()?.takeIf{it.length>1}?.let{out.add(it)}
+                  for(i in 0 until node.childCount){val child=node.getChild(i)?:continue;collect(child,out,depth+1)}
+              }
+              override fun onInterrupt(){}
+          }
+          EOF
+          cat > "$RES/xiaomei_accessibility.xml" <<'EOF'
+          <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+              android:accessibilityEventTypes="typeWindowContentChanged|typeViewTextChanged|typeWindowStateChanged"
+              android:accessibilityFeedbackType="feedbackGeneric"
+              android:notificationTimeout="500"
+              android:canRetrieveWindowContent="true"
+              android:description="@string/app_name"
+              android:accessibilityFlags="flagReportViewIds" />
           EOF
           python3 - <<'PY'
           from pathlib import Path
@@ -183,21 +295,20 @@ jobs:
           manifest=project/"app/src/main/AndroidManifest.xml"
           tree=ET.parse(manifest); root=tree.getroot()
           android="{http://schemas.android.com/apk/res/android}"
-          perms={x.get(android+"name") for x in root.findall("uses-permission")}
-          if "android.permission.SYSTEM_ALERT_WINDOW" not in perms:
-              ET.SubElement(root,"uses-permission",{android+"name":"android.permission.SYSTEM_ALERT_WINDOW"})
           app=root.find("application")
-          if app is None: raise SystemExit("AndroidManifest.xml has no application element")
-          if not any(x.get(android+"name")==".OverlayService" for x in app.findall("service")):
-              ET.SubElement(app,"service",{android+"name":".OverlayService",android+"exported":"false"})
+          if app is None: raise SystemExit("application missing")
+          for name,attrs in [
+              (".OverlayService",{android+"exported":"false"}),
+              (".ChatCaptureAccessibilityService",{android+"permission":"android.permission.BIND_ACCESSIBILITY_SERVICE",android+"exported":"true"})
+          ]:
+              if not any(x.get(android+"name")==name for x in app.findall("service")):
+                  el=ET.SubElement(app,"service",{android+"name":name,**attrs})
+                  if name==".ChatCaptureAccessibilityService":
+                      f=ET.SubElement(el,"intent-filter");ET.SubElement(f,"action",{android+"name":"android.accessibilityservice.AccessibilityService"})
+                      ET.SubElement(el,"meta-data",{android+"name":"android.accessibilityservice",android+"resource":"@xml/xiaomei_accessibility"})
           tree.write(manifest,encoding="utf-8",xml_declaration=True)
-          gradle=project/"app/build.gradle.kts"
-          s=gradle.read_text()
-          import re
-          s=re.sub(r'versionCode\s*=\s*\d+', 'versionCode = 12', s, count=1)
-          s=re.sub(r'versionName\s*=\s*"[^"]+"', 'versionName = "1.0.0"', s, count=1)
-          gradle.write_text(s)
           PY
+
       - name: Bump XiaoMei women companion version
         run: |
           python3 - <<'PY'
