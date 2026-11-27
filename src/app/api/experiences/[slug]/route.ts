@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { requireDb } from "@/lib/db";
 
@@ -6,14 +8,31 @@ export const dynamic = "force-dynamic";
 export async function GET(_request: Request, context: { params: { slug: string } }) {
   try {
     const db = requireDb();
+    const token = cookies().get("heart_buyer")?.value;
+    let buyerRef: string | null = null;
+    if (token) {
+      const tokenHash = createHash("sha256").update(token).digest("hex");
+      const [buyer] = await db`SELECT buyer_ref FROM buyer_sessions WHERE token_hash = ${tokenHash} AND expires_at > now() LIMIT 1`;
+      buyerRef = buyer?.buyer_ref ?? null;
+    }
     const rows = await db`
       SELECT e.slug, e.title, e.description, e.cover_url, e.cover_position, e.currency, e.theme,
         l.id AS level_id, l.position, l.title AS level_title,
         l.teaser, l.price_minor
       FROM experiences e
       LEFT JOIN experience_levels l
-        ON l.experience_id = e.id AND l.is_active = true
-      WHERE e.slug = ${context.params.slug} AND e.status = 'published'
+        ON l.experience_id = e.id
+        AND (l.is_active = true OR EXISTS (
+          SELECT 1 FROM entitlements ent JOIN orders o ON o.id = ent.order_id
+          WHERE ent.level_id = l.id AND ent.buyer_ref = ${buyerRef}
+            AND o.status = 'paid' AND o.buyer_ref = ent.buyer_ref AND o.level_id = l.id
+        ))
+      WHERE e.slug = ${context.params.slug}
+        AND (e.status = 'published' OR EXISTS (
+          SELECT 1 FROM entitlements ent JOIN orders o ON o.id = ent.order_id
+          WHERE o.experience_id = e.id AND ent.buyer_ref = ${buyerRef}
+            AND o.status = 'paid' AND o.buyer_ref = ent.buyer_ref
+        ))
       ORDER BY l.position ASC
     `;
     if (!rows.length) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
