@@ -55,9 +55,19 @@ export default function CreatorPage() {
     } catch(e){setMessage(e instanceof Error?e.message:"操作失败");} finally{setBusy(false);}
   }
   async function logout(){await fetch("/api/auth/logout",{method:"POST"});setUser(null);setExperiences([]);setMessage("已退出登录。")}
+  async function revokeOtherSessions(){
+    if(!window.confirm("这会让其他设备上的创作者账户退出登录，但保留当前设备。确定继续吗？"))return;
+    setBusy(true);setMessage("");
+    try{
+      const r=await fetch("/api/auth/sessions",{method:"POST"});
+      const d=await r.json();
+      if(!r.ok)throw new Error(d.error==="UNAUTHORIZED"?"登录状态已失效，请重新登录。":"暂时无法撤销其他设备的登录。");
+      setMessage(d.revokedCount>0?`已让其他 ${d.revokedCount} 个登录会话退出。`:"没有发现其他有效登录设备。");
+    }catch(e){setMessage(e instanceof Error?e.message:"操作失败");}finally{setBusy(false);}
+  }
   return <main className="creatorShell"><a href="/" className="back">♡ 心意闯关</a><section className="creatorCard"><p className="eyebrow">CREATOR STUDIO</p><h1>创作者工作台</h1><p className="sub">创建你的专属心意作品，再逐步设计每一道关卡。</p>
   {!user ? <><div className="switch"><button className={mode==="register"?"chosen":""} onClick={()=>setMode("register")}>注册</button><button className={mode==="login"?"chosen":""} onClick={()=>setMode("login")}>登录</button></div><form onSubmit={auth} className="form">{mode==="register"&&<label>显示昵称<input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="怎么称呼你" maxLength={40}/></label>}<label>邮箱<input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="name@example.com"/></label><label>密码<input type="password" required minLength={10} value={password} onChange={e=>setPassword(e.target.value)} placeholder="至少 10 位"/></label><button className="primary" disabled={busy}>{busy?"请稍候…":mode==="register"?"创建创作者账户":"登录工作台"}</button></form></>:<>
-    <div className="welcome"><b>{user.displayName||user.email}</b><div className="welcomeActions"><a href="/creator/orders">订单记录 ↗</a><button onClick={logout}>退出</button></div></div>
+    <div className="welcome"><b>{user.displayName||user.email}</b><div className="welcomeActions"><a href="/creator/orders">订单记录 ↗</a><button disabled={busy} onClick={revokeOtherSessions}>退出其他设备</button><button onClick={logout}>退出</button></div></div>
     <form onSubmit={create} className="form createForm"><label>作品名称<input required maxLength={80} value={title} onChange={e=>setTitle(e.target.value)} placeholder="例如：给你的一场心意旅行"/></label><label>分享标识<input required minLength={3} maxLength={48} value={slug} onChange={e=>setSlug(e.target.value)} placeholder="my-heart-story"/></label><button className="primary" disabled={busy}>＋ 创建作品</button></form>
     <h2>我的作品</h2>{experiences.length===0?<p className="empty">还没有作品，创建第一份心意吧。</p>:<div className="experienceList">{experiences.map(x=><div className="experienceWrap" key={x.id}>
       <article className="experience experienceItem"><div><b>{x.title}</b><span>{x.status==="published"?"已发布":x.status==="archived"?"已归档":"草稿"} · /{x.slug}</span></div><div className="experienceActions"><button type="button" disabled={busy} onClick={()=>beginEdit(x)}>编辑信息</button>{x.status!=="archived"&&<a href={`/creator/${x.id}`}>编辑关卡 →</a>}{x.status==="published"&&<a href={`/p/${x.slug}`} target="_blank" rel="noreferrer">预览分享页 ↗</a>}<button type="button" disabled={busy} onClick={()=>archive(x)}>{x.status==="archived"?"恢复草稿":"归档"}</button></div></article>
