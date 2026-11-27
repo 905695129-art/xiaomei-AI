@@ -17,7 +17,7 @@ export async function GET(_request: Request, context: { params: { experienceId: 
     const creator = await getCurrentCreator();
     if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
     const db = requireDb();
-    const [experience] = await db\`SELECT id, slug, title, description, status FROM experiences WHERE id = ${context.params.experienceId}::uuid AND creator_id = ${creator.id} LIMIT 1\`;
+    const [experience] = await db`SELECT id, slug, title, description, status FROM experiences WHERE id = ${context.params.experienceId}::uuid AND creator_id = ${creator.id} LIMIT 1`;
     if (!experience) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
     return NextResponse.json({ experience });
   } catch (error) {
