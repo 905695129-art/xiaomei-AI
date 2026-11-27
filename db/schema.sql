@@ -607,11 +607,18 @@ BEGIN
   IF event_row.provider <> order_row.provider THEN
     RAISE EXCEPTION 'PAYMENT_PROVIDER_MISMATCH';
   END IF;
+  IF event_row.event_type <> 'payment.succeeded' THEN
+    RAISE EXCEPTION 'PAYMENT_EVENT_TYPE_NOT_SUCCESS';
+  END IF;
   IF event_row.order_id IS NOT NULL AND event_row.order_id <> p_order_id THEN
     RAISE EXCEPTION 'PAYMENT_EVENT_ORDER_MISMATCH';
   END IF;
   IF p_provider_order_id IS NULL OR length(trim(p_provider_order_id)) = 0 THEN
     RAISE EXCEPTION 'PROVIDER_ORDER_ID_REQUIRED';
+  END IF;
+  IF order_row.provider_order_id IS NOT NULL
+     AND order_row.provider_order_id <> p_provider_order_id THEN
+    RAISE EXCEPTION 'PROVIDER_ORDER_ID_MISMATCH';
   END IF;
   IF order_row.amount_minor <> p_amount_minor OR order_row.currency <> p_currency THEN
     RAISE EXCEPTION 'PROVIDER_AMOUNT_OR_CURRENCY_MISMATCH';
