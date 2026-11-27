@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { S3Client } from "@aws-sdk/client-s3";
+import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { requireDb } from "@/lib/db";
 import { getCurrentCreator } from "@/lib/session";
 
@@ -48,15 +48,15 @@ export async function POST(request: Request, context: { params: { experienceId: 
       forcePathStyle: true,
       credentials: { accessKeyId, secretAccessKey }
     });
-    const command = new PutObjectCommand({
+    const signedPost = await createPresignedPost(client, {
       Bucket: bucket,
       Key: key,
-      ContentType: contentType,
-      CacheControl: "public, max-age=31536000, immutable"
+      Expires: 300,
+      Fields: { "Content-Type": contentType, "Cache-Control": "public, max-age=31536000, immutable" },
+      Conditions: [["content-length-range", 1, 8 * 1024 * 1024], ["eq", "$Content-Type", contentType]]
     });
-    const uploadUrl = await getSignedUrl(client, command, { expiresIn: 300 });
     const publicUrl = `${publicBase.replace(/\/$/, "")}/${key.split("/").map(encodeURIComponent).join("/")}`;
-    return NextResponse.json({ uploadUrl, publicUrl, method: "PUT", headers: { "Content-Type": contentType } });
+    return NextResponse.json({ uploadUrl: signedPost.url, fields: signedPost.fields, publicUrl, method: "POST" });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
     const status = code === "DATABASE_NOT_CONFIGURED" ? 503 : 500;
