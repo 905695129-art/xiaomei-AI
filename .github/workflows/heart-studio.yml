@@ -1,6 +1,6 @@
 name: Heart Studio checks
 concurrency:
-  group: heart-studio-${{ github.ref }}
+  group: heart-studio-v2-${{ github.ref }}
   cancel-in-progress: true
 on:
   push:
