@@ -10,9 +10,9 @@
     "db:migrate": "psql \"$DATABASE_URL\" -f db/schema.sql"
   },
   "dependencies": {
-    "next": "14.2.15",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "next": "15.5.29",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "zod": "^3.23.8",
     "postgres": "^3.4.5",
     "@aws-sdk/client-s3": "^3.750.0",
@@ -21,8 +21,8 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.1",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
     "typescript": "^5.7.2"
   }
 }
