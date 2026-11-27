@@ -413,6 +413,9 @@ BEGIN
      OR NEW.buyer_ref IS DISTINCT FROM OLD.buyer_ref
      OR NEW.amount_minor IS DISTINCT FROM OLD.amount_minor
      OR NEW.currency IS DISTINCT FROM OLD.currency
+     OR NEW.level_title_snapshot IS DISTINCT FROM OLD.level_title_snapshot
+     OR NEW.level_position_snapshot IS DISTINCT FROM OLD.level_position_snapshot
+     OR NEW.private_content_snapshot IS DISTINCT FROM OLD.private_content_snapshot
      OR NEW.provider IS DISTINCT FROM OLD.provider
      OR (OLD.provider_order_id IS NOT NULL AND NEW.provider_order_id IS DISTINCT FROM OLD.provider_order_id) THEN
     RAISE EXCEPTION 'ORDER_COMMERCIAL_IDENTITY_IMMUTABLE';
