@@ -20,20 +20,31 @@ export default function ExperienceEditor() {
     }).catch(e=>setMessage(e instanceof Error?e.message:"加载失败")).finally(()=>setLoading(false));
   },[experienceId]);
   function change(index:number,key:keyof Level,value:string|number){
+    setIsDirty(true);
     setLevels(old=>old.map((l,i)=>i===index?{...l,[key]:value}:l));
   }
+  useEffect(()=>{
+    if(!isDirty) return;
+    const warn=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue="";};
+    window.addEventListener("beforeunload",warn);
+    return ()=>window.removeEventListener("beforeunload",warn);
+  },[isDirty]);
   async function save(){
     setBusy(true);setMessage("");setShareUrl("");
     try{
+      const invalidIndex=levels.findIndex(l=>!l.title.trim() || !Number.isFinite(Number(l.priceMinor)) || Number(l.priceMinor)<0 || Number(l.priceMinor)>100000000);
+      if(invalidIndex>=0) throw new Error(`请检查第 ${invalidIndex+1} 关：标题不能为空，价格须为 0 至 1,000,000 元。`);
       const payload={levels:levels.map(l=>({title:l.title.trim(),teaser:l.teaser,priceMinor:Number(l.priceMinor),privateContent:l.privateContent}))};
       const r=await fetch(`/api/creator/experiences/${experienceId}/levels`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
       const d=await r.json();
       if(!r.ok) throw new Error(d.error==="UNAUTHORIZED"?"登录状态已失效，请重新登录。":"保存失败，请检查每关标题和价格。");
       setLevels(d.levels.map((x:any,i:number)=>({...levels[i],id:x.id,priceMinor:Number(x.price_minor)})));
+      setIsDirty(false);
       setMessage("已保存。每关内容独立保存，尚未公开。");
     }catch(e){setMessage(e instanceof Error?e.message:"保存失败");}finally{setBusy(false);}
   }
   async function publish(){
+    if(isDirty){setMessage("你有尚未保存的修改。请先点击「保存所有关卡」，再发布，避免发布旧版本。");return;}
     setBusy(true);setMessage("");setShareUrl("");
     try{
       const r=await fetch(`/api/creator/experiences/${experienceId}/publish`,{method:"POST"});
@@ -54,7 +65,8 @@ export default function ExperienceEditor() {
     <button className="addLevel" type="button" disabled={levels.length>=30} onClick={()=>{setIsDirty(true);setLevels(old=>[...old,blank()]);}}>＋ 添加下一关（最多 30 关）</button>
     <div className="editorActions"><button className="primary" disabled={busy} onClick={save}>{busy?"处理中…":isDirty?"保存修改 · 有未保存内容":"保存所有关卡"}</button><button className="publishButton" disabled={busy||isDirty} onClick={publish}>发布并生成分享链接 ↗</button></div>
     {shareUrl&&<div className="shareResult"><span>{shareUrl}</span><button onClick={copy}>复制链接</button><a href={shareUrl} target="_blank" rel="noreferrer">预览</a></div>}
-    {isDirty&&<p className="notice" role="status">你有尚未保存的修改。离开页面前请先保存；发布按钮会在保存后开放。</p>}\n    {message&&<p className="notice" role="status">{message}</p>}
+    {isDirty&&<p className="notice" role="status">你有尚未保存的修改。离开页面前请先保存；发布按钮会在保存后开放。</p>}
+    {message&&<p className="notice" role="status">{message}</p>}
     <p className="disclaimer">重要：真实支付尚未接入。当前发布仅用于展示关卡介绍与价格，不能向体验者收款或解锁私密内容。</p>
   </section></main>;
 }
