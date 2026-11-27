@@ -7,7 +7,8 @@ export const dynamic = "force-dynamic";
 const updateSchema = z.object({
   title: z.string().trim().min(1).max(80).optional(),
   description: z.string().max(1000).optional(),
-  status: z.enum(["draft", "published", "archived"]).optional()
+  // Publishing is deliberately handled only by the dedicated publish endpoint.
+  status: z.enum(["draft", "archived"]).optional()
 }).refine(value => Object.keys(value).length > 0);
 
 export async function PATCH(request: Request, context: { params: { experienceId: string } }) {
