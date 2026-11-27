@@ -58,6 +58,16 @@ BEGIN
 
   BEGIN
     INSERT INTO orders (experience_id, level_id, creator_id, buyer_ref, amount_minor, currency, status, provider)
+    VALUES (experience_id, level_id, creator_id, buyer_ref_value, 990, 'CNY', 'pending', 'ci-test');
+    RAISE EXCEPTION 'STALE_CLIENT_PRICE_WAS_ACCEPTED';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM <> 'ORDER_AMOUNT_MISMATCH' THEN
+      RAISE;
+    END IF;
+  END;
+
+  BEGIN
+    INSERT INTO orders (experience_id, level_id, creator_id, buyer_ref, amount_minor, currency, status, provider)
     VALUES (experience_id, level_id, creator_id, buyer_ref_value, 1990, 'CNY', 'pending', 'ci-test');
     RAISE EXCEPTION 'DUPLICATE_ACTIVE_ORDER_WAS_ACCEPTED';
   EXCEPTION WHEN unique_violation THEN
