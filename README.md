@@ -26,6 +26,9 @@
 - `POST /api/buyer/session`：复用当前有效体验者会话，避免每次访问都创建新身份。
 - `POST /api/orders`：真实支付渠道未配置前明确返回 503 `PAYMENTS_NOT_CONFIGURED`。
 
+## 分享页支付状态提示
+分享页会在关卡列表前明确提示：标价仅供展示，真实支付未开通；体验者点击关卡仅检查既有解锁记录，不会收款或创建订单。按钮文案使用“查看解锁状态”，避免让体验者误以为当前可以付款。
+
 ## 封面图片存储配置
 
 上传照片需要配置 S3 兼容对象存储（例如自有对象存储或兼容服务），并设置以下服务端环境变量：`STORAGE_ENDPOINT`（S3 API endpoint）、`STORAGE_PUBLIC_URL`（可公开访问的文件 URL 前缀，不含末尾斜杠）、`STORAGE_REGION`（服务商要求的区域，默认 `auto`）、`STORAGE_BUCKET`、`STORAGE_ACCESS_KEY`、`STORAGE_SECRET_KEY`。存储桶 CORS 需允许应用域名发起 `POST` 表单上传。当前上传限制为 JPG/PNG/WEBP/GIF，单张最大 8MB。若未配置存储，预设封面素材仍可用，照片上传会明确提示未配置，不会假装上传成功。
