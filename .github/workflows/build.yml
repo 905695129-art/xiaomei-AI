@@ -276,6 +276,15 @@ jobs:
           g.write_text(t)
           PY
 
+      - name: Bump Soul build version
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("extracted/xiaomei-ai/app/build.gradle.kts")
+          s=p.read_text().replace("versionCode = 7", "versionCode = 8").replace('versionName = "0.7.0"', 'versionName = "0.8.0"')
+          p.write_text(s)
+          PY
+
       - name: Diagnose Kotlin source
         run: |
           FILE=$(find extracted -name MainActivity.kt -type f | head -n 1)
