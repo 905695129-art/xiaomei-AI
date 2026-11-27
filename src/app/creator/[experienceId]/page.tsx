@@ -12,6 +12,7 @@ export default function ExperienceEditor() {
   const [message,setMessage] = useState("");
   const [shareUrl,setShareUrl] = useState("");
   const [isDirty,setIsDirty] = useState(false);
+  const [previewMode,setPreviewMode] = useState(false);
   useEffect(()=>{
     fetch(`/api/creator/experiences/${experienceId}/levels`).then(async r=>{
       const d=await r.json();
@@ -56,6 +57,8 @@ export default function ExperienceEditor() {
   async function copy(){if(shareUrl){await navigator.clipboard.writeText(shareUrl);setMessage("分享链接已复制。");}}
   if(loading)return <main className="creatorShell"><p className="notice">正在加载关卡…</p></main>;
   return <main className="creatorShell"><a href="/creator" className="back">← 返回工作台</a><section className="creatorCard editorCard"><p className="eyebrow">DESIGN YOUR JOURNEY</p><h1>关卡设计</h1><p className="sub">每一关都可以单独定价。公开页面只展示标题、提示和价格，私密内容仅在真实付款验证后开放。</p>
+    <div className="previewToolbar"><div><b>体验者视角预览</b><span>只预览公开展示内容，不会创建订单或解锁内容</span></div><button type="button" onClick={()=>setPreviewMode(value=>!value)}>{previewMode?"收起预览":"打开预览 ↗"}</button></div>
+    {previewMode&&<section className="creatorPreview"><div className="creatorPreviewHero"><span>♡</span><small>A LITTLE JOURNEY FOR YOU</small><h2>一份专属心意</h2><p>有人为你准备了一段小小的心意旅程。每打开一扇门，都有一份认真准备的惊喜。</p></div><div className="creatorPreviewLevels">{levels.map((level,index)=><article key={index}><span className="creatorPreviewNumber">{String(index+1).padStart(2,"0")}</span><div><b>{level.title.trim()||"未填写关卡标题"}</b><p>{level.teaser.trim()||"一份为你准备的小惊喜，打开后就能看到更多。"}</p></div><strong>¥{(Number(level.priceMinor||0)/100).toFixed(2)}</strong></article>)}</div><p className="creatorPreviewFoot">预览不代表真实支付状态；私密内容不会在公开预览中展示。</p></section>}
     {levels.map((level,index)=><article className="levelEditor" key={index}><div className="levelEditorTop"><b>第 {index+1} 关</b><div className="levelEditorControls"><button type="button" className="moveLevel" aria-label={`第 ${index+1} 关上移`} disabled={index===0} onClick={()=>{setIsDirty(true);setLevels(old=>{const next=[...old];[next[index-1],next[index]]=[next[index],next[index-1]];return next;});}}>↑ 上移</button><button type="button" className="moveLevel" aria-label={`第 ${index+1} 关下移`} disabled={index===levels.length-1} onClick={()=>{setIsDirty(true);setLevels(old=>{const next=[...old];[next[index],next[index+1]]=[next[index+1],next[index]];return next;});}}>↓ 下移</button><button type="button" className="removeLevel" disabled={levels.length===1} onClick={()=>{setIsDirty(true);setLevels(old=>old.filter((_,i)=>i!==index));}}>删除此关</button></div></div>
       <label>关卡标题<input value={level.title} maxLength={80} onChange={e=>change(index,"title",e.target.value)} placeholder="例如：第一份小惊喜"/></label>
       <label>关卡提示（对方付款前可见）<textarea value={level.teaser} maxLength={240} onChange={e=>change(index,"teaser",e.target.value)} placeholder="写一小段提示，让对方知道这一关有什么期待…" rows={2}/></label>
