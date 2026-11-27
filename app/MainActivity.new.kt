@@ -245,7 +245,13 @@ class MainActivity : Activity() {
         val model=field("模型名称",prefs.getString("model","gpt-4o-mini").orEmpty())
         val key=field("API Key",prefs.getString("key","").orEmpty()).apply{inputType=129}
         box.addView(endpoint);box.addView(model);box.addView(key)
-        AlertDialog.Builder(this).setTitle("AI 服务设置").setView(box).setPositiveButton("保存"){_,_->prefs.edit().putString("endpoint",endpoint.text.toString().trim()).putString("model",model.text.toString().trim()).putString("key",key.text.toString().trim()).apply();toast("设置已保存")}.setNegativeButton("取消",null).show()
+        AlertDialog.Builder(this).setTitle("AI 服务设置").setView(box)
+            .setPositiveButton("保存"){_,_->prefs.edit().putString("endpoint",endpoint.text.toString().trim()).putString("model",model.text.toString().trim()).putString("key",key.text.toString().trim()).apply();toast("设置已保存")}
+            .setNeutralButton("开启聊天内容识别"){_,_->
+                prefs.edit().putBoolean("capture_enabled",true).apply()
+                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                toast("请在系统无障碍设置中找到小美 AI 并手动开启")
+            }.setNegativeButton("取消",null).show()
     }
     private fun ai(prompt:String,done:(String)->Unit){
         val ep=prefs.getString("endpoint","").orEmpty();val model=prefs.getString("model","").orEmpty();val key=prefs.getString("key","").orEmpty()
