@@ -21,8 +21,6 @@ export async function POST(request: Request) {
     if (!parsed.success) return NextResponse.json({ error: "INVALID_INPUT" }, { status: 400, headers });
     const { token, newPassword } = parsed.data;
     const tokenHash = createHash("sha256").update(token).digest("hex");
-    const salt = randomBytes(16).toString("hex");
-    const passwordHash = `scrypt:${salt}:${scryptSync(newPassword, salt, 64).toString("hex")}`;
     const db = requireDb();
     const result = await db.begin(async tx => {
       const [reset] = await tx`
@@ -31,6 +29,9 @@ export async function POST(request: Request) {
         FOR UPDATE OF password_reset_tokens
       `;
       if (!reset) return false;
+      // Do expensive password hashing only after proving possession of a valid token.
+      const salt = randomBytes(16).toString("hex");
+      const passwordHash = `scrypt:${salt}:${scryptSync(newPassword, salt, 64).toString("hex")}`;
       await tx`UPDATE users SET password_hash = ${passwordHash}, email_verified_at = COALESCE(email_verified_at, now()) WHERE id = ${reset.user_id}`;
       await tx`UPDATE password_reset_tokens SET consumed_at = now() WHERE id = ${reset.id}`;
       await tx`DELETE FROM password_reset_tokens WHERE user_id = ${reset.user_id} AND id <> ${reset.id}`;
