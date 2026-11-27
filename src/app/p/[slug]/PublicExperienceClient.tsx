@@ -28,38 +28,36 @@ export default function PublicExperiencePage() {
     let alive = true;
     // Establish the anonymous buyer session before loading: archived experiences
     // are visible only to a buyer who already has a verified paid entitlement.
-    fetch("/api/buyer/session", { method: "POST" })
-      .then(() => fetch(`/api/experiences/${encodeURIComponent(slug)}`, { cache: "no-store" }))
-      .then(async (r) => {
-        const data = await r.json();
-        if (!r.ok) throw new Error(r.status === 404 ? "这份心意暂时不存在，或尚未发布。" : "暂时无法打开，请稍后再试。");
-        return data.experience as Experience;
-      })
-      .then((data) => { if (alive) setExperience(data); })
-      .catch((e) => { if (alive) setError(e instanceof Error ? e.message : "加载失败"); })
-      .finally(() => { if (alive) setLoading(false); });
+    async function loadExperienceAndPurchases() {
+      try {
+        // Create or reuse exactly one buyer session before any buyer-specific reads.
+        const session = await fetch("/api/buyer/session", { method: "POST" });
+        if (!session.ok) throw new Error("体验者身份暂时不可用，请稍后再试。");
+        const response = await fetch(`/api/experiences/${encodeURIComponent(slug)}`, { cache: "no-store" });
+        const data = await response.json();
+        if (!response.ok) throw new Error(response.status === 404 ? "这份心意暂时不存在，或尚未发布。" : "暂时无法打开，请稍后再试。");
+        if (!alive) return;
+        setExperience(data.experience as Experience);
+
+        // Load this browser's purchases only after the session cookie is established.
+        const purchasesResponse = await fetch("/api/buyer/purchases", { cache: "no-store" });
+        if (purchasesResponse.ok) {
+          const purchasesData = await purchasesResponse.json();
+          if (alive && Array.isArray(purchasesData.purchases)) {
+            setUnlockedIds(new Set(purchasesData.purchases.map((item: { level_id: string }) => item.level_id)));
+          }
+        }
+      } catch (e) {
+        if (alive) setError(e instanceof Error ? e.message : "加载失败");
+      } finally {
+        if (alive) setLoading(false);
+      }
+    }
+    void loadExperienceAndPurchases();
     return () => { alive = false; };
   }, [slug]);
 
   const total = useMemo(() => experience?.levels.reduce((sum, level) => sum + level.priceMinor, 0) ?? 0, [experience]);
-
-  useEffect(() => {
-    let alive = true;
-    async function loadUnlocked() {
-      try {
-        const session = await fetch("/api/buyer/session", { method: "POST" });
-        if (!session.ok) return;
-        const response = await fetch("/api/buyer/purchases", { cache: "no-store" });
-        if (!response.ok) return;
-        const data = await response.json();
-        if (alive && Array.isArray(data.purchases)) {
-          setUnlockedIds(new Set(data.purchases.map((item: { level_id: string }) => item.level_id)));
-        }
-      } catch { /* Public preview remains usable if buyer history is unavailable. */ }
-    }
-    loadUnlocked();
-    return () => { alive = false; };
-  }, []);
 
 
 
