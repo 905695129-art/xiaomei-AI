@@ -7,7 +7,7 @@ export async function GET(_request: Request, context: { params: { slug: string }
   try {
     const db = requireDb();
     const rows = await db`
-      SELECT e.slug, e.title, e.description, e.cover_url, e.currency,
+      SELECT e.slug, e.title, e.description, e.cover_url, e.currency, e.theme,
         l.id AS level_id, l.position, l.title AS level_title,
         l.teaser, l.price_minor
       FROM experiences e
@@ -21,7 +21,7 @@ export async function GET(_request: Request, context: { params: { slug: string }
     return NextResponse.json({
       experience: {
         slug: first.slug, title: first.title, description: first.description,
-        coverUrl: first.cover_url, currency: first.currency,
+        coverUrl: first.cover_url, currency: first.currency, theme: ["rose", "cream", "lavender"].includes(first.theme) ? first.theme : "rose",
         levels: rows.filter((r: any) => r.level_id).map((r: any) => ({
           id: r.level_id, position: r.position, title: r.level_title,
           teaser: r.teaser, priceMinor: r.price_minor
