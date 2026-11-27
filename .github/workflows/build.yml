@@ -220,7 +220,7 @@ jobs:
                       val result=try{
                           val knowledge=try{assets.open("chat_knowledge.md").bufferedReader().use{it.readText()}}catch(_:Exception){""}
                           val text=(previous+" "+context).lowercase()
-                          val has=(vararg words:String)->words.any{text.contains(it)}
+                          fun has(vararg words:String)=words.any{text.contains(it)}
                           val empathetic=has("累","烦","难过","委屈","压力","不开心","失望","生气","焦虑")
                           val busy=has("忙","加班","开会","没时间","工作")
                           val cold=has("嗯","哦","随便","再说","不知道")
