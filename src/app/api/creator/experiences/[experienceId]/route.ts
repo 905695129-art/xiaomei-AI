@@ -6,7 +6,7 @@ import { getCurrentCreator } from "@/lib/session";
 export const dynamic = "force-dynamic";
 const updateSchema = z.object({
   title: z.string().trim().min(1).max(80).optional(),
-  description: z.string().max(1000).optional(),
+  description: z.string().max(1000).optional(),\n  theme: z.enum(["rose", "cream", "lavender"]).optional(),
   // Publishing is deliberately handled only by the dedicated publish endpoint.
   status: z.enum(["draft", "archived"]).optional()
 }).refine(value => Object.keys(value).length > 0);
@@ -17,7 +17,7 @@ export async function GET(_request: Request, context: { params: { experienceId: 
     const creator = await getCurrentCreator();
     if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
     const db = requireDb();
-    const [experience] = await db`SELECT id, slug, title, description, status FROM experiences WHERE id = ${context.params.experienceId}::uuid AND creator_id = ${creator.id} LIMIT 1`;
+    const [experience] = await db`SELECT id, slug, title, description, status, theme FROM experiences WHERE id = ${context.params.experienceId}::uuid AND creator_id = ${creator.id} LIMIT 1`;
     if (!experience) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
     return NextResponse.json({ experience });
   } catch (error) {
@@ -37,11 +37,11 @@ export async function PATCH(request: Request, context: { params: { experienceId:
     const [updated] = await db`
       UPDATE experiences SET
         title = COALESCE(${parsed.data.title ?? null}, title),
-        description = COALESCE(${parsed.data.description ?? null}, description),
+        description = COALESCE(${parsed.data.description ?? null}, description),\n        theme = COALESCE(${parsed.data.theme ?? null}, theme),
         status = COALESCE(${parsed.data.status ?? null}, status),
         updated_at = now()
       WHERE id = ${context.params.experienceId}::uuid AND creator_id = ${creator.id}
-      RETURNING id, slug, title, description, status, updated_at
+      RETURNING id, slug, title, description, status, theme, updated_at
     `;
     if (!updated) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
     return NextResponse.json({ experience: updated });
