@@ -59,6 +59,8 @@ export async function PUT(request: Request, context: { params: { experienceId: s
         JOIN orders o ON o.level_id = l.id AND o.status = 'paid'
         WHERE ent.level_id = l.id
           AND ent.order_id = o.id
+          AND ent.buyer_ref = o.buyer_ref
+          AND o.experience_id = l.experience_id
           AND l.experience_id = ${context.params.experienceId}::uuid
       `;
 
