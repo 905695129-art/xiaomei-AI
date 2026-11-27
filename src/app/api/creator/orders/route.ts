@@ -30,7 +30,7 @@ export async function GET() {
       ORDER BY o.created_at DESC
       LIMIT 100
     `;
-    return NextResponse.json({ summary, orders, paymentsEnabled: false });
+    return NextResponse.json({ summary, orders, paymentsEnabled: false }, { headers: { "Cache-Control": "private, no-store", "Vary": "Cookie" } });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
     const status = code === "DATABASE_NOT_CONFIGURED" ? 503 : 500;
