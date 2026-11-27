@@ -26,7 +26,10 @@ export default function PublicExperiencePage() {
 
   useEffect(() => {
     let alive = true;
-    fetch(`/api/experiences/${encodeURIComponent(slug)}`, { cache: "no-store" })
+    // Establish the anonymous buyer session before loading: archived experiences
+    // are visible only to a buyer who already has a verified paid entitlement.
+    fetch("/api/buyer/session", { method: "POST" })
+      .then(() => fetch(`/api/experiences/${encodeURIComponent(slug)}`, { cache: "no-store" }))
       .then(async (r) => {
         const data = await r.json();
         if (!r.ok) throw new Error(r.status === 404 ? "这份心意暂时不存在，或尚未发布。" : "暂时无法打开，请稍后再试。");
