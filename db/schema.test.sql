@@ -250,4 +250,52 @@ BEGIN
   END IF;
 END $$;
 
+
+DO $
+DECLARE
+  test_user UUID;
+  verify_id UUID;
+  reset_id UUID;
+  token_digest CHAR(64) := encode(digest(gen_random_uuid()::text, 'sha256'), 'hex');
+  reset_digest CHAR(64) := encode(digest(gen_random_uuid()::text, 'sha256'), 'hex');
+BEGIN
+  INSERT INTO users (email, display_name, password_hash, role)
+  VALUES ('ci-email-' || gen_random_uuid()::text || '@example.test', 'Email CI', 'scrypt:test:test', 'creator')
+  RETURNING id INTO test_user;
+
+  INSERT INTO email_verification_tokens (user_id, token_hash, expires_at)
+  VALUES (test_user, token_digest, now() + interval '24 hours')
+  RETURNING id INTO verify_id;
+
+  INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
+  VALUES (test_user, reset_digest, now() + interval '30 minutes')
+  RETURNING id INTO reset_id;
+
+  IF NOT EXISTS (SELECT 1 FROM email_verification_tokens WHERE id = verify_id AND consumed_at IS NULL AND expires_at > now()) THEN
+    RAISE EXCEPTION 'EMAIL_VERIFICATION_TOKEN_NOT_CREATED';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM password_reset_tokens WHERE id = reset_id AND consumed_at IS NULL AND expires_at > now()) THEN
+    RAISE EXCEPTION 'PASSWORD_RESET_TOKEN_NOT_CREATED';
+  END IF;
+
+  BEGIN
+    INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
+    VALUES (test_user, reset_digest, now() + interval '30 minutes');
+    RAISE EXCEPTION 'DUPLICATE_PASSWORD_RESET_TOKEN_HASH_ACCEPTED';
+  EXCEPTION WHEN unique_violation THEN
+    NULL;
+  END;
+
+  UPDATE users SET email_verified_at = now() WHERE id = test_user;
+  IF NOT EXISTS (SELECT 1 FROM users WHERE id = test_user AND email_verified_at IS NOT NULL) THEN
+    RAISE EXCEPTION 'EMAIL_VERIFICATION_TIMESTAMP_NOT_STORED';
+  END IF;
+
+  DELETE FROM users WHERE id = test_user;
+  IF EXISTS (SELECT 1 FROM email_verification_tokens WHERE id = verify_id)
+     OR EXISTS (SELECT 1 FROM password_reset_tokens WHERE id = reset_id) THEN
+    RAISE EXCEPTION 'ACCOUNT_DELETE_DID_NOT_CASCADE_EMAIL_TOKENS';
+  END IF;
+END $;
+
 ROLLBACK;
