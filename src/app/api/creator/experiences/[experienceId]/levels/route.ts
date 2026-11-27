@@ -22,7 +22,7 @@ export async function GET(_request: Request, context: { params: { experienceId: 
     const owns = await db`SELECT id FROM experiences WHERE id = ${context.params.experienceId}::uuid AND creator_id = ${creator.id} LIMIT 1`;
     if (!owns.length) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
     const rows = await db`SELECT id, position, title, teaser, price_minor, private_content, is_active FROM experience_levels WHERE experience_id = ${context.params.experienceId}::uuid AND is_active = true ORDER BY position`;
-    return NextResponse.json({ levels: rows });
+    return NextResponse.json({ levels: rows }, { headers: { "Cache-Control": "private, no-store", "Vary": "Cookie" } });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
     return NextResponse.json({ error: code === "DATABASE_NOT_CONFIGURED" ? "SERVICE_NOT_CONFIGURED" : "INTERNAL_ERROR" }, { status: code === "DATABASE_NOT_CONFIGURED" ? 503 : 500 });
