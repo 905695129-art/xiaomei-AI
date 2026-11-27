@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     const tokenHash = createHash("sha256").update(token).digest("hex");
     await db`INSERT INTO creator_sessions (user_id, token_hash, expires_at) VALUES (${user.id}, ${tokenHash}, now() + interval '14 days')`;
     await db`DELETE FROM auth_rate_limits WHERE email = ${email}`;
-    const response = NextResponse.json({ user: { id: user.id, email: user.email, displayName: user.display_name } });
+    const response = NextResponse.json({ user: { id: user.id, email: user.email, displayName: user.display_name } }, { headers: { "Cache-Control": "no-store, private", Vary: "Cookie" } });
     response.cookies.set("heart_session", token, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 14 });
     return response;
   } catch (error) {
