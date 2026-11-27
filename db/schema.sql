@@ -82,8 +82,19 @@ CREATE TABLE IF NOT EXISTS entitlements (
   order_id UUID NOT NULL UNIQUE REFERENCES orders(id),
   level_id UUID NOT NULL REFERENCES experience_levels(id),
   buyer_ref TEXT NOT NULL,
+  -- Immutable purchase-time snapshot: later creator edits must not rewrite a buyer's purchase.
+  level_title_snapshot TEXT,
+  level_position_snapshot INTEGER,
+  private_content_snapshot TEXT,
+  price_minor_snapshot INTEGER,
+  currency_snapshot CHAR(3),
   granted_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE entitlements ADD COLUMN IF NOT EXISTS level_title_snapshot TEXT;
+ALTER TABLE entitlements ADD COLUMN IF NOT EXISTS level_position_snapshot INTEGER;
+ALTER TABLE entitlements ADD COLUMN IF NOT EXISTS private_content_snapshot TEXT;
+ALTER TABLE entitlements ADD COLUMN IF NOT EXISTS price_minor_snapshot INTEGER;
+ALTER TABLE entitlements ADD COLUMN IF NOT EXISTS currency_snapshot CHAR(3);
 CREATE INDEX IF NOT EXISTS entitlements_lookup_idx ON entitlements(buyer_ref, level_id);
 
 -- Payment callbacks must be verified by the provider before changing orders to paid
