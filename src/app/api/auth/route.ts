@@ -7,7 +7,9 @@ import { isSameOriginWrite } from "@/lib/security";
 export const dynamic = "force-dynamic";
 const privateHeaders = { "Cache-Control": "no-store, private", Vary: "Cookie" };
 function authJson(body: unknown, init: ResponseInit = {}) {
-  return NextResponse.json(body, { ...init, headers: { ...privateHeaders, ...init.headers } });
+  const headers = new Headers(privateHeaders);
+  new Headers(init.headers).forEach((value, key) => headers.set(key, value));
+  return NextResponse.json(body, { ...init, headers });
 }
 const inputSchema = z.object({
   email: z.string().trim().email().max(254).transform(v => v.toLowerCase()),
