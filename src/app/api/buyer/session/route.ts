@@ -7,9 +7,11 @@ import { isSameOriginWrite } from "@/lib/security";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403 });
+  if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403, headers: { "Cache-Control": "no-store" } });
   try {
     const db = requireDb();
+    // Expired browser identities no longer grant access; prune them opportunistically.
+    await db`DELETE FROM buyer_sessions WHERE expires_at < now()`;
     const cookieStore = await cookies();
     const existingToken = cookieStore.get("heart_buyer")?.value;
 
