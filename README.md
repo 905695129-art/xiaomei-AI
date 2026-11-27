@@ -59,6 +59,10 @@
 
 仓库包含一个独立的静态交互预览：`docs/index.html`。它可以在手机上切换樱花粉/奶油白/雾霭紫主题、点开示例关卡查看提示；所有付款按钮仅用于说明，不会创建订单或扣款。GitHub Pages 工作流会尝试发布该预览，正式应用仍需要数据库与服务端环境，不能用静态预览代替生产站点。
 
+## 容器部署
+
+已提供 `Dockerfile`、`docker-compose.yml` 和 `.dockerignore`，可用 Docker Compose 启动 PostgreSQL、执行数据库迁移并运行 Next.js standalone 应用。完整的服务器准备、HTTPS 反向代理、邮件/对象存储配置、备份恢复和上线验收步骤见 [`docs/deployment.md`](docs/deployment.md)。容器配置不会自动创建云服务器、域名或服务商账户；真实支付仍保持关闭。
+
 ## 本地开发
 需要 Node.js 20+ 与 PostgreSQL 15+。
 
