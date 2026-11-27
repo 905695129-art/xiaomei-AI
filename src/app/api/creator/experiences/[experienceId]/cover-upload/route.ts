@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isSameOriginWrite } from "@/lib/security";
 import { randomUUID } from "node:crypto";
 import { S3Client } from "@aws-sdk/client-s3";
 import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
@@ -14,7 +15,8 @@ const allowedTypes: Record<string, string> = {
   "image/gif": "gif"
 };
 
-export async function POST(request: Request, context: { params: { experienceId: string } }) {
+export async function POST(request: Request, context: {
+  if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403 }); params: { experienceId: string } }) {
   try {
     const creator = await getCurrentCreator();
     if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
