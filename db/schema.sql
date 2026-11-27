@@ -86,3 +86,6 @@ CREATE INDEX IF NOT EXISTS entitlements_lookup_idx ON entitlements(buyer_ref, le
 
 -- Payment callbacks must be verified by the provider before changing orders to paid
 -- and creating entitlements in one database transaction. Never trust client redirects.
+
+-- Additive migration for share-page appearance; safe to run on existing databases.
+ALTER TABLE experiences ADD COLUMN IF NOT EXISTS theme TEXT NOT NULL DEFAULT 'rose';
