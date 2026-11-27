@@ -83,7 +83,7 @@ export default function ExperienceEditor() {
     try{
       const invalidIndex=levels.findIndex(l=>!l.title.trim() || !Number.isFinite(Number(l.priceMinor)) || Number(l.priceMinor)<0 || Number(l.priceMinor)>100000000);
       if(invalidIndex>=0) throw new Error(`请检查第 ${invalidIndex+1} 关：标题不能为空，价格须为 0 至 1,000,000 元。`);
-      const payload={levels:levels.map(l=>({title:l.title.trim(),teaser:l.teaser,priceMinor:Number(l.priceMinor),privateContent:l.privateContent}))};
+      const payload={levels:levels.map(l=>({...(l.id?{id:l.id}:{}),title:l.title.trim(),teaser:l.teaser,priceMinor:Number(l.priceMinor),privateContent:l.privateContent}))};
       const r=await fetch(`/api/creator/experiences/${experienceId}/levels`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
       const d=await r.json();
       if(!r.ok) throw new Error(d.error==="UNAUTHORIZED"?"登录状态已失效，请重新登录。":"保存失败，请检查每关标题和价格。");
