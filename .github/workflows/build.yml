@@ -155,15 +155,20 @@ jobs:
               private fun toggle(anchor:WindowManager.LayoutParams,type:Int){
                   if(panel!=null){try{wm?.removeView(panel)}catch(_:Exception){};panel=null;return}
                   val menu=LinearLayout(this).apply{orientation=1;setPadding(dp(11),dp(11),dp(11),dp(11));background=shape(0xFFFFF3F8.toInt());elevation=dp(14).toFloat()}
-                  val labels=listOf("🌷 吸引力课程","📸 展示面工坊","💎 优质男筛选","💬 聊天辅助","🧸 关系成长记","✨ 约会与复盘")
-                  labels.forEachIndexed{index,title->
-                      val item=TextView(this).apply{text=title;textSize=14f;setTextColor(0xFF7E415E.toInt());setPadding(dp(15),dp(13),dp(15),dp(13));background=shape(Color.WHITE);setOnClickListener{
-                          val i=packageManager.getLaunchIntentForPackage(packageName)
-                          i?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                          i?.putExtra("xiaomei_module",index);if(i!=null)startActivity(i)
-                          try{wm?.removeView(panel)}catch(_:Exception){};panel=null
-                      }}
-                      menu.addView(item,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(7)})
+                  val sections=listOf("主动发起对话","识别内容后回应")
+                  sections.forEach{ section ->
+                      menu.addView(TextView(this).apply{text=section;textSize=12f;setTextColor(0xFFB66B91.toInt());setPadding(dp(9),dp(8),dp(9),dp(5))})
+                      val modes=if(section=="主动发起对话") listOf("🌸 轻松开场","🫧 兴趣破冰","💗 自然邀约") else listOf("🌷 暖心回应","😄 幽默接话","🤍 认真沟通")
+                      modes.forEachIndexed{localIndex,title->
+                          val mode=if(section=="主动发起对话") localIndex else localIndex+3
+                          val item=TextView(this).apply{text=title;textSize=14f;setTextColor(0xFF7E415E.toInt());setPadding(dp(16),dp(12),dp(16),dp(12));background=shape(Color.WHITE);setOnClickListener{
+                              val i=packageManager.getLaunchIntentForPackage(packageName)
+                              i?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                              i?.putExtra("xiaomei_module",3);i?.putExtra("xiaomei_chat_mode",mode);if(i!=null)startActivity(i)
+                              try{wm?.removeView(panel)}catch(_:Exception){};panel=null
+                          }}
+                          menu.addView(item,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(6)})
+                      }
                   }
                   val p=WindowManager.LayoutParams(-2,-2,type,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT).apply{gravity=Gravity.TOP or Gravity.END;x=dp(12);y=anchor.y+dp(58)}
                   panel=menu;try{wm?.addView(menu,p)}catch(_:Exception){panel=null}
