@@ -24,6 +24,32 @@ export async function POST(request: Request) {
   try {
     const db = requireDb();
     const { email, password, displayName } = parsed.data;
+
+    // Atomic per-email throttling: 10 attempts per 15-minute window.
+    // The database upsert makes concurrent requests share one counter.
+    const [limit] = await db`
+      INSERT INTO auth_rate_limits (email, window_started_at, attempts)
+      VALUES (${email}, now(), 1)
+      ON CONFLICT (email) DO UPDATE SET
+        attempts = CASE
+          WHEN auth_rate_limits.window_started_at < now() - interval '15 minutes' THEN 1
+          ELSE auth_rate_limits.attempts + 1
+        END,
+        window_started_at = CASE
+          WHEN auth_rate_limits.window_started_at < now() - interval '15 minutes' THEN now()
+          ELSE auth_rate_limits.window_started_at
+        END
+      RETURNING attempts, window_started_at
+    `;
+    if (Number(limit.attempts) > 10) {
+      const elapsedMs = Date.now() - new Date(limit.window_started_at).getTime();
+      const retryAfter = Math.max(1, Math.ceil((15 * 60 * 1000 - elapsedMs) / 1000));
+      return NextResponse.json(
+        { error: "TOO_MANY_ATTEMPTS", message: "尝试次数过多，请稍后再试。" },
+        { status: 429, headers: { "Retry-After": String(retryAfter), "Cache-Control": "no-store" } }
+      );
+    }
+
     const rows = await db`SELECT id, email, display_name, password_hash FROM users WHERE email = ${email} LIMIT 1`;
     let user = rows[0];
     if (request.headers.get("x-heart-mode") === "register") {
@@ -41,6 +67,7 @@ export async function POST(request: Request) {
     const token = randomBytes(32).toString("base64url");
     const tokenHash = createHash("sha256").update(token).digest("hex");
     await db`INSERT INTO creator_sessions (user_id, token_hash, expires_at) VALUES (${user.id}, ${tokenHash}, now() + interval '14 days')`;
+    await db`DELETE FROM auth_rate_limits WHERE email = ${email}`;
     const response = NextResponse.json({ user: { id: user.id, email: user.email, displayName: user.display_name } });
     response.cookies.set("heart_session", token, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 14 });
     return response;
