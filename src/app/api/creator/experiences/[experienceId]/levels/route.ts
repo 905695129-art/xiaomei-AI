@@ -5,6 +5,7 @@ import { getCurrentCreator } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 const levelSchema = z.object({
+  id: z.string().uuid().optional(),
   title: z.string().trim().min(1).max(80),
   teaser: z.string().max(240).default(""),
   priceMinor: z.number().int().min(0).max(100000000),
@@ -37,21 +38,42 @@ export async function PUT(request: Request, context: { params: { experienceId: s
     const result = await db.begin(async tx => {
       const owns = await tx`SELECT id FROM experiences WHERE id = ${context.params.experienceId}::uuid AND creator_id = ${creator.id} FOR UPDATE`;
       if (!owns.length) return null;
+
+      const submittedIds = parsed.data.levels.flatMap(level => level.id ? [level.id] : []);
+      if (new Set(submittedIds).size !== submittedIds.length) return "INVALID_LEVEL_IDS";
+      if (submittedIds.length) {
+        const ownedLevels = await tx`SELECT id FROM experience_levels WHERE experience_id = ${context.params.experienceId}::uuid AND id = ANY(${submittedIds}::uuid[])`;
+        if (ownedLevels.length !== submittedIds.length) return "INVALID_LEVEL_IDS";
+      }
+
+      // Temporarily deactivate active rows to avoid position-index conflicts while reordering.
+      // Keep existing row IDs stable so previously granted purchase entitlements remain valid.
       await tx`UPDATE experience_levels SET is_active = false, updated_at = now() WHERE experience_id = ${context.params.experienceId}::uuid AND is_active = true`;
       const saved = [];
       for (let i = 0; i < parsed.data.levels.length; i++) {
         const level = parsed.data.levels[i];
-        const rows = await tx`
-          INSERT INTO experience_levels (experience_id, position, title, teaser, price_minor, private_content, is_active)
-          VALUES (${context.params.experienceId}::uuid, ${i + 1}, ${level.title}, ${level.teaser}, ${level.priceMinor}, ${level.privateContent}, true)
-          RETURNING id, position, title, teaser, price_minor
-        `;
+        const rows = level.id
+          ? await tx`
+              UPDATE experience_levels
+              SET position = ${i + 1}, title = ${level.title}, teaser = ${level.teaser},
+                  price_minor = ${level.priceMinor}, private_content = ${level.privateContent},
+                  is_active = true, updated_at = now()
+              WHERE id = ${level.id}::uuid AND experience_id = ${context.params.experienceId}::uuid
+              RETURNING id, position, title, teaser, price_minor
+            `
+          : await tx`
+              INSERT INTO experience_levels (experience_id, position, title, teaser, price_minor, private_content, is_active)
+              VALUES (${context.params.experienceId}::uuid, ${i + 1}, ${level.title}, ${level.teaser}, ${level.priceMinor}, ${level.privateContent}, true)
+              RETURNING id, position, title, teaser, price_minor
+            `;
+        if (!rows[0]) throw new Error("LEVEL_UPDATE_FAILED");
         saved.push(rows[0]);
       }
       await tx`UPDATE experiences SET updated_at = now() WHERE id = ${context.params.experienceId}::uuid`;
       return saved;
     });
     if (!result) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
+    if (result === "INVALID_LEVEL_IDS") return NextResponse.json({ error: "INVALID_LEVEL_IDS" }, { status: 400 });
     return NextResponse.json({ levels: result });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
