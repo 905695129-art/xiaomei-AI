@@ -125,7 +125,11 @@ jobs:
           PROJECT="extracted/xiaomei-ai"
           SRC="$PROJECT/app/src/main/java/com/xiaomei/ai"
           RES="$PROJECT/app/src/main/res/xml"
-          mkdir -p "$SRC" "$RES"
+          VALUES="$PROJECT/app/src/main/res/values"
+          mkdir -p "$SRC" "$RES" "$VALUES"
+          cat > "$VALUES/xiaomei_accessibility_strings.xml" <<'EOF'
+          <resources><string name="xiaomei_accessibility_desc">小美 AI 聊天内容辅助服务</string></resources>
+          EOF
           cat > "$SRC/OverlayService.kt" <<'EOF'
           package com.xiaomei.ai
           import android.app.Service
@@ -285,7 +289,7 @@ jobs:
               android:accessibilityFeedbackType="feedbackGeneric"
               android:notificationTimeout="500"
               android:canRetrieveWindowContent="true"
-              android:description="小美 AI 聊天内容辅助服务"
+              android:description="@string/xiaomei_accessibility_desc"
               android:accessibilityFlags="flagReportViewIds" />
           EOF
           python3 - <<'PY'
