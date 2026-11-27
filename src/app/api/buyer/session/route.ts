@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export async function POST() {
   try {
     const db = requireDb();
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const existingToken = cookieStore.get("heart_buyer")?.value;
 
     // Preserve the existing buyer identity so purchase history and entitlements
