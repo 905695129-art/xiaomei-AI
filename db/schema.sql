@@ -118,6 +118,39 @@ CREATE TABLE IF NOT EXISTS password_change_rate_limits (
   attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0)
 );
 
+-- Email ownership and recovery tokens. Only token hashes are persisted.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS email_verification_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash CHAR(64) NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  consumed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS email_verification_tokens_user_idx
+  ON email_verification_tokens(user_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash CHAR(64) NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  consumed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS password_reset_tokens_user_idx
+  ON password_reset_tokens(user_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS email_action_rate_limits (
+  email TEXT NOT NULL,
+  action TEXT NOT NULL CHECK (action IN ('verify','password_reset')),
+  window_started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+  PRIMARY KEY (email, action)
+);
+
 
 -- Provider webhook idempotency ledger. Store identifiers and hashes, not raw card/payment secrets.
 CREATE TABLE IF NOT EXISTS payment_provider_events (
