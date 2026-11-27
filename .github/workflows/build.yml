@@ -149,11 +149,6 @@ jobs:
           import android.view.Gravity
           import android.view.WindowManager
           import android.widget.*
-          import org.json.JSONArray
-          import org.json.JSONObject
-          import java.net.HttpURLConnection
-          import java.net.URL
-          import java.io.OutputStreamWriter
           class OverlayService : Service() {
               private var wm:WindowManager?=null
               private var bubble:TextView?=null
@@ -214,38 +209,57 @@ jobs:
                   val prefs=getSharedPreferences("xiaomei",MODE_PRIVATE)
                   val context=prefs.getString("screen_snapshot","").orEmpty()
                   val previous=prefs.getString("dialogue_memory","").orEmpty()
-                  val key=prefs.getString("key","").orEmpty()
-                  val endpoint=prefs.getString("endpoint","https://ark.cn-beijing.volces.com/api/v3/chat/completions").orEmpty()
-                  val model=prefs.getString("model","").orEmpty()
                   val wait=basePanel()
-                  wait.addView(TextView(this).apply{text="已读取当前页面，正在生成六种表达…";textSize=15f;setTextColor(0xFF78445E.toInt());setPadding(dp(12),dp(18),dp(12),dp(18))})
+                  wait.addView(TextView(this).apply{text="正在使用本地知识库分析…";textSize=15f;setTextColor(0xFF78445E.toInt());setPadding(dp(12),dp(18),dp(12),dp(18))})
                   display(wait,type)
-                  if(key.isBlank()){showResults(listOf("请先在小美 AI 设置中配置 AI 服务。"),type);return}
-                  if(context.isBlank() && mode>=3){showResults(listOf("还没有识别到聊天文字。请先打开聊天页面，并在系统设置中允许小美读取当前屏幕文字。"),type);return}
+                  if(context.isBlank() && mode>=3){
+                      showResults(listOf("还没有读取到聊天文字。请打开聊天页面，并在系统设置中授权小美读取当前屏幕可访问文字。"),type)
+                      return
+                  }
                   Thread{
                       val result=try{
-                          val guidance=listOf(
-                              "根据上下文写六条自然、不冒犯的初次开场白。",
-                              "围绕聊天中明确出现的兴趣，写六条分享加轻问题的破冰表达。",
-                              "写六条清楚、轻松、可拒绝的邀约表达，不默认对方同意。",
-                              "识别对方情绪和事实，写六条共情但不过度承诺的回应。",
-                              "根据上下文写六条轻松幽默的接话，不讽刺或贬低对方。",
-                              "针对对方表达，写六条真诚、清楚、有边界的回应。"
-                          )[mode]
-                          val prompt="你是持续陪伴式中文对话教练。你必须理解整段上下文，而不是只回复最后一句。"+guidance+"识别关系阶段、对方刚表达的事实与可能情绪、对话目前进展和用户目标。恰好生成六条：前3条是可直接发送的不同风格回应；后3条是回应之后自然延续话题的下一步问题或接话方向，帮助用户持续对话但不盘问。简短自然，不编造共同经历；信息不足时先给低压力澄清表达。只返回JSON数组，恰好六个中文字符串。尊重拒绝和停止联系，不操纵、不羞辱、不制造焦虑。此前对话辅助摘要："+previous+"；当前聊天窗口可见内容："+context
-                          val conn=URL(endpoint).openConnection() as HttpURLConnection
-                          conn.requestMethod="POST";conn.connectTimeout=18000;conn.readTimeout=35000;conn.doOutput=true
-                          conn.setRequestProperty("Content-Type","application/json");conn.setRequestProperty("Authorization","Bearer "+key)
-                          val body=JSONObject().put("model",model).put("messages",JSONArray().put(JSONObject().put("role","user").put("content",prompt))).put("temperature",0.75)
-                          OutputStreamWriter(conn.outputStream).use{it.write(body.toString())}
-                          val raw=(if(conn.responseCode in 200..299)conn.inputStream else conn.errorStream).bufferedReader().use{it.readText()}
-                          if(conn.responseCode !in 200..299)throw Exception("API "+conn.responseCode+": "+raw.take(250))
-                          val content=JSONObject(raw).getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content").trim()
-                          val clean=content.removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
-                          val arr=JSONArray(clean);(0 until arr.length()).map{arr.optString(it)}.filter{it.isNotBlank()}.take(6)
-                      }catch(e:Exception){listOf("生成失败："+(e.message?: "请检查网络和AI设置"))}
+                          val knowledge=try{assets.open("chat_knowledge.md").bufferedReader().use{it.readText()}}catch(_:Exception){""}
+                          val text=(previous+" "+context).lowercase()
+                          val has=(vararg words:String)->words.any{text.contains(it)}
+                          val empathetic=has("累","烦","难过","委屈","压力","不开心","失望","生气","焦虑")
+                          val busy=has("忙","加班","开会","没时间","工作")
+                          val cold=has("嗯","哦","随便","再说","不知道")
+                          val interest=has("喜欢","电影","音乐","旅行","美食","运动","游戏","猫","狗")
+                          val boundary=has("不想","不要","拒绝","别联系","不方便")
+                          val openers=listOf(
+                              "刚看到你提到的内容，感觉挺有意思的，你最近也常关注这个吗？",
+                              "突然想到一个轻松的话题：最近有没有什么让你觉得不错的小事？",
+                              "想和你打个招呼，不用特意找话题，今天过得怎么样？"
+                          )
+                          val replies=when{
+                              boundary->listOf("好的，我尊重你的想法，不打扰你了。","收到，谢谢你坦诚告诉我，我会注意边界。","明白了，祝你接下来一切顺利。")
+                              empathetic->listOf("听起来这件事确实让你挺不容易的。你愿意的话，可以慢慢说，我先听你讲。","我能理解这可能让你有些难受。现在最让你在意的是哪一部分？","不用急着把情绪整理好，我愿意先听听发生了什么。")
+                              busy->listOf("听起来你最近安排得挺满的，先忙正事，等你有空再聊。","辛苦啦，记得也给自己留点休息时间。","没关系，不着急回复，等你方便的时候再说。")
+                              cold->listOf("感觉你现在可能不太想展开聊，没关系。","我不想让你有压力，等你想聊的时候再继续。","是不是现在不太方便？我们可以换个时间。")
+                              interest->listOf("你说的这个我还挺感兴趣的，最吸引你的是哪一点？","听起来你对这个有自己的看法，是怎么开始喜欢上的？","这个话题可以聊聊，你最近有没有相关的新发现？")
+                              else->listOf("我想先确认一下你的意思，免得我理解错了。","你刚才说的这点我记住了，你更在意的是哪一部分？","我愿意听听你的想法，不急着下结论。")
+                          }
+                          val continuations=when{
+                              boundary->listOf("尊重对方的停止联系要求，不再追问或继续发送。","把注意力收回自己的生活，给彼此空间。","如果对方主动重新联系，再根据新的表达判断是否回应。")
+                              empathetic->listOf("可以轻轻问：这件事现在对你影响最大的是哪里？","先听完对方的感受，再确认是否需要建议或实际帮助。","之后可以问：你希望我现在陪你聊聊，还是一起想办法？")
+                              busy->listOf("等对方有空后再自然接续，不连续追问。","下次可以问：最近忙的事情有进展了吗？","根据对方主动投入的程度调整联系频率。")
+                              cold->listOf("暂时结束这个话题，给对方选择继续或暂停的空间。","之后换一个具体、轻松且容易回答的话题。","观察对方是否也主动开启话题，判断交流是否双向。")
+                              interest->listOf("围绕对方刚提到的兴趣，分享一个真实相关的小观点。","可以问：你最推荐新手从哪里开始了解？","记住对方提到的细节，下次自然跟进，不要连续盘问。")
+                              else->listOf("先确认事实，再讨论感受和期待。","可以问：你希望接下来怎么处理会更舒服？","根据对方的回答再选择倾听、澄清或提出建议。")
+                          }
+                          val selected=when(mode){
+                              0->openers
+                              1->if(interest)listOf("你提到的这个我也想了解，最推荐哪一个？","你是怎么开始喜欢它的？","如果让我入门，你会建议先试试什么？") else openers
+                              2->listOf("如果你愿意，找个双方方便的时间喝杯咖啡？不方便也完全没关系。","这个话题挺适合当面聊，哪天有空可以一起坐坐。","我周末可能会去逛逛，你有兴趣的话可以一起。")
+                              else->replies
+                          }+continuations
+                          selected.take(6).ifEmpty{listOf("可以先从理解对方真正想表达的内容开始。")}
+                      }catch(e:Exception){listOf("本地分析暂时遇到问题："+(e.message?:"请重试"))}
                       handler.post{
-                          val mem=(previous+"\\n本轮页面："+context+"\\n本轮建议："+result.joinToString(" / ")).takeLast(5000)\n                          prefs.edit().putString("dialogue_memory",mem).apply()\n                          showResults(result,type)\n                      }
+                          val mem=(previous+"\n本轮页面："+context+"\n本轮建议："+result.joinToString(" / ")).takeLast(5000)
+                          prefs.edit().putString("dialogue_memory",mem).apply()
+                          showResults(result,type)
+                      }
                   }.start()
               }
               private fun showResults(items:List<String>,type:Int){
