@@ -130,7 +130,7 @@ export default function PublicExperiencePage() {
   if (loading) return <main className="publicShell"><div className="publicLoading">正在打开这份心意… ♡</div></main>;
   if (error || !experience) return <main className="publicShell"><section className="publicError"><div className="publicFlower">♡</div><h1>这份心意暂时找不到</h1><p>{error || "请检查分享链接是否正确。"}</p><a href="/">返回首页</a></section></main>;
 
-  return <main className="publicShell">
+  return <main className={`publicShell publicTheme-${experience.theme || "rose"}`}> 
     <header className="publicNav"><a href="/" className="publicBrand"><span>♡</span> 心意闯关</a><div className="publicNavActions"><a href="/purchases" className="buyerCreatorLink">我的已解锁</a><button onClick={share} className="shareButton">{copied ? "已复制链接 ✓" : "分享这份心意 ↗"}</button></div></header>
     <section className="publicHero">
       <div className="publicHalo">♡</div>
