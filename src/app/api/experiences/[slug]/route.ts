@@ -22,7 +22,7 @@ export async function GET(_request: Request, context: { params: { slug: string }
       FROM experiences e
       LEFT JOIN experience_levels l
         ON l.experience_id = e.id
-        AND (l.is_active = true OR EXISTS (
+        AND ((e.status = 'published' AND l.is_active = true) OR EXISTS (
           SELECT 1 FROM entitlements ent JOIN orders o ON o.id = ent.order_id
           WHERE ent.level_id = l.id AND ent.buyer_ref = ${buyerRef}
             AND o.status = 'paid' AND o.buyer_ref = ent.buyer_ref AND o.level_id = l.id
