@@ -23,8 +23,13 @@ services:
       DATABASE_URL: postgres://heart:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/heart_studio
     volumes:
       - ./db:/schema:ro
-    entrypoint: ["/bin/sh", "-c"]
-    command: ["psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1 -f /schema/schema.sql"]
+    entrypoint: ["psql"]
+    command:
+      - postgres://heart:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/heart_studio
+      - -v
+      - ON_ERROR_STOP=1
+      - -f
+      - /schema/schema.sql
     restart: "no"
 
   app:
