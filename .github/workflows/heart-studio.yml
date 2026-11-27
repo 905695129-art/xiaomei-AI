@@ -69,5 +69,9 @@ jobs:
       - run: npm install
       - run: npx tsc --noEmit
       - run: npm run build
+      - name: Validate Docker Compose configuration
+        env:
+          POSTGRES_PASSWORD: ci-compose-validation-password
+        run: docker compose config --quiet
       - name: Build production Docker image
         run: docker build --tag heart-studio-ci .
