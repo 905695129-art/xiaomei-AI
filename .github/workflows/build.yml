@@ -206,8 +206,8 @@ jobs:
                   val prefs=getSharedPreferences("xiaomei",MODE_PRIVATE)
                   val context=prefs.getString("screen_snapshot","").orEmpty()
                   val key=prefs.getString("key","").orEmpty()
-                  val endpoint=prefs.getString("endpoint","https://api.openai.com/v1/chat/completions").orEmpty()
-                  val model=prefs.getString("model","gpt-4o-mini").orEmpty()
+                  val endpoint=prefs.getString("endpoint","https://openrouter.ai/api/v1/chat/completions").orEmpty()
+                  val model=prefs.getString("model","openrouter/free").orEmpty()
                   val wait=basePanel()
                   wait.addView(TextView(this).apply{text="已读取当前页面，正在生成六种表达…";textSize=15f;setTextColor(0xFF78445E.toInt());setPadding(dp(12),dp(18),dp(12),dp(18))})
                   display(wait,type)
@@ -226,7 +226,7 @@ jobs:
                           val prompt="你是温暖、尊重边界的中文聊天助手。"+guidance+"只返回JSON数组，恰好六个简短、可直接使用的中文句子，不要编号或解释。若聊天内容不足，给出不冒进的通用表达。不得操纵、羞辱、制造焦虑或绕过拒绝。当前页面可见文字："+context
                           val conn=URL(endpoint).openConnection() as HttpURLConnection
                           conn.requestMethod="POST";conn.connectTimeout=18000;conn.readTimeout=35000;conn.doOutput=true
-                          conn.setRequestProperty("Content-Type","application/json");conn.setRequestProperty("Authorization","Bearer "+key)
+                          conn.setRequestProperty("Content-Type","application/json");conn.setRequestProperty("Authorization","Bearer "+key);conn.setRequestProperty("HTTP-Referer","https://xiaomei.ai");conn.setRequestProperty("X-Title","XiaoMei AI")
                           val body=JSONObject().put("model",model).put("messages",JSONArray().put(JSONObject().put("role","user").put("content",prompt))).put("temperature",0.75)
                           OutputStreamWriter(conn.outputStream).use{it.write(body.toString())}
                           val raw=(if(conn.responseCode in 200..299)conn.inputStream else conn.errorStream).bufferedReader().use{it.readText()}
