@@ -23,6 +23,7 @@ export async function POST(request: Request) {
   if (!isEmailDeliveryConfigured()) return NextResponse.json({ error: "EMAIL_DELIVERY_NOT_CONFIGURED" }, { status: 503, headers });
   try {
     const db = requireDb();
+    await db`DELETE FROM email_verification_tokens WHERE expires_at < now() - interval '1 day' OR consumed_at < now() - interval '1 day'`;
     const [user] = await db`SELECT email, email_verified_at FROM users WHERE id = ${creator.id} LIMIT 1`;
     if (!user) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401, headers });
     if (user.email_verified_at) return NextResponse.json({ ok: true, verified: true, message: "邮箱已经验证。" }, { headers });
