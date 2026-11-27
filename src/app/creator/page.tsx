@@ -6,6 +6,7 @@ type CreatorSession = { id: string; created_at: string; expires_at: string; is_c
 export default function CreatorPage() {
   const [mode,setMode] = useState<"login"|"register">("register");
   const [email,setEmail] = useState(""); const [password,setPassword] = useState(""); const [displayName,setDisplayName] = useState("");
+  const [currentPassword,setCurrentPassword] = useState(""); const [newPassword,setNewPassword] = useState("");
   const [user,setUser] = useState<{email:string;displayName:string}|null>(null);
   const [experiences,setExperiences] = useState<Experience[]>([]);
   const [sessions,setSessions] = useState<CreatorSession[]>([]);
@@ -57,6 +58,15 @@ export default function CreatorPage() {
     } catch(e){setMessage(e instanceof Error?e.message:"操作失败");} finally{setBusy(false);}
   }
   async function logout(){await fetch("/api/auth/logout",{method:"POST"});setUser(null);setExperiences([]);setSessions([]);setMessage("已退出登录。")}
+  async function changePassword(e:React.FormEvent){
+    e.preventDefault();setBusy(true);setMessage("");
+    try{
+      const r=await fetch("/api/auth/password",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({currentPassword,newPassword})});
+      const d=await r.json();
+      if(!r.ok)throw new Error(({INVALID_CURRENT_PASSWORD:"当前密码不正确。",PASSWORD_UNCHANGED:"新密码不能与当前密码相同。",INVALID_INPUT:"新密码至少需要 10 位。",UNAUTHORIZED:"登录状态已失效，请重新登录。"} as Record<string,string>)[d.error]||"密码修改失败，请稍后重试。");
+      setCurrentPassword("");setNewPassword("");await load();setMessage("密码已更新，其他设备的登录会话也已撤销。");
+    }catch(e){setMessage(e instanceof Error?e.message:"操作失败");}finally{setBusy(false);}
+  }
   async function revokeOtherSessions(){
     if(!window.confirm("这会让其他设备上的创作者账户退出登录，但保留当前设备。确定继续吗？"))return;
     setBusy(true);setMessage("");
@@ -69,7 +79,7 @@ export default function CreatorPage() {
   }
   return <main className="creatorShell"><a href="/" className="back">♡ 心意闯关</a><section className="creatorCard"><p className="eyebrow">CREATOR STUDIO</p><h1>创作者工作台</h1><p className="sub">创建你的专属心意作品，再逐步设计每一道关卡。</p>
   {!user ? <><div className="switch"><button className={mode==="register"?"chosen":""} onClick={()=>setMode("register")}>注册</button><button className={mode==="login"?"chosen":""} onClick={()=>setMode("login")}>登录</button></div><form onSubmit={auth} className="form">{mode==="register"&&<label>显示昵称<input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="怎么称呼你" maxLength={40}/></label>}<label>邮箱<input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="name@example.com"/></label><label>密码<input type="password" required minLength={10} value={password} onChange={e=>setPassword(e.target.value)} placeholder="至少 10 位"/></label><button className="primary" disabled={busy}>{busy?"请稍候…":mode==="register"?"创建创作者账户":"登录工作台"}</button></form></>:<>
-    <div className="welcome"><b>{user.displayName||user.email}</b><div className="welcomeActions"><a href="/creator/orders">订单记录 ↗</a><button disabled={busy} onClick={revokeOtherSessions}>退出其他设备</button><button onClick={logout}>退出</button></div></div><section className="sessionPanel"><h2>登录设备</h2><p>这里只显示当前账户的有效登录会话。退出其他设备不会影响当前设备。</p>{sessions.length===0?<span>暂未读取到有效会话。</span>:<ul>{sessions.map(s=><li key={s.id}><b>{s.is_current?"当前设备":"其他设备"}</b><span>登录时间：{new Date(s.created_at).toLocaleString()}</span><span>有效期至：{new Date(s.expires_at).toLocaleString()}</span></li>)}</ul>}</section>
+    <div className="welcome"><b>{user.displayName||user.email}</b><div className="welcomeActions"><a href="/creator/orders">订单记录 ↗</a><button disabled={busy} onClick={revokeOtherSessions}>退出其他设备</button><button onClick={logout}>退出</button></div></div><section className="sessionPanel"><h2>登录设备</h2><p>这里只显示当前账户的有效登录会话。退出其他设备不会影响当前设备。</p>{sessions.length===0?<span>暂未读取到有效会话。</span>:<ul>{sessions.map(s=><li key={s.id}><b>{s.is_current?"当前设备":"其他设备"}</b><span>登录时间：{new Date(s.created_at).toLocaleString()}</span><span>有效期至：{new Date(s.expires_at).toLocaleString()}</span></li>)}</ul>}</section><section className="passwordPanel"><h2>修改登录密码</h2><form className="form" onSubmit={changePassword}><label>当前密码<input type="password" autoComplete="current-password" required value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)}/></label><label>新密码<input type="password" autoComplete="new-password" minLength={10} maxLength={128} required value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="至少 10 位"/></label><button className="primary" disabled={busy}>更新密码</button></form><p>修改成功后，其他设备会自动退出登录。</p></section>
     <form onSubmit={create} className="form createForm"><label>作品名称<input required maxLength={80} value={title} onChange={e=>setTitle(e.target.value)} placeholder="例如：给你的一场心意旅行"/></label><label>分享标识<input required minLength={3} maxLength={48} value={slug} onChange={e=>setSlug(e.target.value)} placeholder="my-heart-story"/></label><button className="primary" disabled={busy}>＋ 创建作品</button></form>
     <h2>我的作品</h2>{experiences.length===0?<p className="empty">还没有作品，创建第一份心意吧。</p>:<div className="experienceList">{experiences.map(x=><div className="experienceWrap" key={x.id}>
       <article className="experience experienceItem"><div><b>{x.title}</b><span>{x.status==="published"?"已发布":x.status==="archived"?"已归档":"草稿"} · /{x.slug}</span></div><div className="experienceActions"><button type="button" disabled={busy} onClick={()=>beginEdit(x)}>编辑信息</button>{x.status!=="archived"&&<a href={`/creator/${x.id}`}>编辑关卡 →</a>}{x.status==="published"&&<a href={`/p/${x.slug}`} target="_blank" rel="noreferrer">预览分享页 ↗</a>}<button type="button" disabled={busy} onClick={()=>archive(x)}>{x.status==="archived"?"恢复草稿":"归档"}</button></div></article>
