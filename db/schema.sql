@@ -655,3 +655,5 @@ BEGIN
   WHERE id = p_event_id;
 END;
 $$;
+REVOKE ALL ON FUNCTION heart_finalize_verified_payment(UUID, UUID, TEXT, INTEGER, CHAR(3), CHAR(64)) FROM PUBLIC;
+
