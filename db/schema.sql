@@ -289,7 +289,8 @@ BEGIN
   IF NEW.provider IS DISTINCT FROM OLD.provider
      OR NEW.provider_event_id IS DISTINCT FROM OLD.provider_event_id
      OR NEW.event_type IS DISTINCT FROM OLD.event_type
-     OR NEW.payload_sha256 IS DISTINCT FROM OLD.payload_sha256 THEN
+     OR NEW.payload_sha256 IS DISTINCT FROM OLD.payload_sha256
+     OR (OLD.order_id IS NOT NULL AND NEW.order_id IS DISTINCT FROM OLD.order_id) THEN
     RAISE EXCEPTION 'PAYMENT_EVENT_IDENTITY_IMMUTABLE';
   END IF;
   IF OLD.processing_status = 'processed'
