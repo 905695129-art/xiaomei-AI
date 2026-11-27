@@ -76,8 +76,7 @@ class MainActivity : Activity() {
                 intArrayOf(0xFFFFD8E9.toInt(), 0xFFFFF0F6.toInt(), 0xFFEFE5FF.toInt())).apply { cornerRadius = dp(28).toFloat() }
         }
         hero.addView(text("你好呀～", 23f, deep, true)); gap(hero, 7)
-        hero.addView(text("先说说你正在经历什么，
-我会一步一步陪你理清。", 17f, deep, true)); gap(hero, 10)
+        hero.addView(text("先说说你正在经历什么，\n我会一步一步陪你理清。", 17f, deep, true)); gap(hero, 10)
         hero.addView(text("不需要一次填写很多资料。我们从最重要的问题开始。", 13f, muted)); gap(hero, 15)
         hero.addView(button("开始分析  ›") { openModule("情感挽回") })
         root.addView(hero); gap(root, 24)
