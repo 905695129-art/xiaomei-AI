@@ -285,7 +285,7 @@ jobs:
               android:accessibilityFeedbackType="feedbackGeneric"
               android:notificationTimeout="500"
               android:canRetrieveWindowContent="true"
-              android:description="@string/app_name"
+              android:description="小美 AI 聊天内容辅助服务"
               android:accessibilityFlags="flagReportViewIds" />
           EOF
           python3 - <<'PY'
