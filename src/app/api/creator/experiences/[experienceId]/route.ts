@@ -23,7 +23,7 @@ export async function GET(_request: Request, context: { params: { experienceId: 
     const db = requireDb();
     const [experience] = await db`SELECT id, slug, title, description, status, theme, cover_url, cover_position FROM experiences WHERE id = ${context.params.experienceId}::uuid AND creator_id = ${creator.id} LIMIT 1`;
     if (!experience) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
-    return NextResponse.json({ experience });
+    return NextResponse.json({ experience }, { headers: { "Cache-Control": "private, no-store", "Vary": "Cookie" } });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
     const status = code === "DATABASE_NOT_CONFIGURED" ? 503 : 500;
