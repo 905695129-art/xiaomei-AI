@@ -425,3 +425,81 @@ DROP TRIGGER IF EXISTS orders_guard_identity ON orders;
 CREATE TRIGGER orders_guard_identity
 BEFORE UPDATE ON orders
 FOR EACH ROW EXECUTE FUNCTION heart_guard_order_identity();
+
+
+
+-- Snapshot the exact content at order creation, not at a later payment callback.
+-- This prevents edits to a level while payment is pending from changing what was bought.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS level_title_snapshot TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS level_position_snapshot INTEGER;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS private_content_snapshot TEXT;
+
+CREATE OR REPLACE FUNCTION heart_validate_new_order()
+RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+  experience_row experiences%ROWTYPE;
+  level_row experience_levels%ROWTYPE;
+BEGIN
+  IF NEW.status <> 'pending' THEN
+    RAISE EXCEPTION 'NEW_ORDER_MUST_START_PENDING';
+  END IF;
+  IF NEW.buyer_ref IS NULL OR length(trim(NEW.buyer_ref)) < 16 THEN
+    RAISE EXCEPTION 'ORDER_BUYER_SESSION_REQUIRED';
+  END IF;
+  IF NEW.amount_minor <= 0 THEN
+    RAISE EXCEPTION 'PAID_ORDER_AMOUNT_MUST_BE_POSITIVE';
+  END IF;
+
+  SELECT * INTO experience_row FROM experiences WHERE id = NEW.experience_id FOR SHARE;
+  IF NOT FOUND OR experience_row.status <> 'published' THEN
+    RAISE EXCEPTION 'EXPERIENCE_NOT_PUBLISHED';
+  END IF;
+  IF experience_row.creator_id <> NEW.creator_id OR experience_row.currency <> NEW.currency THEN
+    RAISE EXCEPTION 'ORDER_CREATOR_OR_CURRENCY_MISMATCH';
+  END IF;
+
+  SELECT * INTO level_row
+  FROM experience_levels
+  WHERE id = NEW.level_id AND experience_id = NEW.experience_id
+  FOR SHARE;
+  IF NOT FOUND OR NOT level_row.is_active THEN
+    RAISE EXCEPTION 'LEVEL_NOT_AVAILABLE';
+  END IF;
+  IF level_row.price_minor <> NEW.amount_minor THEN
+    RAISE EXCEPTION 'ORDER_AMOUNT_MISMATCH';
+  END IF;
+  IF NEW.provider IS NULL OR NEW.provider = 'disabled' THEN
+    RAISE EXCEPTION 'PAYMENT_PROVIDER_NOT_CONFIGURED';
+  END IF;
+
+  NEW.level_title_snapshot := level_row.title;
+  NEW.level_position_snapshot := level_row.position;
+  NEW.private_content_snapshot := level_row.private_content;
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION heart_entitlement_matches_paid_order()
+RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+  order_row orders%ROWTYPE;
+BEGIN
+  SELECT * INTO order_row
+  FROM orders o
+  WHERE o.id = NEW.order_id
+    AND o.status = 'paid'
+    AND o.level_id = NEW.level_id
+    AND o.buyer_ref = NEW.buyer_ref
+  FOR SHARE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ENTITLEMENT_REQUIRES_MATCHING_PAID_ORDER';
+  END IF;
+
+  NEW.level_title_snapshot := COALESCE(order_row.level_title_snapshot, NEW.level_title_snapshot);
+  NEW.level_position_snapshot := COALESCE(order_row.level_position_snapshot, NEW.level_position_snapshot);
+  NEW.private_content_snapshot := COALESCE(order_row.private_content_snapshot, NEW.private_content_snapshot);
+  NEW.price_minor_snapshot := COALESCE(order_row.amount_minor, NEW.price_minor_snapshot);
+  NEW.currency_snapshot := COALESCE(order_row.currency, NEW.currency_snapshot);
+  RETURN NEW;
+END;
+$$;
