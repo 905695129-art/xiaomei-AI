@@ -6,7 +6,8 @@ import { requireDb } from "@/lib/db";
 
 export async function POST(request: Request) {
   if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403 });
-  const token = cookies().get("heart_session")?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get("heart_session")?.value;
   if (token) {
     try {
       const hash = createHash("sha256").update(token).digest("hex");
