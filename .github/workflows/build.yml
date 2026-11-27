@@ -1,10 +1,20 @@
 name: Build XiaoMei AI APK
 
+concurrency:
+  group: xiaomei-apk-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   workflow_dispatch:
   push:
     branches:
       - main
+    paths:
+      - '*.zip'
+      - 'app/**'
+      - 'knowledge/**'
+      - 'scripts/**'
+      - '.github/workflows/build.yml'
 
 jobs:
   build:
