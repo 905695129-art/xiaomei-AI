@@ -19,11 +19,48 @@ function safeEqual(a: string, b: string) {
 }
 export async function POST(request: Request) {
   if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403 });
+  const maxBodyBytes = 16 * 1024;
   const contentLength = Number(request.headers.get("content-length") ?? 0);
-  if (Number.isFinite(contentLength) && contentLength > 16 * 1024) {
+  if (Number.isFinite(contentLength) && contentLength > maxBodyBytes) {
     return NextResponse.json({ error: "REQUEST_TOO_LARGE" }, { status: 413, headers: { "Cache-Control": "no-store" } });
   }
-  const parsed = inputSchema.safeParse(await request.json().catch(() => null));
+
+  // Content-Length is optional and can be omitted by streaming clients. Enforce
+  // the limit while reading so a chunked request cannot bypass the body cap.
+  let rawBody = "";
+  if (request.body) {
+    const reader = request.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let totalBytes = 0;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        totalBytes += value.byteLength;
+        if (totalBytes > maxBodyBytes) {
+          await reader.cancel();
+          return NextResponse.json({ error: "REQUEST_TOO_LARGE" }, { status: 413, headers: { "Cache-Control": "no-store" } });
+        }
+        chunks.push(value);
+      }
+    } catch {
+      return NextResponse.json({ error: "INVALID_REQUEST_BODY" }, { status: 400, headers: { "Cache-Control": "no-store" } });
+    }
+    const body = new Uint8Array(totalBytes);
+    let offset = 0;
+    for (const chunk of chunks) {
+      body.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    rawBody = new TextDecoder().decode(body);
+  }
+  let bodyValue: unknown = null;
+  try {
+    bodyValue = rawBody ? JSON.parse(rawBody) : null;
+  } catch {
+    return NextResponse.json({ error: "INVALID_JSON" }, { status: 400, headers: { "Cache-Control": "no-store" } });
+  }
+  const parsed = inputSchema.safeParse(bodyValue);
   if (!parsed.success) return NextResponse.json({ error: "INVALID_INPUT", message: "邮箱格式不正确，密码至少 10 位。" }, { status: 400 });
   try {
     const db = requireDb();
