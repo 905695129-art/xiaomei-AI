@@ -19,6 +19,10 @@ function safeEqual(a: string, b: string) {
 }
 export async function POST(request: Request) {
   if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403 });
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (Number.isFinite(contentLength) && contentLength > 16 * 1024) {
+    return NextResponse.json({ error: "REQUEST_TOO_LARGE" }, { status: 413, headers: { "Cache-Control": "no-store" } });
+  }
   const parsed = inputSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "INVALID_INPUT", message: "邮箱格式不正确，密码至少 10 位。" }, { status: 400 });
   try {
