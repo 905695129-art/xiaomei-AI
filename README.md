@@ -1,46 +1,43 @@
 # 心意闯关 Heart Studio
 
-独立备用工程：将 Floot 上的心意闯关产品逐步迁移为可独立部署的 Web 应用。
+这是「心意闯关」的独立 Web 应用开发仓库。产品采用温柔、甜美的视觉方向：创作者制作互动作品，体验者通过专属链接逐关浏览。
 
-## 产品边界
-- 创作者购买软件一次性授权；平台不从创作者与体验者之间的关卡交易抽佣。
-- 创作者创建多份作品，每份作品包含多个单独定价的关卡。
-- 体验者通过分享链接浏览作品，逐关付款后解锁对应内容。
-- 资金由合规支付机构直接结算给对应创作者/商户；商户准入和支付接口完成前，不开放真实付款。
+## 产品规则
+- 创作者创建多份作品，每份作品最多包含 30 个关卡。
+- 每关单独设置标题、付款前提示、价格和私密内容。
+- 公开分享页只展示作品介绍、关卡标题、提示和价格。
+- 私密内容必须由服务端验证已支付 entitlement 后才能读取。
+- 产品设计目标是不对创作者与体验者之间的关卡交易抽佣；真实结算须使用获准的商户/服务商及子商户方案。
 
-## 当前状态
-- 现有线上版本：https://heart-studio.floot.app
-- 本仓库是备用迁移工程，不代表已经完成线上切换。
-- 不提交密钥、支付证书、用户数据或生产数据库备份。
+## 当前已实现
+- /creator：创作者邮箱注册、登录、作品创建与作品列表。
+- /creator/[experienceId]：关卡编辑、删除、添加、价格设置、私密内容编辑、保存与发布。
+- /p/[slug]：体验者分享页，展示每关标题、提示和独立价格，并支持分享链接。
+- GET /api/experiences/:slug：只返回已发布作品的公开元数据。
+- GET/PUT /api/creator/experiences/:id/levels：验证作品归属后读取或保存关卡。
+- POST /api/creator/experiences/:id/publish：发布作品。
+- GET /api/experiences/:slug/levels/:levelId：只有当前买家会话拥有已支付 entitlement 时才返回私密内容。
+- POST /api/orders：真实支付渠道未配置前明确返回 503 PAYMENTS_NOT_CONFIGURED。
 
-## 计划架构
-Next.js + TypeScript、PostgreSQL、Drizzle、安全会话认证、私有对象存储、支付 Provider Adapter。
+## 重要限制
+**目前尚未开通真实收款，也不是可投入商业运营的生产服务。** 分享页的价格仅作展示；点击关卡不会发起支付、创建虚假订单或解锁内容。不要用当前版本向体验者收取真实款项。
 
-## MVP
-登录注册、一次性软件授权、多作品管理、关卡编辑、分享体验页、私密内容访问授权、订单后台、支付沙盒。
+正式上线前仍需完成：
+1. 配置并迁移生产 PostgreSQL 数据库。
+2. 完成支付机构/商户准入，确认创作者结算方式。
+3. 实现服务端下单、签名回调验证、退款和 entitlement 发放。
+4. 增加注册/登录限流、邮箱验证、密码重置及更完整的 CSRF 防护。
+5. 完成端到端安全测试、隐私政策、服务条款和生产部署配置。
 
-## 本地启动
-待应用脚手架文件提交后执行 npm install && npm run dev。
+## 本地开发
+需要 Node.js 20+ 与 PostgreSQL 15+。
 
+```bash
+npm install
+cp .env.example .env.local
+# 在 .env.local 中配置 DATABASE_URL
+npm run db:migrate
+npm run dev
+```
 
-## Heart Studio MVP backend (work in progress)
-
-### Local setup
-
-1. Install Node.js 20+ and PostgreSQL 15+.
-2. Copy `.env.example` to `.env.local` and set `DATABASE_URL` to a private PostgreSQL database URL.
-3. Install dependencies with `npm install`.
-4. Apply the schema with `npm run db:migrate`.
-5. Start the app with `npm run dev`.
-
-### Implemented API foundation
-
-- `GET /api/experiences/:slug`: published experience metadata and active level titles, teasers and prices only.
-- `POST /api/buyer/session`: creates an opaque buyer identity in an HttpOnly cookie.
-- `GET /api/experiences/:slug/levels/:levelId`: returns private level content only when the buyer session has a paid entitlement.
-- `GET/POST /api/creator/experiences`: creator-owned list/create endpoints, requiring a valid server-side creator session.
-- `POST /api/orders`: intentionally returns `503 PAYMENTS_NOT_CONFIGURED` until an approved provider and verified callback flow are implemented.
-
-### Important deployment gates
-
-This repository is not yet a production-ready paid service. The database schema must be applied to a managed PostgreSQL instance; creator login/session issuance and editor APIs are still incomplete; payment provider onboarding, sub-merchant settlement, signed callback verification, refunds and end-to-end tests are not implemented. Do not collect money or represent demo checkout as real payment. The public experience API intentionally excludes private level content.
+应用默认在 http://localhost:3000 启动。不要将数据库连接串、支付密钥、证书或生产用户数据提交到 Git。
