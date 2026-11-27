@@ -40,9 +40,10 @@ export async function GET() {
       FROM entitlements ent
       JOIN orders o ON o.id = ent.order_id
       JOIN experiences e ON e.id = o.experience_id
-      JOIN experience_levels l ON l.id = ent.level_id
+      JOIN experience_levels l ON l.id = ent.level_id AND l.experience_id = o.experience_id
       WHERE ent.buyer_ref = ${buyer.buyer_ref}
         AND o.buyer_ref = ${buyer.buyer_ref}
+        AND o.level_id = ent.level_id
         AND o.status = 'paid'
       ORDER BY o.paid_at DESC NULLS LAST, o.created_at DESC
       LIMIT 100
