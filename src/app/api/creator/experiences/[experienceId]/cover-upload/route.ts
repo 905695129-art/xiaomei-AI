@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isSameOriginWrite } from "@/lib/security";
+import { isSameOriginWrite, readJsonLimited } from "@/lib/security";
 import { randomUUID } from "node:crypto";
 import { S3Client } from "@aws-sdk/client-s3";
 import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
@@ -21,7 +21,14 @@ export async function POST(request: Request, context: { params: { experienceId: 
     const creator = await getCurrentCreator();
     if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
 
-    const body = await request.json().catch(() => null);
+    const parsedBody = await readJsonLimited(request, 4 * 1024);
+    if (!parsedBody.ok) {
+      return NextResponse.json(
+        { error: parsedBody.error },
+        { status: parsedBody.error === "REQUEST_TOO_LARGE" ? 413 : 400 }
+      );
+    }
+    const body = parsedBody.value as { contentType?: unknown; fileSize?: unknown } | null;
     const contentType = typeof body?.contentType === "string" ? body.contentType : "";
     const fileSize = Number(body?.fileSize);
     const extension = allowedTypes[contentType];
