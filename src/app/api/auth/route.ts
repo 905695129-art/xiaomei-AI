@@ -64,6 +64,8 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "INVALID_INPUT", message: "邮箱格式不正确，密码至少 10 位。" }, { status: 400 });
   try {
     const db = requireDb();
+    // Expired sessions cannot authenticate; prune them during normal auth traffic.
+    await db`DELETE FROM creator_sessions WHERE expires_at < now()`;
     // Opportunistically prune expired throttle keys so arbitrary email attempts
     // cannot grow the rate-limit table indefinitely.
     await db`DELETE FROM auth_rate_limits WHERE window_started_at < now() - interval '1 day'`;
