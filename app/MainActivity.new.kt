@@ -156,22 +156,200 @@ class MainActivity : Activity() {
     }
     private fun open(i:Int){when(i){0->course();1->profile();2->screening();3->chat();4->journal();5->date()}}
     private val lessonTitles = ["停止讨好：把注意力放回自己","真实展示：让别人看见你的魅力","温柔而坚定：建立清晰边界","轻松吸引：让交流有来有往","适度留白：保留自己的生活节奏","识别双向奔赴：选择值得的人"]
-    private val lessonBodies = ["【核心讲解】吸引力的起点不是争取所有人的认可，而是拥有稳定的自我评价。马基雅维利相关网络内容常谈权力、距离与不讨好；放进亲密关系，我们保留自我主权，不采用故意冷落、忽冷忽热或制造焦虑的操控方式。\n【生活案例】对方几个小时没回复，你反复打开聊天框，连原本安排好的事情也做不下去。新的做法：先回到自己的生活安排，有空、有话想说时再回复，而不是用延迟回复惩罚对方。\n【练习】写下三件即使没有恋爱也会认真经营的事，以及你在关系里最不愿牺牲的三项原则。\n【自测】我是否把对方的回复速度当成对自我价值的判决？","【核心讲解】展示不是包装成另一个人，而是帮助别人理解真实的你。照片、简介、兴趣和生活方式应彼此一致。\n【实操】准备清晰自然的头像、日常生活照、兴趣场景照、全身或环境照。避免盗用他人照片、过度修图或虚构职业收入。\n【简介结构】一句生活态度 + 两个真实兴趣 + 一项愿意分享的体验 + 对相处方式的期待。\n【示例】“平时喜欢城市散步和做饭，周末会去看展或找一家新咖啡馆。希望认识真诚、有好奇心，也愿意认真沟通的人。”\n【练习】挑选三张代表不同生活侧面的真实照片，写出每张希望传达的特点。","【核心讲解】边界不是冷漠，也不是控制别人。边界是清楚说明什么适合我、什么不适合我，以及如何照顾自己。\n【表达模板】“谢谢你想到我，不过这件事我不太方便。”“我愿意继续了解你，但我更喜欢循序渐进。”“我理解你的想法，不过我的感受也很重要。”\n【案例】对方临时要求你深夜见面。你可以提出白天、公共场所的替代安排，不必为了证明喜欢而勉强自己。\n【练习】把最近一次勉强答应的事情，改写成礼貌、明确、不攻击对方的表达。","【核心讲解】聊天不是面试，也不需要靠套路制造神秘感。有效交流包含观察、分享、提问和回应。\n【四步法】观察对方明确表达的细节；分享一点真实经历；提出容易回答的轻问题；接住回答自然延展。\n【示例】“你照片里那家书店看起来很舒服。我最近也在找适合慢慢逛的地方，你更喜欢独立书店还是大型书店？”\n【练习】找一个对方公开资料里的具体兴趣，写一条“观察 + 自己的分享 + 一个轻问题”。","【核心讲解】留白是给彼此空间，不是故意制造不确定和焦虑。自己的生活、朋友、兴趣和计划不应因刚开始的关系全部暂停。\n【实操】保持原有作息；不为测试对方而故意消失；忙碌时简短说明；不把回复速度当作唯一感情指标。\n【案例】周末已有安排，对方临时邀约。说明已有计划，并提出另一个双方方便的时间。\n【练习】规划一周中属于自己的时间，保留至少两项不依赖恋爱关系的活动。","【核心讲解】判断关系是否有真实的双向投入，而不是一味追逐结果。\n【观察维度】主动性：双方是否都愿意发起交流；一致性：言行是否一致；尊重：是否尊重拒绝、时间和边界；可靠性：是否认真对待约定；契合度：生活方式和未来期待是否兼容。\n【决策提示】有好感可以继续了解，但不必过早承诺；长期只有一方努力，可以降低投入并观察；出现威胁、羞辱、控制或金钱索取时，优先保护自己。\n【练习】回顾最近三次互动，记录对方实际行动、你的感受和仍需核实的信息。"]
+    private val lessonBodies = listOf(
+        """【本课目标】
+把“我必须让对方喜欢我”慢慢调整为“我也在观察，这段关系是否适合我”。
+
+【核心讲解】
+讨好常常不是因为你不够好，而是因为你担心失去连接。于是你把对方的情绪、回复速度和态度放在第一位，自己的安排和感受不断往后退。短期看，这可能换来一点安心；长期却容易让关系失去平衡，也让你越来越听不见自己的需要。
+真正稳定的吸引力，不是永远表现得完美，而是你有自己的生活、有判断，也愿意真诚地靠近别人。你可以喜欢一个人，同时不放弃自己。
+
+【生活案例】
+对方几个小时没有回复，你反复打开聊天框，取消了原本的运动和朋友聚会。你开始猜测是不是自己说错了话。
+可以尝试的新路径：先不急着给沉默下结论，按原计划生活。等有合适的时间，再自然地继续交流。如果这种失联长期反复出现，再通过沟通判断双方节奏是否合适。
+
+【可执行的四步】
+1. 识别：我现在是在表达喜欢，还是在用讨好换取确定感？
+2. 暂停：先给自己十分钟，不立刻连续追问或道歉。
+3. 回到生活：完成一件原本安排好的小事。
+4. 观察：看对方是否也愿意主动、稳定地投入。
+
+【练习】
+写下三件即使没有恋爱也想认真经营的事；再写下你在亲密关系中不愿牺牲的三项原则。
+
+【温柔提醒】
+你不需要靠被谁选择，来证明自己值得被爱。""",
+        """【本课目标】
+让别人更容易认识真实的你，而不是把自己包装成一个不真实的人。
+
+【核心讲解】
+展示面不是炫耀，也不是把生活修饰得毫无瑕疵。它更像一扇清楚、舒服的窗：别人能从你的照片、文字和兴趣里，看见你的生活质感、性格特点和相处期待。
+有记忆点的展示通常来自具体细节，而不是空泛标签。“热爱生活”“有趣的灵魂”不如一张你认真做饭、散步看展或完成一项兴趣的真实照片。照片与简介最好彼此一致，让人看到的是同一个你。
+
+【照片组合建议】
+1. 清晰自然的头像：光线舒服，面部清楚，避免过度滤镜。
+2. 日常生活照：呈现真实的生活状态，不必刻意摆拍。
+3. 兴趣场景照：让别人知道你喜欢什么，也更容易找到共同话题。
+4. 环境或全身照：帮助别人形成完整、自然的印象。
+5. 近期照片优先：避免使用他人照片、旧照冒充近照或过度修图。
+
+【个人简介结构】
+一句生活态度 + 两个真实兴趣 + 一项愿意分享的体验 + 对相处方式的期待。
+示例：“平时喜欢城市散步和做饭，周末会去看展或找一家新咖啡馆。比起热闹的场面，我更喜欢轻松真诚的交流。希望认识有好奇心、愿意认真沟通的人。”
+
+【练习】
+选出三张真实照片，分别写下它们呈现了你哪一面；再写一段不超过80字的简介。删掉任何你其实并不喜欢、只是觉得“这样更受欢迎”的描述。
+
+【检查标准】
+真实、清楚、具体、不过度承诺。你的展示面是邀请别人认识你，不是向所有人证明你足够好。""",
+        """【本课目标】
+学会表达偏好、拒绝和协商，让温柔与边界同时存在。
+
+【核心讲解】
+边界不是惩罚对方，也不是让对方猜你的底线。它是对自己负责：我知道什么让我舒服，什么让我不舒服；我愿意说明，也愿意承担选择的结果。
+健康的边界包含三部分：说清事实、表达自己的感受或偏好、提出可行的替代方式。表达时不必攻击对方，也不需要把每个“不”解释成一篇论文。
+
+【常见场景与表达】
+对方临时要求深夜见面：“今晚太晚了，我更愿意白天见面。如果你方便，我们可以约周末下午。”
+对方开让你不舒服的玩笑：“我知道你可能是在开玩笑，但这个话题我不太舒服，我们换一个吧。”
+对方要求过快确定关系：“我愿意继续了解你，不过我希望慢一点，让彼此都更确定。”
+你暂时不想聊天：“我现在需要处理一点自己的事情，晚些时候再认真回复你。”
+
+【边界的三个层次】
+1. 偏好：我更喜欢怎样相处。
+2. 请求：我希望我们可以怎样调整。
+3. 行动：如果边界持续被忽视，我会怎样保护自己，例如结束当次对话、拒绝见面或退出关系。
+
+【练习】
+回想一次你明明不愿意却答应的经历。把原来的回应改写成一句礼貌、明确、不攻击对方的话。再想想：如果对方不接受，你准备如何照顾自己？
+
+【重要提醒】
+拒绝不需要获得对方批准。对方也有拒绝你的权利。好的关系不是谁赢了，而是双方都能自在地说出真实想法。""",
+        """【本课目标】
+从“想一句完美的话”转向“建立自然、有来有往的交流”。
+
+【核心讲解】
+聊天不是面试，也不是一场必须拿高分的表演。舒服的交流通常由四个动作组成：观察对方说过的具体内容、分享一点自己的真实经验、提出轻松的问题、认真接住对方的回答。
+提问不宜像查户口；分享也不宜一次倾倒太多。把对话当作两个人共同搭建的小桥，给彼此回应和选择的空间。
+
+【四步对话法】
+1. 观察：从对方明确提到的兴趣、经历或观点里找一个细节。
+2. 分享：补充一点与你有关的真实内容。
+3. 轻问：提出一个容易回答、没有压力的问题。
+4. 延展：根据对方的回答继续，而不是机械地切换到下一个问题。
+
+【示例】
+对方说最近常去书店。你可以说：“我也喜欢在书店慢慢逛，尤其是有独立咖啡区的那种。你更喜欢去找某一本书，还是随便看看？”
+对方分享一次旅行。你可以先回应：“听起来那段旅程挺特别的。”再问：“如果以后再去一次，你还会选择同样的路线吗？”
+
+【避免的情况】
+不要假装拥有相同经历；不要连续追问隐私；不要把对方的每句话都转成自己的故事；如果对方明显不想继续，就允许对话自然结束。
+
+【练习】
+找一个对方公开表达过的具体兴趣，写出三条“观察 + 一点自己的分享 + 一个轻问题”。选最像你平时说话的那一条。
+
+【复盘】
+交流结束后，不只问“对方喜不喜欢我”，也问“我有没有表达自己？这段交流让我感觉舒服吗？”""",
+        """【本课目标】
+理解健康的留白：给彼此空间，而不是故意制造不确定感。
+
+【核心讲解】
+留白的价值在于每个人都保有自己的生活节奏。刚认识一个人时，容易把大量注意力集中在聊天上，仿佛随时在线才能维持关系。但长期稳定的连接不应该要求你放弃工作、朋友、兴趣和休息。
+真正舒服的节奏，是忙的时候可以说明，想念时可以表达，有空时愿意投入；不靠故意消失、延迟回复或冷热交替来测试对方。
+
+【生活案例】
+周末你已经和朋友约好活动，对方临时邀约。你不必取消原计划来证明在意，可以说：“我今天已经有安排啦，不过我也想见你。我们看看下周哪天都方便？”
+如果对方回复慢，先看整体交流是否稳定，而不是只凭一次间隔判断关系。
+
+【建立自己的节奏】
+1. 保留固定的工作、休息和兴趣时间。
+2. 忙碌时简短说明，不必为了秒回而打乱安排。
+3. 有期待就诚实表达，不用冷淡来试探。
+4. 观察双方是否愿意协调，而不是只有一个人迁就。
+
+【练习】
+安排一周的个人时间，至少保留两项不依赖恋爱关系的活动。写下一句你在忙碌时可以自然使用的说明。
+
+【温柔提醒】
+留白不是让别人害怕失去你，而是让你不再因为害怕失去别人而弄丢自己。""",
+        """【本课目标】
+从单次心动走向持续观察，判断一段关系是否值得继续了解。
+
+【核心讲解】
+关系是否合适，不应只看对方说了什么，也要看长期行动是否一致。筛选不是给人贴标签，更不是只按收入、外貌或职业排序；它是把自己的期待和现实互动放在一起，看看双方能否建立互相尊重的生活。
+可以观察五个维度：主动性、稳定性、尊重、可靠性和生活契合度。每个维度都需要时间和具体行为来验证，不要凭一次热情就下结论。
+
+【五个观察维度】
+1. 主动性：是否双方都会发起交流，而不是长期单向维持。
+2. 稳定性：说过的话与实际行动是否大体一致。
+3. 尊重：是否尊重你的时间、隐私、拒绝和边界。
+4. 可靠性：约定能否认真对待，出现变化是否愿意说明。
+5. 契合度：对生活方式、金钱观、家庭期待和未来方向是否有可沟通的共识。
+
+【决策参考】
+有好感但信息不足：继续轻松了解，不急着承诺。
+互动总体积极：可以提出具体、低压力的见面计划。
+长期只有一方投入：表达一次真实感受，观察对方是否愿意一起调整。
+出现威胁、羞辱、控制、跟踪或金钱索取：优先保护自己，必要时停止联系并寻求可信任的人帮助。
+
+【练习】
+回顾最近三次互动，分三栏记录：对方实际做了什么、我的真实感受、仍需核实的信息。只记录事实，不替对方编理由，也不把猜测当结论。
+
+【结束语】
+双向奔赴不是每一天都完全对等，而是双方都愿意看见彼此、尊重彼此，并在有分歧时一起寻找办法。你也有选择的权利。"""
+    )
     private fun course(){
-        val r=page("🌷 吸引力成长课","温柔、有边界、有自我：从讨好走向双向吸引")
-        val hero=LinearLayout(this).apply{orientation=1;setPadding(dp(17),dp(17),dp(17),dp(17));background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(0xFFFFE0EC.toInt(),0xFFF4EAFE.toInt())).apply{cornerRadius=dp(22).toFloat()}}
-        hero.addView(label("不必追着谁证明自己值得被爱。",18f,deep,true));gap(hero,7)
-        hero.addView(label("课程借鉴马基雅维利相关公开内容中关于自我主权、边界与不讨好的讨论，并将其转化为健康、温暖、可实践的关系能力。",12f,muted))
-        r.addView(hero);gap(r,17);r.addView(label("课程目录 · 6 个单元",18f,deep,true));gap(r,5)
-        r.addView(label("每课包含讲解、生活案例和练习。点击进入学习。",12f,muted));gap(r,12)
+        val done=prefs.getStringSet("course_done",emptySet())?:emptySet()
+        val r=page("🌷 吸引力成长","像一本温柔的成长手册，陪你慢慢练习")
+        val hero=LinearLayout(this).apply{
+            orientation=1;setPadding(dp(20),dp(20),dp(20),dp(20))
+            background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(0xFFFFDDEB.toInt(),0xFFFFF2F6.toInt(),0xFFEDE8FF.toInt())).apply{cornerRadius=dp(25).toFloat()}
+        }
+        hero.addView(label("今天，也给自己一点温柔。",20f,deep,true));gap(hero,7)
+        hero.addView(label("吸引力不是讨好谁，而是更了解自己、自在表达，也有能力选择适合自己的关系。",13f,0xFF805F71.toInt()))
+        gap(hero,15)
+        hero.addView(label("我的成长进度",12f,deep,true));gap(hero,6)
+        val progress=ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal).apply{
+            max=6;progress=done.size.coerceAtMost(6);progressTintList=android.content.res.ColorStateList.valueOf(0xFFD8759F.toInt())
+            progressBackgroundTintList=android.content.res.ColorStateList.valueOf(0xFFFFF9FC.toInt())
+        }
+        hero.addView(progress,LinearLayout.LayoutParams(-1,dp(7)));gap(hero,7)
+        hero.addView(label("${done.size.coerceAtMost(6)} / 6 课已完成 · 不用赶进度，按自己的节奏来",11f,muted))
+        r.addView(hero);gap(r,20)
+
+        val daily=LinearLayout(this).apply{orientation=1;setPadding(dp(17),dp(16),dp(17),dp(16));background=bgd(Color.WHITE,20);elevation=dp(2).toFloat()}
+        daily.addView(label("今日成长灵感  ·  01",10f,pink,true));gap(daily,7)
+        daily.addView(label("你可以主动表达喜欢，也可以认真观察对方是否适合你。",16f,deep,true));gap(daily,6)
+        daily.addView(label("今天的小练习：做一件原本就想为自己做的事。完成后，记下那一刻的感受。",12f,muted))
+        r.addView(daily);gap(r,20)
+
+        r.addView(label("循序渐进 · 6 个成长单元",18f,deep,true));gap(r,5)
+        r.addView(label("每一课都有目标、生活案例、表达方法和练习。",12f,muted));gap(r,12)
+        val subtitles=listOf("找回自我价值与生活重心","真实照片、简介与个人表达","偏好表达、拒绝与协商","观察、分享、提问与倾听","保留自己的生活节奏","观察行动与双向契合")
+        val palettes=listOf(0xFFFFEFF5.toInt(),0xFFF1EDFF.toInt(),0xFFFFF4E9.toInt(),0xFFECF7F3.toInt(),0xFFFFF0F0.toInt(),0xFFF0F1FF.toInt())
         lessonTitles.forEachIndexed{index,title->
-            val tile=LinearLayout(this).apply{orientation=0;gravity=Gravity.CENTER_VERTICAL;setPadding(dp(15),dp(14),dp(14),dp(14));background=bgd(Color.WHITE,18);elevation=dp(2).toFloat();setOnClickListener{lesson(index)}}
-            val num=TextView(this).apply{text=String.format("%02d",index+1);textSize=16f;setTextColor(pink);gravity=Gravity.CENTER;background=bgd(0xFFFFEAF2.toInt(),14);layoutParams=LinearLayout.LayoutParams(dp(43),dp(43)).apply{rightMargin=dp(12)}}
-            val textCol=LinearLayout(this).apply{orientation=1;addView(label(title,14f,deep,true));gap(this,4);addView(label(listOf("自我价值与注意力","真实资料与个人表达","表达偏好与拒绝","观察、分享与提问","生活节奏与留白","行动、尊重与契合度")[index],11f,muted))}
-            tile.addView(num);tile.addView(textCol,LinearLayout.LayoutParams(0,-2,1f));tile.addView(label("›",25f,pink))
+            val finished=done.contains(index.toString())
+            val tile=LinearLayout(this).apply{
+                orientation=0;gravity=Gravity.CENTER_VERTICAL;setPadding(dp(13),dp(14),dp(13),dp(14))
+                background=GradientDrawable().apply{setColor(Color.WHITE);cornerRadius=dp(19).toFloat();setStroke(dp(1),0xFFF0E4EA.toInt())}
+                elevation=dp(2).toFloat();setOnClickListener{lesson(index)}
+            }
+            val badge=TextView(this).apply{
+                text=listOf("♡","✿","☁","✧","❀","♡")[index];textSize=21f;gravity=Gravity.CENTER;setTextColor(0xFFB96D91.toInt());background=bgd(palettes[index],15)
+                layoutParams=LinearLayout.LayoutParams(dp(48),dp(48)).apply{rightMargin=dp(12)}
+            }
+            val col=LinearLayout(this).apply{orientation=1}
+            col.addView(label("第 ${index+1} 课  ·  ${if(finished)"已完成" else "约 8 分钟"}",10f,pink,true));gap(col,4)
+            col.addView(label(title,14f,deep,true));gap(col,4)
+            col.addView(label(subtitles[index],11f,muted))
+            tile.addView(badge);tile.addView(col,LinearLayout.LayoutParams(0,-2,1f))
+            tile.addView(label(if(finished)"✓" else "›",22f,if(finished)0xFF69A88C.toInt() else pink,true))
             r.addView(tile,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(10)})
         }
-        gap(r,8);r.addView(label("课程原则：不教冷暴力、不制造焦虑、不把关系变成输赢。吸引力来自自我完整、真实表达和双方自愿。",11f,muted));show(r)
+        gap(r,6)
+        val note=label("这里不教冷暴力、忽冷忽热或制造焦虑。我们练习的是自我尊重、真实表达、安全感与双向选择。",11f,muted)
+        note.setPadding(dp(13),dp(12),dp(13),dp(12));note.background=bgd(0xFFF5EFF8.toInt(),15);r.addView(note)
+        show(r)
     }
     private fun lesson(index:Int){
         val r=page("第 "+(index+1)+" 课",lessonTitles[index]+" · 讲解 / 案例 / 练习")
@@ -226,7 +404,7 @@ class MainActivity : Activity() {
             ai("你是小美AI沟通助手。当前模式："+modes[mode]+"。"+modePrompts[mode]+"给出三种可直接参考的中文口语表达，并简要说明各自适用场景。不得虚构用户经历、操纵对方或绕过拒绝；尊重双方边界。用户提供内容："+context.text+"。补充目标："+goal.text){result.text=it}
         })
         gap(r,8);r.addView(button("复制建议，由我自己检查和发送"){copy(result.text.toString())})
-        r.addView(label("前三种是主动发起对话；后三种是识别对方内容后回应。AI只生成草稿，不读取其他应用屏幕，也不会自动发送。",11f,muted));show(r)
+        r.addView(label("前三种用于主动发起对话，后三种用于读取当前页面可见文字后给出回应建议。需由你主动开启系统无障碍授权；AI只生成草稿，每条可单独复制，不会自动发送。识别功能开启时，仅处理当前前台页面可访问的文字节点，请勿在敏感页面开启。",11f,muted));show(r)
     }
     private fun journal(){
         val r=page("🧸 关系成长记","记录聊过的事情，让交流更连贯")
