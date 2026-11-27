@@ -18,7 +18,7 @@
 - `GET /api/experiences/:slug`：只返回已发布作品的公开元数据，归档作品不会公开访问。
 - `GET/PUT /api/creator/experiences/:id/levels`：验证作品归属后读取或保存关卡。
 - `PATCH /api/creator/experiences/:id`：创作者本人可修改作品标题/描述、封面素材、主题、归档或恢复草稿。
-- `POST /api/creator/experiences/:id/cover-upload`：验证创作者身份与作品归属，签发限时 S3 兼容对象存储上传地址；图片文件不经过应用服务器中转。
+- `POST /api/creator/experiences/:id/cover-upload`：验证创作者身份与作品归属，签发限时 S3 兼容对象存储预签名表单；对象存储端强制限制真实文件大小不超过 8MB，图片文件不经过应用服务器中转。
 - `GET /api/creator/orders`：按当前创作者身份读取订单及汇总。
 - `GET /api/buyer/purchases`：仅凭 HttpOnly 买家会话读取当前买家已付款且已发放 entitlement 的购买记录，不接受客户端传入买家 ID。
 - `POST /api/creator/experiences/:id/publish`：发布作品。
@@ -26,7 +26,7 @@
 - `POST /api/buyer/session`：复用当前有效体验者会话，避免每次访问都创建新身份。
 - `POST /api/orders`：真实支付渠道未配置前明确返回 503 `PAYMENTS_NOT_CONFIGURED`。
 
-## 封面图片存储配置\n\n上传照片需要配置 S3 兼容对象存储（例如自有对象存储或兼容服务），并设置以下服务端环境变量：`STORAGE_ENDPOINT`（S3 API endpoint）、`STORAGE_PUBLIC_URL`（可公开访问的文件 URL 前缀，不含末尾斜杠）、`STORAGE_REGION`（服务商要求的区域，默认 `auto`）、`STORAGE_BUCKET`、`STORAGE_ACCESS_KEY`、`STORAGE_SECRET_KEY`。存储桶 CORS 需允许应用域名发起 `PUT`，并允许 `Content-Type` 请求头。当前上传限制为 JPG/PNG/WEBP/GIF，单张最大 8MB。若未配置存储，预设封面素材仍可用，照片上传会明确提示未配置，不会假装上传成功。\n\n## 重要限制
+## 封面图片存储配置\n\n上传照片需要配置 S3 兼容对象存储（例如自有对象存储或兼容服务），并设置以下服务端环境变量：`STORAGE_ENDPOINT`（S3 API endpoint）、`STORAGE_PUBLIC_URL`（可公开访问的文件 URL 前缀，不含末尾斜杠）、`STORAGE_REGION`（服务商要求的区域，默认 `auto`）、`STORAGE_BUCKET`、`STORAGE_ACCESS_KEY`、`STORAGE_SECRET_KEY`。存储桶 CORS 需允许应用域名发起 `POST` 表单上传。当前上传限制为 JPG/PNG/WEBP/GIF，单张最大 8MB。若未配置存储，预设封面素材仍可用，照片上传会明确提示未配置，不会假装上传成功。\n\n## 重要限制
 **目前尚未开通真实收款，也不是可投入商业运营的生产服务。** 分享页的价格仅作展示；点击关卡不会发起支付、创建虚假订单或解锁内容。不要用当前版本向体验者收取真实款项。订单页面仅展示数据库中的真实订单记录；在支付尚未接入时通常为空。
 
 正式上线前仍需完成：
