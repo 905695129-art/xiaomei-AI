@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isSameOriginWrite } from "@/lib/security";
+import { isSameOriginWrite, readJsonLimited } from "@/lib/security";
 import { z } from "zod";
 import { requireDb } from "@/lib/db";
 import { getCurrentCreator } from "@/lib/session";
@@ -34,7 +34,9 @@ export async function PUT(request: Request, context: { params: { experienceId: s
   try {
     const creator = await getCurrentCreator();
     if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
-    const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+    const body = await readJsonLimited(request, 1024 * 1024);
+    if (!body.ok) return NextResponse.json({ error: body.error }, { status: body.error === "REQUEST_TOO_LARGE" ? 413 : 400 });
+    const parsed = bodySchema.safeParse(body.value);
     if (!parsed.success) return NextResponse.json({ error: "INVALID_INPUT", details: parsed.error.flatten() }, { status: 400 });
     const db = requireDb();
     const result = await db.begin(async tx => {
