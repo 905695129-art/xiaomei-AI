@@ -19,6 +19,7 @@ export async function POST(request: Request) {
     if (!parsed.success) return NextResponse.json({ error: "INVALID_INPUT" }, { status: 400, headers });
     const { email } = parsed.data;
     const db = requireDb();
+    await db`DELETE FROM password_reset_tokens WHERE expires_at < now() - interval '1 day' OR consumed_at < now() - interval '1 day'`;
     await db`DELETE FROM email_action_rate_limits WHERE window_started_at < now() - interval '1 day'`;
     const [limit] = await db`
       INSERT INTO email_action_rate_limits (email, action, window_started_at, attempts)
