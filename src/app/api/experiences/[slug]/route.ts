@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
 export async function GET(_request: Request, context: { params: { slug: string } }) {
   try {
     const db = requireDb();
-    const token = cookies().get("heart_buyer")?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get("heart_buyer")?.value;
     let buyerRef: string | null = null;
     if (token) {
       const tokenHash = createHash("sha256").update(token).digest("hex");
