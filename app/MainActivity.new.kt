@@ -432,12 +432,25 @@ class MainActivity : Activity() {
     }
     private fun settings(){
         val box=LinearLayout(this).apply{orientation=1;setPadding(dp(16),0,dp(16),0)}
-        val endpoint=field("兼容 OpenAI 的 API 地址",prefs.getString("endpoint","https://api.openai.com/v1/chat/completions").orEmpty())
-        val model=field("模型名称",prefs.getString("model","gpt-4o-mini").orEmpty())
-        val key=field("API Key",prefs.getString("key","").orEmpty()).apply{inputType=129}
+        box.addView(label("AI 服务商：OpenRouter（一个密钥连接多种模型）",13f,deep,true))
+        val endpoint=field("API 地址",prefs.getString("endpoint","https://openrouter.ai/api/v1/chat/completions").orEmpty())
+        val tier=Spinner(this).apply{
+            adapter=ArrayAdapter(this@MainActivity,android.R.layout.simple_spinner_dropdown_item,listOf("免费模型（有次数限制）","付费模型（按量计费）"))
+            setSelection(if(prefs.getString("tier","free")=="paid")1 else 0)
+        }
+        val model=field("模型名称",prefs.getString("model","openrouter/free").orEmpty())
+        val key=field("OpenRouter API Key",prefs.getString("key","").orEmpty()).apply{inputType=129}
+        box.addView(label("模型类型",12f,muted));box.addView(tier)
         box.addView(endpoint);box.addView(model);box.addView(key)
+        box.addView(label("免费默认：openrouter/free。付费可填写模型 ID，例如 anthropic/claude-sonnet-4。付费模型需要账户余额。",11f,muted))
         AlertDialog.Builder(this).setTitle("AI 服务设置").setView(box)
-            .setPositiveButton("保存"){_,_->prefs.edit().putString("endpoint",endpoint.text.toString().trim()).putString("model",model.text.toString().trim()).putString("key",key.text.toString().trim()).apply();toast("设置已保存")}
+            .setPositiveButton("保存"){_,_-> 
+                val chosen=if(tier.selectedItemPosition==0) "free" else "paid"
+                val selectedModel=model.text.toString().trim().ifBlank{if(chosen=="free")"openrouter/free" else "openai/gpt-4o-mini"}
+                prefs.edit().putString("endpoint",endpoint.text.toString().trim().ifBlank{"https://openrouter.ai/api/v1/chat/completions"})
+                    .putString("model",selectedModel).putString("tier",chosen).putString("key",key.text.toString().trim()).apply()
+                toast("OpenRouter 配置已保存")
+            }
             .setNeutralButton("开启聊天内容识别"){_,_->
                 prefs.edit().putBoolean("capture_enabled",true).apply()
                 startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
