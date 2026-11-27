@@ -21,6 +21,7 @@ export default function PublicExperiencePage() {
   const [notice, setNotice] = useState("");
   const [privateContent, setPrivateContent] = useState("");
   const [checkingLevel, setCheckingLevel] = useState(false);
+  const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -39,6 +40,26 @@ export default function PublicExperiencePage() {
 
   const total = useMemo(() => experience?.levels.reduce((sum, level) => sum + level.priceMinor, 0) ?? 0, [experience]);
 
+  useEffect(() => {
+    let alive = true;
+    async function loadUnlocked() {
+      try {
+        const session = await fetch("/api/buyer/session", { method: "POST" });
+        if (!session.ok) return;
+        const response = await fetch("/api/buyer/purchases", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (alive && Array.isArray(data.purchases)) {
+          setUnlockedIds(new Set(data.purchases.map((item: { level_id: string }) => item.level_id)));
+        }
+      } catch { /* Public preview remains usable if buyer history is unavailable. */ }
+    }
+    loadUnlocked();
+    return () => { alive = false; };
+  }, []);
+
+
+
   async function beginUnlock(level: Level) {
     setSelected(level);
     setPrivateContent("");
@@ -51,6 +72,7 @@ export default function PublicExperiencePage() {
       const data = await response.json();
       if (response.ok) {
         setPrivateContent(typeof data.content === "string" ? data.content : "");
+        setUnlockedIds(current => new Set(current).add(level.id));
         setNotice("已确认解锁成功。这是你此前购买的专属内容。");
       } else if (response.status === 403 && data.error === "PURCHASE_REQUIRED") {
         setNotice("你还没有解锁这一关。当前版本尚未开通合规支付，因此不会向你收款，也不会创建订单。");
@@ -92,7 +114,7 @@ export default function PublicExperiencePage() {
         <div className="journeyList">{experience.levels.map((level, index) => <article className={selected?.id === level.id ? "journeyCard activeJourney" : "journeyCard"} key={level.id}>
           <div className="journeyNumber">{String(level.position || index + 1).padStart(2, "0")}</div>
           <div className="journeyCopy"><span className="journeyLabel">A LITTLE SECRET</span><h3>{level.title}</h3><p>{level.teaser || "一份为你准备的小惊喜，打开后就能看到更多。"}</p></div>
-          <div className="journeyAction"><strong>{money(level.priceMinor, experience.currency || "CNY")}</strong><button disabled={checkingLevel} onClick={() => beginUnlock(level)}>{checkingLevel && selected?.id === level.id ? "确认中…" : selected?.id === level.id ? "查看本关" : "了解这一关"} <span>♡</span></button></div>
+          <div className="journeyAction"><strong>{money(level.priceMinor, experience.currency || "CNY")}</strong><button disabled={checkingLevel} onClick={() => beginUnlock(level)}>{checkingLevel && selected?.id === level.id ? "确认中…" : unlockedIds.has(level.id) ? "已解锁 · 查看" : selected?.id === level.id ? "查看本关" : "了解这一关"} <span>♡</span></button></div>
         </article>)}</div>}
       <div className="journeyTotal"><span>全部关卡合计（仅供参考）</span><strong>{money(total, experience.currency || "CNY")}</strong></div>
     </section>
