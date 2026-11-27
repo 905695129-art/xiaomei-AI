@@ -27,6 +27,7 @@ class MainActivity : Activity() {
     private val prefs by lazy { getSharedPreferences("xiaomei", MODE_PRIVATE) }
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var result: TextView
+    private var chatMode: Int = 0
 
     private val titles = listOf("吸引力课程","展示面工坊","优质男筛选","聊天辅助","关系成长记","约会与复盘")
     private val icons = listOf("🌷","📸","💎","💬","🧸","✨")
@@ -36,7 +37,7 @@ class MainActivity : Activity() {
     override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); routeIntent(intent) }
     private fun routeIntent(intent: Intent?) {
         val module = intent?.getIntExtra("xiaomei_module", -1) ?: -1
-        if (module in 0..5) open(module) else home()
+        if (module in 0..5) { if (module == 3) chatMode = intent?.getIntExtra("xiaomei_chat_mode", 0) ?: 0; open(module) } else home()
     }
     private fun dp(n:Int) = (n*resources.displayMetrics.density).toInt()
     private fun bgd(c:Int,r:Int=18):GradientDrawable = GradientDrawable().apply { setColor(c); cornerRadius=dp(r).toFloat() }
@@ -120,18 +121,28 @@ class MainActivity : Activity() {
         });show(r)
     }
     private fun chat(){
-        val r=page("💬 聊天辅助","理解上下文，给你可选择的自然回复")
-        val context=field("粘贴你愿意分享的对话或聊天背景","",5)
-        val goal=field("本轮交流目标","轻松接话，了解共同兴趣")
-        val style=field("表达风格","温柔自然、轻松、有边界")
-        addField(r,"聊天上下文",context);addField(r,"交流目标",goal);addField(r,"表达风格",style)
-        result=label("分析结果和三种可选回复会显示在这里。");card(r,result)
-        r.addView(button("✨ 分析并生成三种回复"){
-            if(context.text.toString().isBlank()){toast("先填写对话内容");return@button}
-            ai("你是小美AI女性交友沟通顾问。仅根据提供的对话分析对方明确表达的内容、交流阶段和自然话题。给出三种短回复：温柔自然、轻松俏皮、真诚深入。口语化，不故意冷落、不制造嫉妒、不虚构经历、不推断对方内心，尊重拒绝和边界。交流目标："+goal.text+"；风格："+style.text+"；对话："+context.text){result.text=it}
+        val modes=listOf("轻松开场","兴趣破冰","自然邀约","暖心回应","幽默接话","认真沟通")
+        val modeTitles=listOf("主动发起｜轻松开场","主动发起｜兴趣破冰","主动发起｜自然邀约","识别后回应｜暖心回应","识别后回应｜幽默接话","识别后回应｜认真沟通")
+        val modePrompts=listOf(
+            "根据用户提供的对方公开资料或共同背景，写三条自然、不冒犯的初次开场白，避免群发感和过度热情。",
+            "围绕对方明确展示的兴趣，生成三种具体的破冰开场，采用分享加轻问题，不假装拥有相同经历。",
+            "根据已有交流进展，生成三种轻松、清晰、可拒绝的邀约表达，不施压、不默认对方同意。",
+            "识别对方表达的情绪和事实，给出三种共情但不过度承诺的回应，先理解再交流。",
+            "根据上下文给出三种轻松幽默的接话，不讽刺、不贬低、不拿敏感经历开玩笑。",
+            "针对对方明确提出的观点或问题，生成三种真诚、清楚、有边界的回应，允许双方意见不同。"
+        )
+        val mode=chatMode.coerceIn(0,5)
+        val r=page("💬 "+modeTitles[mode],"六种对话模式 · 由你选择并决定是否发送")
+        val context=field(if(mode<3) "对方资料、共同兴趣或你想开启的话题" else "粘贴对方发来的内容或你愿意分享的聊天片段","",5)
+        val goal=field("补充目标或背景",if(mode<3) "自然开启交流，不显得刻意" else "理解对方意思，给出合适回应")
+        addField(r,if(mode<3)"发起对话的素材" else "需要识别的内容",context);addField(r,"补充说明",goal)
+        result=label("生成内容会显示在这里。");card(r,result)
+        r.addView(button("✨ 生成三种表达方案"){
+            if(context.text.toString().isBlank()){toast("先填写内容");return@button}
+            ai("你是小美AI沟通助手。当前模式："+modes[mode]+"。"+modePrompts[mode]+"给出三种可直接参考的中文口语表达，并简要说明各自适用场景。不得虚构用户经历、操纵对方或绕过拒绝；尊重双方边界。用户提供内容："+context.text+"。补充目标："+goal.text){result.text=it}
         })
         gap(r,8);r.addView(button("复制建议，由我自己检查和发送"){copy(result.text.toString())})
-        r.addView(label("建议只提供必要对话片段，不要粘贴手机号、住址或证件等敏感信息。",11f,muted));show(r)
+        r.addView(label("前三种是主动发起对话；后三种是识别对方内容后回应。AI只生成草稿，不读取其他应用屏幕，也不会自动发送。",11f,muted));show(r)
     }
     private fun journal(){
         val r=page("🧸 关系成长记","记录聊过的事情，让交流更连贯")
