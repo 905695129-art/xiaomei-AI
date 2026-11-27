@@ -1,0 +1,44 @@
+"use client";
+import { useEffect, useState } from "react";
+
+type Experience = { id: string; slug: string; title: string; description: string; status: string };
+export default function CreatorPage() {
+  const [mode,setMode] = useState<"login"|"register">("register");
+  const [email,setEmail] = useState("");
+  const [password,setPassword] = useState("");
+  const [displayName,setDisplayName] = useState("");
+  const [user,setUser] = useState<{email:string;displayName:string}|null>(null);
+  const [experiences,setExperiences] = useState<Experience[]>([]);
+  const [title,setTitle] = useState("");
+  const [slug,setSlug] = useState("");
+  const [message,setMessage] = useState("正在检查登录状态…");
+  const [busy,setBusy] = useState(false);
+
+  async function load() {
+    const r=await fetch("/api/creator/experiences");
+    if(r.ok){const d=await r.json();setExperiences(d.experiences);setUser(v=>v??{email:"已登录",displayName:"创作者"});setMessage("");}
+    else {setUser(null);setMessage("登录或注册后即可创建作品。");}
+  }
+  useEffect(()=>{load().catch(()=>setMessage("暂时无法连接服务器。"));},[]);
+  async function auth(e:React.FormEvent) {
+    e.preventDefault();setBusy(true);setMessage("");
+    try {
+      const r=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json","x-heart-mode":mode},body:JSON.stringify({email,password,displayName})});
+      const d=await r.json();
+      if(!r.ok) throw new Error(d.message||({EMAIL_EXISTS:"该邮箱已注册，请切换到登录。",INVALID_CREDENTIALS:"邮箱或密码不正确。",SERVICE_NOT_CONFIGURED:"数据库尚未配置。"} as Record<string,string>)[d.error]||"操作失败，请稍后重试。");
+      setUser(d.user);setMessage("登录成功。");await load();
+    } catch(e){setMessage(e instanceof Error?e.message:"请求失败");} finally{setBusy(false);}
+  }
+  async function create(e:React.FormEvent) {
+    e.preventDefault();setBusy(true);setMessage("");
+    try{
+      const r=await fetch("/api/creator/experiences",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title,slug:slug.toLowerCase().replace(/[^a-z0-9-]/g,"-"),description:""})});
+      const d=await r.json();if(!r.ok)throw new Error(d.error==="UNAUTHORIZED"?"请先登录。":"创建失败：请检查分享标识是否重复，且仅使用 3-48 位小写字母、数字和短横线。");
+      setTitle("");setSlug("");await load();setMessage("作品创建成功。下一步可接入关卡编辑器。");
+    }catch(e){setMessage(e instanceof Error?e.message:"请求失败");}finally{setBusy(false);}
+  }
+  async function logout(){await fetch("/api/auth/logout",{method:"POST"});setUser(null);setExperiences([]);setMessage("已退出登录。");}
+  return <main className="creatorShell"><a href="/" className="back">♡ 心意闯关</a><section className="creatorCard"><p className="eyebrow">CREATOR STUDIO</p><h1>创作者工作台</h1><p className="sub">创建你的专属心意作品，再逐步设计每一道关卡。</p>
+  {!user ? <><div className="switch"><button className={mode==="register"?"chosen":""} onClick={()=>setMode("register")}>注册</button><button className={mode==="login"?"chosen":""} onClick={()=>setMode("login")}>登录</button></div><form onSubmit={auth} className="form">{mode==="register"&&<label>显示昵称<input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="怎么称呼你" maxLength={40}/></label>}<label>邮箱<input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="name@example.com"/></label><label>密码<input type="password" required minLength={10} value={password} onChange={e=>setPassword(e.target.value)} placeholder="至少 10 位"/></label><button className="primary" disabled={busy}>{busy?"请稍候…":mode==="register"?"创建创作者账户":"登录工作台"}</button></form></>:<><div className="welcome"><b>{user.displayName||user.email}</b><button onClick={logout}>退出</button></div><form onSubmit={create} className="form createForm"><label>作品名称<input required maxLength={80} value={title} onChange={e=>setTitle(e.target.value)} placeholder="例如：给你的一场心意旅行"/></label><label>分享标识<input required minLength={3} maxLength={48} value={slug} onChange={e=>setSlug(e.target.value)} placeholder="my-heart-story"/></label><button className="primary" disabled={busy}>＋ 创建作品</button></form><h2>我的作品</h2>{experiences.length===0?<p className="empty">还没有作品，创建第一份心意吧。</p>:experiences.map(x=><article className="experience" key={x.id}><b>{x.title}</b><span>{x.status==="published"?"已发布":"草稿"} · /{x.slug}</span></article>)}</>}
+  {message&&<p className="notice" role="status">{message}</p>}<p className="disclaimer">当前备用版本尚未开通真实支付。请勿在此收取真实款项。</p></section></main>;
+}
