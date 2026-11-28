@@ -24,7 +24,7 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
     const rows = await db.unsafe(
       `SELECT
          CASE WHEN o.id IS NOT NULL THEN COALESCE(en.level_title_snapshot, l.title) ELSE l.title END AS title,
-         CASE WHEN o.id IS NOT NULL THEN COALESCE(en.private_content_snapshot, l.private_content) ELSE l.private_content END AS private_content
+         CASE WHEN o.id IS NOT NULL THEN COALESCE(en.private_content_snapshot, l.private_content) ELSE l.private_content END AS private_content,\n         CASE WHEN o.id IS NOT NULL THEN COALESCE(en.private_media_snapshot, l.private_media) ELSE l.private_media END AS private_media
        FROM experiences e
        JOIN experience_levels l ON l.experience_id = e.id
        LEFT JOIN entitlements en ON en.level_id = l.id AND en.buyer_ref = $1
@@ -65,7 +65,7 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
       );
       return NextResponse.json({ error: target?.locked ? "LEVEL_LOCKED" : "LEVEL_NOT_AVAILABLE" }, { status: target?.locked ? 409 : 404, headers: privateHeaders });
     }
-    return NextResponse.json({ title: rows[0].title, content: rows[0].private_content }, { headers: privateHeaders });
+    return NextResponse.json({ title: rows[0].title, content: rows[0].private_content, media: rows[0].private_media ?? [] }, { headers: privateHeaders });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
     const status = code === "DATABASE_NOT_CONFIGURED" ? 503 : 400;
