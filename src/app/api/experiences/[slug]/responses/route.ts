@@ -43,6 +43,7 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
          WHERE e.slug = $1 AND e.status = 'published' AND l.id = $2::uuid
            AND (
              EXISTS (SELECT 1 FROM journey_level_unlocks unlocks WHERE unlocks.level_id = l.id AND unlocks.buyer_ref = b.buyer_ref)
+             OR l.price_minor = 0
              OR EXISTS (
                SELECT 1 FROM entitlements ent JOIN orders o ON o.id = ent.order_id
                WHERE ent.level_id = l.id AND ent.buyer_ref = b.buyer_ref
