@@ -300,3 +300,17 @@
 @keyframes heartWelcomeRise{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes heartWelcomeFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 @media(prefers-reduced-motion:reduce){.heartWelcomeBackdrop,.heartWelcomeCard,.heartWelcomeOrbits{animation:none}}
+
+
+/* Recipient arrival moment: affirming, gentle, and never pressuring. */
+.heartArrivalBackdrop{position:fixed;inset:0;z-index:1300;display:grid;place-items:center;padding:22px;background:radial-gradient(circle at 50% 18%,rgba(255,225,239,.88),rgba(255,245,249,.97) 52%,rgba(247,239,249,.98));backdrop-filter:blur(16px);animation:heartWelcomeFade .4s ease both}
+.heartArrivalCard{width:min(100%,430px);padding:34px 27px 28px;border:1px solid rgba(255,255,255,.92);border-radius:31px;background:linear-gradient(155deg,#fff 0%,#fff8fb 58%,#fff0f6 100%);box-shadow:0 24px 80px rgba(183,104,143,.2);text-align:center;animation:heartWelcomeRise .56s cubic-bezier(.2,.8,.2,1) both}
+.heartArrivalSeal{display:grid;place-items:center;width:66px;height:66px;margin:0 auto 18px;border-radius:24px;background:linear-gradient(145deg,#ffe3ef,#fff2f7);color:#df83a9;font-size:32px;box-shadow:0 8px 24px rgba(224,132,169,.2);animation:heartWelcomeFloat 3s ease-in-out infinite}
+.heartArrivalCard .publicEyebrow{margin:0 0 12px;color:#c17b9a;font-size:10px;letter-spacing:2px}
+.heartArrivalCard h1{margin:0 auto 13px;max-width:330px;color:#75485e;font-size:clamp(24px,6.5vw,29px);line-height:1.45}
+.heartArrivalCard>p:not(.publicEyebrow){margin:0 auto 18px;max-width:325px;color:#987487;font-size:14px;line-height:1.9}
+.heartArrivalMessage{margin:0 0 23px;padding:15px;border:1px solid #f8e3ec;border-radius:18px;background:rgba(255,255,255,.78);color:#987487;font-size:12px;line-height:1.9}
+.heartArrivalCard>button{width:100%;min-height:51px;border:0;border-radius:17px;background:linear-gradient(100deg,#ed9cbd,#e783aa);color:white;font-size:14px;font-weight:700;box-shadow:0 9px 22px rgba(222,127,166,.28)}
+.heartArrivalCard>button:active{transform:scale(.975)}
+.heartArrivalCard>small{display:block;margin-top:14px;color:#bd9bad;font-size:10px}
+@media(prefers-reduced-motion:reduce){.heartArrivalBackdrop,.heartArrivalCard,.heartArrivalSeal{animation:none}}
