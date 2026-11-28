@@ -23,7 +23,7 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
       buyerRef = buyer?.buyer_ref ?? null;
     }
     const rows = await db`
-      SELECT e.slug, e.title, e.description, e.cover_url, e.cover_position, e.currency, e.theme,
+      SELECT e.slug, e.title, e.description, e.cover_url, e.cover_position, e.payment_qr_url, e.currency, e.theme,
         l.id AS level_id, l.position, l.title AS level_title,
         l.teaser, l.price_minor,
         EXISTS (
@@ -51,7 +51,7 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
     return NextResponse.json({
       experience: {
         slug: first.slug, title: first.title, description: first.description,
-        coverUrl: first.cover_url, coverPosition: ["top", "center", "bottom"].includes(first.cover_position) ? first.cover_position : "center", currency: first.currency, theme: ["rose", "cream", "lavender"].includes(first.theme) ? first.theme : "rose",
+        coverUrl: first.cover_url, paymentQrUrl: first.payment_qr_url, coverPosition: ["top", "center", "bottom"].includes(first.cover_position) ? first.cover_position : "center", currency: first.currency, theme: ["rose", "cream", "lavender"].includes(first.theme) ? first.theme : "rose",
         levels: rows.filter((r: any) => r.level_id).map((r: any) => ({
           id: r.level_id, position: r.position, title: r.level_title,
           teaser: r.teaser, priceMinor: r.price_minor, completed: Boolean(r.completed)
