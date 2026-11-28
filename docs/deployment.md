@@ -54,9 +54,9 @@ cp .env.example .env
 编辑 `.env`，至少将 `POSTGRES_PASSWORD` 替换为长随机密码；同时检查 `.env.example` 中所有适用变量。不要沿用示例占位值。可使用 `openssl rand -hex 32` 生成数据库密码。当前应用的登录会话令牌由服务端使用密码学安全随机数生成，并以哈希形式存储在数据库中；代码没有读取 `SESSION_SECRET`，因此模板不再提供一个未接入的伪配置项。生产部署还应设置：
 
 - `APP_URL=https://你的正式域名`（必须与实际对外 HTTPS 地址一致，邮件验证和密码重置链接依赖它）
-- `RESEND_API_KEY`：Resend 服务端 API Key
+- `RESEND_API_KEY`：当前代码唯一已实现的邮件服务商 Resend API Key；仅在适用地区完成可达性、数据处理和合规评估后配置
 - `EMAIL_FROM`：Resend 已验证域名中的发件地址
-- `REQUIRE_VERIFIED_EMAIL=true`：只有在邮件发送已完成验证后再启用
+- `REQUIRE_VERIFIED_EMAIL=true`：只有在邮件发送已完成验证后再启用。**中国大陆生产上线阻断：** 当前尚未实现境内邮件/短信 provider，不能只改环境变量就切换服务商；必须先抽象邮件 provider 接口、接入选定的境内服务商，并完成实名/签名/模板、送达率、退订/投诉及数据地域验收。在此之前不得把 Resend 当作大陆生产邮件方案，也不得启用依赖邮件的生产注册/找回流程。
 - `STORAGE_ENDPOINT`、`STORAGE_PUBLIC_URL`、`STORAGE_REGION`、`STORAGE_BUCKET`、`STORAGE_ACCESS_KEY`、`STORAGE_SECRET_KEY`：需要真实照片上传时配置
 
 不要把 `.env` 提交到 Git。生产密钥应使用服务器密钥管理能力保存，并定期轮换。
