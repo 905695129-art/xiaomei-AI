@@ -1,3 +1,15 @@
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_indexes
+    WHERE schemaname = current_schema()
+      AND tablename = 'buyer_sessions'
+      AND indexname = 'buyer_sessions_expiry_idx'
+  ) THEN
+    RAISE EXCEPTION 'BUYER_SESSION_EXPIRY_INDEX_MISSING';
+  END IF;
+END $$;
+
 -- Integration checks for critical purchase invariants.
 -- Run only against the disposable PostgreSQL service used by GitHub Actions.
 BEGIN;
