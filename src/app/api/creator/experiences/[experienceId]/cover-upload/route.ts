@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401, headers: privateHeaders });
 
     const contentLengthHeader = request.headers.get("content-length");
-    if (!contentLengthHeader || !/^\\d+$/.test(contentLengthHeader)) {
+    if (!contentLengthHeader || !/^\d+$/.test(contentLengthHeader)) {
       return NextResponse.json({ error: "CONTENT_LENGTH_REQUIRED" }, { status: 411, headers: privateHeaders });
     }
     const contentLength = Number(contentLengthHeader);
