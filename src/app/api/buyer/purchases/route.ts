@@ -4,11 +4,12 @@ import { NextResponse } from "next/server";
 import { requireDb } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
+const privateHeaders = { "Cache-Control": "private, no-store", Vary: "Cookie" };
 
 export async function GET() {
   try {
     const token = (await cookies()).get("heart_buyer")?.value;
-    if (!token) return NextResponse.json({ error: "BUYER_SESSION_REQUIRED" }, { status: 401 });
+    if (!token) return NextResponse.json({ error: "BUYER_SESSION_REQUIRED" }, { status: 401, headers: privateHeaders });
 
     const tokenHash = createHash("sha256").update(token).digest("hex");
     const db = requireDb();
@@ -21,6 +22,8 @@ export async function GET() {
     if (!buyer) {
       const response = NextResponse.json({ error: "BUYER_SESSION_EXPIRED" }, { status: 401 });
       response.cookies.set("heart_buyer", "", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 0 });
+      response.headers.set("Cache-Control", privateHeaders["Cache-Control"]);
+      response.headers.set("Vary", privateHeaders.Vary);
       return response;
     }
 
@@ -48,10 +51,10 @@ export async function GET() {
       ORDER BY o.paid_at DESC NULLS LAST, o.created_at DESC
       LIMIT 100
     `;
-    return NextResponse.json({ purchases }, { headers: { "Cache-Control": "private, no-store", "Vary": "Cookie" } });
+    return NextResponse.json({ purchases }, { headers: privateHeaders });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
     const status = code === "DATABASE_NOT_CONFIGURED" ? 503 : 500;
-    return NextResponse.json({ error: status === 503 ? "SERVICE_NOT_CONFIGURED" : "INTERNAL_ERROR" }, { status });
+    return NextResponse.json({ error: status === 503 ? "SERVICE_NOT_CONFIGURED" : "INTERNAL_ERROR" }, { status, headers: privateHeaders });
   }
 }
