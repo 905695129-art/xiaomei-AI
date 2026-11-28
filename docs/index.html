@@ -19,7 +19,7 @@ body[data-theme=lavender]{--bg:#f8f6ff;--ink:#4e4565;--muted:#948aa9;--accent:#9
 <main class="layout">
 <section class="intro"><div class="kicker">A LITTLE JOURNEY OF HEART</div><h1>把心意，设计成<br><em>一场逐关解锁的惊喜。</em></h1><p>每一关都是一份小小的心意。由创作者亲自设计标题、提示和私密内容，再把专属链接分享给想分享的人。</p><div class="buttons"><button class="btn" onclick="document.querySelector('.phone').scrollIntoView({behavior:'smooth',block:'center'})">体验关卡 ♡</button><button class="btn ghost" onclick="document.querySelector('#themes').scrollIntoView({behavior:'smooth'})">切换主题</button></div><div class="note">♡ 温柔的粉色视觉 · 独立关卡 · 逐关互动 · 完成前一关再解锁下一关</div></section>
 <section class="phone" aria-label="体验者手机界面"><div class="screen"><div class="tiny">A LITTLE SURPRISE FOR YOU</div><div class="seal">♡</div><h2>给你的一场心意小旅行</h2><p class="sub">每打开一扇小门，<br>都有一份认真准备的惊喜。</p><div class="progress"><i id="progressFill" style="width:33%"></i></div>
-<div class="level" id="level1" onclick="openLevel(1)"><div class="num">01</div><b>第一份小惊喜</b><span class="price">免费体验</span><span class="lock" id="lock1">♡ 可进入</span></div>
+<div class="level" id="level1" onclick="openLevel(1)"><div class="num">01</div><b>第一份小惊喜</b><span class="price">¥9.90</span><span class="lock" id="lock1">♡ 可进入</span></div>
 <div class="level" id="level2" aria-disabled="true" onclick="openLevel(2)"><div class="num">02</div><b>藏起来的悄悄话</b><span class="price">¥19.90</span><span class="lock" id="lock2">🔒 未解锁</span></div>
 <div class="level" id="level3" aria-disabled="true" onclick="openLevel(3)"><div class="num">03</div><b>最后一份心意</b><span class="price">¥29.90</span><span class="lock" id="lock3">🔒 未解锁</span></div>
 <div class="smallprint" id="journeyHint">先完成第一关的互动，下一关就会为你打开 ♡</div></div></section>
