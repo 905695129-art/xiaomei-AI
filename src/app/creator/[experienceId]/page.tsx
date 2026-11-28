@@ -44,15 +44,12 @@ export default function ExperienceEditor() {
       bitmap.close();
       if(!pixels||pixels>40000000)throw new Error("图片尺寸过大，请选择长宽乘积不超过 4000 万像素的图片。");
       setCoverMessage("正在上传封面…");
-      const init=await fetch(`/api/creator/experiences/${experienceId}/cover-upload`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contentType:file.type,fileSize:file.size})});
-      const signed=await init.json();
-      if(!init.ok)throw new Error(signed.error==="STORAGE_NOT_CONFIGURED"?"图片存储尚未配置，暂时无法上传。":"无法创建图片上传任务。");
       const form=new FormData();
-      Object.entries(signed.fields as Record<string,string>).forEach(([key,value])=>form.append(key,value));
       form.append("file",file);
-      const put=await fetch(signed.uploadUrl,{method:"POST",body:form});
-      if(!put.ok)throw new Error("图片上传失败，请检查存储桶跨域设置后重试。");
-      await saveCover(signed.publicUrl);
+      const upload=await fetch(`/api/creator/experiences/${experienceId}/cover-upload`,{method:"POST",body:form});
+      const result=await upload.json();
+      if(!upload.ok)throw new Error(result.error==="STORAGE_NOT_CONFIGURED"?"图片存储尚未配置，暂时无法上传。":result.error==="INVALID_IMAGE_CONTENT"?"图片文件内容或尺寸无效，请重新导出后上传。":result.error==="REQUEST_TOO_LARGE"?"图片不能超过 8MB。":"图片上传失败，请稍后重试。");
+      await saveCover(result.publicUrl);
     }catch(e){setCoverMessage(e instanceof Error?e.message:"上传失败");setCoverBusy(false);}
   }
 
