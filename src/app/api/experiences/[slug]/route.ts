@@ -5,7 +5,8 @@ import { requireDb } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_request: Request, context: { params: { slug: string } }) {
+export async function GET(_request: Request, context: { params: Promise<{ slug: string }> }) {
+  const { slug } = await context.params;
   try {
     const db = requireDb();
     const cookieStore = await cookies();
@@ -28,7 +29,7 @@ export async function GET(_request: Request, context: { params: { slug: string }
           WHERE ent.level_id = l.id AND ent.buyer_ref = ${buyerRef}
             AND o.status = 'paid' AND o.buyer_ref = ent.buyer_ref AND o.level_id = l.id
         ))
-      WHERE e.slug = ${context.params.slug}
+      WHERE e.slug = ${slug}
         AND (e.status = 'published' OR EXISTS (
           SELECT 1 FROM entitlements ent JOIN orders o ON o.id = ent.order_id
           WHERE o.experience_id = e.id AND ent.buyer_ref = ${buyerRef}
