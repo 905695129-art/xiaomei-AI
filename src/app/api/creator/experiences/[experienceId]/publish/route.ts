@@ -14,7 +14,7 @@ export async function POST(_request: Request, context: { params: Promise<{ exper
     const db = requireDb();
     if (process.env.REQUIRE_VERIFIED_EMAIL === "true") {
       const [account] = await db`SELECT email_verified_at FROM users WHERE id = ${creator.id} LIMIT 1`;
-      if (!account?.email_verified_at) return NextResponse.json({ error: "EMAIL_NOT_VERIFIED" }, { status: 403 });
+      if (!account?.email_verified_at) return NextResponse.json({ error: "EMAIL_NOT_VERIFIED" }, { status: 403, headers: privateHeaders });
     }
     const result = await db`
       UPDATE experiences e SET status = 'published', updated_at = now()
