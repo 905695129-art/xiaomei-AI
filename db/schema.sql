@@ -60,17 +60,16 @@ CREATE TABLE IF NOT EXISTS experience_levels (
   position INTEGER NOT NULL CHECK (position BETWEEN 1 AND 30),
   title TEXT NOT NULL,
   teaser TEXT NOT NULL DEFAULT '',
-  price_minor INTEGER NOT NULL CHECK (price_minor >= 1),
+  price_minor INTEGER NOT NULL CHECK (price_minor >= 0),
   private_content TEXT NOT NULL DEFAULT '',
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
--- Recreate the NOT VALID constraint idempotently. Existing legacy zero-priced
--- rows remain readable, while new inserts/updates must use a positive price.
+-- Recreate the NOT VALID constraint idempotently; zero means a free level.
 ALTER TABLE experience_levels DROP CONSTRAINT IF EXISTS experience_levels_price_positive;
 ALTER TABLE experience_levels
-  ADD CONSTRAINT experience_levels_price_positive CHECK (price_minor >= 1) NOT VALID;
+  ADD CONSTRAINT experience_levels_price_positive CHECK (price_minor >= 0) NOT VALID;
 CREATE UNIQUE INDEX IF NOT EXISTS levels_active_position_unique ON experience_levels(experience_id, position) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS levels_experience_idx ON experience_levels(experience_id, is_active, position);
 
