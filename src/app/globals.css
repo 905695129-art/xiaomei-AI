@@ -209,3 +209,33 @@
 .editorCard{padding-bottom:100px}
 .creatorShell{min-height:100svh}
 @media(max-width:420px){.creatorStepNav{gap:6px;padding:8px 9px}.creatorStepBack,.creatorStepNext{min-width:94px;padding:10px 9px;font-size:10px}.creatorStepProgress{gap:5px}.creatorStepProgress button{width:24px;height:24px}}
+
+
+/* Fixed one-screen creator workflow: each stage replaces the previous panel. */
+.creatorShell:has(.editorCard){box-sizing:border-box;min-height:100svh;height:100svh;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 14px max(12px,env(safe-area-inset-bottom))}
+.creatorShell:has(.editorCard)>.back{display:none}
+.creatorShell .editorCard{box-sizing:border-box;width:min(100%,760px);height:min(820px,calc(100svh - 24px));max-height:calc(100svh - 24px);min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:24px 22px 112px;margin:0;scrollbar-width:thin;scrollbar-color:#e8cbd5 transparent}
+.creatorShell .editorCard>.creatorEditorHeading,.creatorShell .editorCard>.sub,.creatorShell .editorCard>.creatorStepNav{display:flex}
+.creatorShell .editorCard>.sub{display:block}
+.creatorShell .editorCard>[data-step-panel]{display:none}
+.creatorShell .editorCard[data-editor-step="0"]>.themePicker{display:block}
+.creatorShell .editorCard[data-editor-step="1"]>.coverEditor{display:block}
+.creatorShell .editorCard[data-editor-step="2"]>.levelEditor{display:block}
+.creatorShell .editorCard[data-editor-step="2"]>.addLevel{display:block}
+.creatorShell .editorCard[data-editor-step="2"]>.editorActions{display:flex}
+.creatorShell .editorCard[data-editor-step="2"]>.editorActions>.publishButton{display:none}
+.creatorShell .editorCard[data-editor-step="3"]>.previewToolbar{display:flex}
+.creatorShell .editorCard[data-editor-step="3"]>.creatorPreview{display:block}
+.creatorShell .editorCard[data-editor-step="3"]>.editorActions{display:flex}
+.creatorShell .editorCard[data-editor-step="3"]>.shareResult{display:flex}
+.creatorShell .editorCard[data-editor-step="3"]>.journeyModalBackdrop{display:grid}
+.creatorShell .editorCard>.notice{display:block}
+.creatorShell .editorCard>.creatorStepNav{position:fixed}
+.creatorStepProgress button{transition:transform .18s,background .18s}
+.creatorStepProgress button:active{transform:scale(.92)}
+@media(max-width:520px){
+ .creatorShell:has(.editorCard){padding:8px 8px max(8px,env(safe-area-inset-bottom))}
+ .creatorShell .editorCard{height:calc(100svh - 16px);max-height:calc(100svh - 16px);padding:18px 15px 112px;border-radius:24px}
+ .creatorShell .editorCard>.creatorEditorHeading h1{font-size:24px}
+}
+@media(prefers-reduced-motion:reduce){.creatorStepProgress button{transition:none}}
