@@ -88,7 +88,11 @@ jobs:
                 printf '%s\\n' "$headers" | grep -qiE '^x-frame-options: *DENY' || { echo "Missing frame protection header"; exit 1; }
                 printf '%s\\n' "$headers" | grep -qiE '^referrer-policy: *strict-origin-when-cross-origin' || { echo "Missing referrer policy"; exit 1; }
                 printf '%s\\n' "$headers" | grep -qiE '^strict-transport-security: *max-age=15552000' || { echo "Missing production HSTS header"; exit 1; }
-                echo "Heart Studio app, database, and browser security headers are ready."
+                # Payment must remain fail-closed until a compliant provider is configured.
+                payment_status="$(curl --silent --show-error --output /tmp/heart-orders-response.json --write-out '%{http_code}' --request POST http://127.0.0.1:3000/api/orders)"
+                test "$payment_status" = "503" || { echo "Expected disabled payment endpoint to return HTTP 503, got $payment_status"; cat /tmp/heart-orders-response.json; exit 1; }
+                grep -q '"PAYMENTS_NOT_CONFIGURED"' /tmp/heart-orders-response.json || { echo "Payment endpoint did not return the explicit disabled-provider code"; cat /tmp/heart-orders-response.json; exit 1; }
+                echo "Heart Studio app, database, security headers, and disabled-payment safety gate are ready."
                 exit 0
               fi
             fi
