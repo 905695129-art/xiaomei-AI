@@ -24,14 +24,16 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
     const rows = await db.unsafe(
       `SELECT
          CASE WHEN o.id IS NOT NULL THEN COALESCE(en.level_title_snapshot, l.title) ELSE l.title END AS title,
-         CASE WHEN o.id IS NOT NULL THEN COALESCE(en.private_content_snapshot, l.private_content) ELSE l.private_content END AS private_content
+         CASE WHEN o.id IS NOT NULL THEN COALESCE(en.private_content_snapshot, l.private_content) ELSE l.private_content END AS private_content,
+         l.price_minor, e.payment_qr_url
        FROM experiences e
        JOIN experience_levels l ON l.experience_id = e.id
        LEFT JOIN entitlements en ON en.level_id = l.id AND en.buyer_ref = $1
        LEFT JOIN orders o ON o.id = en.order_id AND o.status = 'paid' AND o.buyer_ref = en.buyer_ref AND o.level_id = l.id
+       LEFT JOIN journey_level_unlocks unlocks ON unlocks.level_id = l.id AND unlocks.buyer_ref = $1
        WHERE e.slug = $2 AND l.id = $3::uuid
          AND (
-           (e.status = 'published' AND l.is_active = TRUE AND (
+           (e.status = 'published' AND l.is_active = TRUE AND (unlocks.id IS NOT NULL OR (
              NOT EXISTS (
                SELECT 1 FROM experience_levels previous
                WHERE previous.experience_id = l.experience_id
@@ -41,14 +43,14 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
                    WHERE progress.level_id = previous.id AND progress.buyer_ref = $1
                  )
              )
-           )) OR o.id IS NOT NULL
+           ))) OR o.id IS NOT NULL
          )
        LIMIT 1`,
       [buyerRef, slug, levelId]
     );
     if (!rows.length) {
       const [target] = await db.unsafe(
-        `SELECT l.id,
+        `SELECT l.id, l.price_minor, e.payment_qr_url,
            EXISTS (
              SELECT 1 FROM experience_levels previous
              WHERE previous.experience_id = l.experience_id
@@ -63,7 +65,9 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
          LIMIT 1`,
         [buyerRef, slug, levelId]
       );
-      return NextResponse.json({ error: target?.locked ? "LEVEL_LOCKED" : "LEVEL_NOT_AVAILABLE" }, { status: target?.locked ? 409 : 404, headers: privateHeaders });
+      if (target?.locked) return NextResponse.json({ error: "LEVEL_LOCKED" }, { status: 409, headers: privateHeaders });
+      if (target && target.price_minor > 0) return NextResponse.json({ error: target.payment_qr_url ? "PAYMENT_CONFIRMATION_REQUIRED" : "PAYMENT_QR_NOT_CONFIGURED", priceMinor: target.price_minor, paymentQrUrl: target.payment_qr_url }, { status: target.payment_qr_url ? 402 : 409, headers: privateHeaders });
+      return NextResponse.json({ error: "LEVEL_NOT_AVAILABLE" }, { status: 404, headers: privateHeaders });
     }
     return NextResponse.json({ title: rows[0].title, content: rows[0].private_content }, { headers: privateHeaders });
   } catch (error) {
