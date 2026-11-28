@@ -136,6 +136,7 @@ export default function PublicExperiencePage() {
 
   async function share() {
     const url = window.location.href;
+    const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
     try {
       if (navigator.share) {
         await navigator.share({ title: experience?.title ?? "心意闯关", text: "有人为你准备了一段专属心意，来看看吧。", url });
@@ -143,6 +144,10 @@ export default function PublicExperiencePage() {
       }
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
+    }
+    if (isWeChat) {
+      setNotice("微信内分享：请点击右上角「…」，选择发送给朋友或分享到朋友圈 ♡");
+      return;
     }
     try {
       if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(url);
