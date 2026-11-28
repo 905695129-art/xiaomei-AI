@@ -21,6 +21,33 @@ export default function ExperienceEditor() {
   function openPreviewLevel(index:number, opener:HTMLButtonElement){previewOpenerRef.current=opener;setPreviewReaction(null);setPreviewLevelIndex(index);}
   function closePreviewLevel(){if(previewLevelIndex===null||previewClosing)return;setPreviewClosing(true);window.setTimeout(()=>{setPreviewLevelIndex(null);setPreviewClosing(false);window.requestAnimationFrame(()=>previewOpenerRef.current?.focus());},180);}
   useEffect(()=>{if(previewLevelIndex===null)return;const previous=document.body.style.overflow;document.body.style.overflow="hidden";const focus=window.setTimeout(()=>document.querySelector<HTMLButtonElement>(".creatorJourneyDialogClose")?.focus(),40);const key=(event:KeyboardEvent)=>{if(event.key==="Escape")closePreviewLevel();if(event.key==="Tab"){const dialog=document.querySelector<HTMLElement>(".creatorJourneyDialog");const items=dialog?.querySelectorAll<HTMLElement>('button:not(:disabled),[tabindex]:not([tabindex="-1"])');if(!items?.length)return;const first=items[0],last=items[items.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}};document.addEventListener("keydown",key);return()=>{window.clearTimeout(focus);document.removeEventListener("keydown",key);document.body.style.overflow=previous;};},[previewLevelIndex]);
+  // Soft pink bubble feedback on every creator-side tap; decorative only, never blocks controls.
+  useEffect(()=>{
+    const onPointerDown=(event:PointerEvent)=>{
+      const target=event.target;
+      if(!(target instanceof Element))return;
+      const control=target.closest("button,a,label,select,input[type='checkbox'],input[type='radio'],.themeOption,.coverPreset");
+      if(!control||!control.closest(".creatorShell"))return;
+      if(window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+      const count=5;
+      for(let i=0;i<count;i++){
+        const bubble=document.createElement("i");
+        bubble.className="heartTapBubble";
+        const angle=(Math.PI*2*i/count)+(Math.random()-.5)*.45;
+        const distance=24+Math.random()*24;
+        bubble.style.left=`${event.clientX}px`;
+        bubble.style.top=`${event.clientY}px`;
+        bubble.style.setProperty("--bubble-x",`${Math.cos(angle)*distance}px`);
+        bubble.style.setProperty("--bubble-y",`${-18-Math.random()*38}px`);
+        bubble.style.setProperty("--bubble-size",`${5+Math.random()*7}px`);
+        bubble.style.setProperty("--bubble-delay",`${i*22}ms`);
+        document.body.appendChild(bubble);
+        window.setTimeout(()=>bubble.remove(),850);
+      }
+    };
+    document.addEventListener("pointerdown",onPointerDown,{passive:true});
+    return()=>document.removeEventListener("pointerdown",onPointerDown);
+  },[]);
   const [experienceInfo,setExperienceInfo] = useState({title:"一份专属心意",description:"有人为你准备了一段小小的心意旅程。每打开一扇门，都有一份认真准备的惊喜。",theme:"rose",coverUrl:"",coverPosition:"center",paymentQrUrl:""});
   const [themeBusy,setThemeBusy] = useState(false);
   const [guideOpen,setGuideOpen] = useState(false);
