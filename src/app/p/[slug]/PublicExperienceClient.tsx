@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 
 type Level = { id: string; position: number; title: string; teaser: string | null; priceMinor: number };
@@ -23,7 +23,7 @@ export default function PublicExperiencePage() {
   const [checkingLevel, setCheckingLevel] = useState(false);
   const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState(false);
-  const [reaction, setReaction] = useState<string | null>(null);
+  const [reaction, setReaction] = useState<string | null>(null);\n  const responsePanelRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -58,7 +58,7 @@ export default function PublicExperiencePage() {
     return () => { alive = false; };
   }, [slug]);
 
-  const total = useMemo(() => experience?.levels.reduce((sum, level) => sum + level.priceMinor, 0) ?? 0, [experience]);
+  const total = useMemo(() => experience?.levels.reduce((sum, level) => sum + level.priceMinor, 0) ?? 0, [experience]);\n\n  useEffect(() => {\n    if (!selected) return;\n    window.requestAnimationFrame(() => responsePanelRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));\n  }, [selected?.id]);
 
 
 
@@ -172,7 +172,7 @@ export default function PublicExperiencePage() {
         </article>)}</div>}
       <div className="journeyTotal"><span>全部关卡合计（仅供参考）</span><strong>{money(total, experience.currency || "CNY")}</strong></div>
     </section>
-    {selected && <section className="unlockNotice" aria-live="polite"><div className="noticeIcon">♡</div><div><b>{selected.title}</b><p>{notice || "选择了这一关。"}</p>{privateContent && <div className="privateContentView">{privateContent}</div>}<div className="heartReaction"><span>此刻，你想给这份心意什么回应？</span><div>{["心动 ♡","想你 ✨","抱抱 🫶"].map(item => <button type="button" key={item} className={reaction === item ? "chosenReaction" : ""} onClick={() => void sendReaction(item)}>{item}</button>)}</div>{reaction && <small aria-live="polite">收到你的回应：{reaction}。创作者已经可以在心意收件箱里看到它。</small>}</div></div><button onClick={() => setSelected(null)} aria-label="关闭">×</button></section>}
+    {selected && <section ref={responsePanelRef} className="unlockNotice" aria-live="polite"><div className="noticeIcon">♡</div><div><b>{selected.title}</b><p>{notice || "选择了这一关。"}</p>{privateContent && <div className="privateContentView">{privateContent}</div>}<div className="heartReaction"><span>此刻，你想给这份心意什么回应？</span><div>{["心动 ♡","想你 ✨","抱抱 🫶"].map(item => <button type="button" key={item} className={reaction === item ? "chosenReaction" : ""} onClick={() => void sendReaction(item)}>{item}</button>)}</div>{reaction && <small aria-live="polite">收到你的回应：{reaction}。创作者已经可以在心意收件箱里看到它。</small>}</div></div><button onClick={() => setSelected(null)} aria-label="关闭">×</button></section>}
     <footer className="publicFooter"><span>用一点点心意，开启一段小旅程。</span><b>HEART STUDIO ♡</b><small>一段专属互动体验 · Heart Studio</small></footer>
   </main>;
 }
