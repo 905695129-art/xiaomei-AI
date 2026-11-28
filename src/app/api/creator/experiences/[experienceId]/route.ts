@@ -16,7 +16,7 @@ function privateJson(body: unknown, init: ResponseInit = {}) {
 const updateSchema = z.object({
   title: z.string().trim().min(1).max(80).optional(),
   description: z.string().max(1000).optional(),
-  theme: z.enum(["rose", "cream", "lavender"]).optional(),
+  theme: z.enum(["rose", "white", "lavender", "mint", "sky", "peach", "midnight", "champagne"]).optional(),
   coverPosition: z.enum(["top", "center", "bottom"]).optional(),
   coverUrl: z.string().max(2048).refine(value => value === "" || /^preset:(rose|cream|lavender|night)$/.test(value) || /^https:\/\//i.test(value), "Invalid cover URL").optional(),
   // Publishing is deliberately handled only by the dedicated publish endpoint.
