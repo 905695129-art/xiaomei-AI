@@ -24,6 +24,7 @@ export default function CreatorResponsesPage() {
   const [items, setItems] = useState<ResponseItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [markingRead, setMarkingRead] = useState(false);
+  const [actionNotice, setActionNotice] = useState("");
   const [message, setMessage] = useState("正在打开你的心意收件箱…");
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -67,7 +68,7 @@ export default function CreatorResponsesPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(response.status === 401 ? "登录状态已失效，请重新登录。" : "暂时无法更新已读状态。");
       await refresh(true);
-      if (data.markedCount > 0) setMessage("已把这些心意收好 ♡");
+      if (data.markedCount > 0) setActionNotice("已把这些心意收好 ♡");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "操作失败");
     } finally {
@@ -94,6 +95,7 @@ export default function CreatorResponsesPage() {
         </div>
       </div>
       {message && <p className="notice" role="status">{message}</p>}
+      {actionNotice && <p className="notice" role="status">{actionNotice}</p>}
       {!message && items.length === 0 && <div className="empty">还没有收到回应。把作品分享出去，等待一份小小的心意吧 ♡</div>}
       {!message && items.length > 0 && <div style={{ display: "grid", gap: 12, marginTop: 18 }}>
         {items.map(item => <article key={item.id} style={{ padding: 16, borderRadius: 16, border: item.read_at ? "1px solid #f0dfe4" : "1px solid #edbfd0", background: item.read_at ? "linear-gradient(135deg,#fff8fa,#fff)" : "linear-gradient(135deg,#fff0f5,#fff)" }}>
