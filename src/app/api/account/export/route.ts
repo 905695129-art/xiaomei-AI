@@ -44,7 +44,7 @@ export async function GET() {
     const journeyResponses = await db`
       SELECT r.id, r.experience_id, e.title AS experience_title,
         r.level_id, l.title AS level_title, l.position,
-        r.reaction, r.created_at, r.updated_at, r.read_at
+        r.reaction, r.message, r.created_at, r.updated_at, r.read_at
       FROM journey_responses r
       JOIN experiences e ON e.id = r.experience_id
       JOIN experience_levels l ON l.id = r.level_id

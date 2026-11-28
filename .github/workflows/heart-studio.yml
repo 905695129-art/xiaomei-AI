@@ -73,6 +73,10 @@ jobs:
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_journey_response_read.sql
       - name: Test response read-state migration
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_journey_response_read.test.sql
+      - name: Apply response message migration
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_journey_response_message.sql
+      - name: Verify response message migration is repeatable
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_journey_response_message.sql
       - name: Test persisted journey response constraints
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_journey_responses.test.sql
       - name: Test purchase, snapshot, duplicate-order and refund invariants

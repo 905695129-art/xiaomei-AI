@@ -13,7 +13,7 @@ export async function GET() {
     const db = requireDb();
     const [responses, unread] = await Promise.all([
       db`
-        SELECT r.id, r.reaction, r.created_at, r.updated_at, r.read_at,
+        SELECT r.id, r.reaction, r.message, r.created_at, r.updated_at, r.read_at,
           e.title AS experience_title, e.slug,
           l.title AS level_title, l.position
         FROM journey_responses r

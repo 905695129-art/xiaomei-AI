@@ -25,6 +25,8 @@ export default function PublicExperiencePage() {
   const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState(false);
   const [reaction, setReaction] = useState<string | null>(null);
+  const [responseMessage, setResponseMessage] = useState("");
+  const [sendingReaction, setSendingReaction] = useState(false);
   const responsePanelRef = useRef<HTMLElement | null>(null);
   const openerButtonRef = useRef<HTMLButtonElement | null>(null);
   function closeSelected() {
@@ -105,6 +107,7 @@ export default function PublicExperiencePage() {
     if (opener) openerButtonRef.current = opener;
     setSelected(level);
     setReaction(null);
+    setResponseMessage("");
     setPrivateContent("");
     setCheckingLevel(true);
     setNotice("正在为你打开这一关…");
@@ -171,14 +174,15 @@ export default function PublicExperiencePage() {
   }
 
   async function sendReaction(label: string) {
-    if (!selected || !experience) return;
+    if (!selected || !experience || sendingReaction || checkingLevel) return;
     const reactionCode = label.startsWith("心动") ? "heart" : label.startsWith("想你") ? "miss_you" : "hug";
+    setSendingReaction(true);
     setNotice("正在把这份回应送出…");
     try {
       const response = await fetch(`/api/experiences/${encodeURIComponent(slug)}/responses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ levelId: selected.id, reaction: reactionCode })
+        body: JSON.stringify({ levelId: selected.id, reaction: reactionCode, message: responseMessage })
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error === "BUYER_SESSION_REQUIRED" ? "体验身份已失效，请刷新页面后再试。" : "暂时无法发送回应，请稍后再试。");
@@ -186,6 +190,8 @@ export default function PublicExperiencePage() {
       setNotice("你的回应已经送到创作者的心意收件箱 ♡");
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "发送失败，请稍后再试。");
+    } finally {
+      setSendingReaction(false);
     }
   }
 
@@ -225,7 +231,8 @@ export default function PublicExperiencePage() {
         {privateContent && <div className="privateContentView">{privateContent}</div>}
         <div className="heartReaction journeyDialogReactions">
           <span>此刻，你想给这份心意什么回应？</span>
-          <div>{["心动 ♡","想你 ✨","抱抱 🫶"].map(item => <button type="button" key={item} disabled={checkingLevel} className={reaction === item ? "chosenReaction" : ""} onClick={() => void sendReaction(item)}>{item}</button>)}</div>
+          <label className="journeyResponseNote"><span>也可以留一句话（选填）</span><textarea value={responseMessage} maxLength={500} disabled={checkingLevel || sendingReaction} onChange={event => setResponseMessage(event.target.value)} placeholder="写一句此刻想说的话…" rows={3}/><small>{Array.from(responseMessage).length}/500</small></label>
+          <div>{["心动 ♡","想你 ✨","抱抱 🫶"].map(item => <button type="button" key={item} disabled={checkingLevel || sendingReaction} className={reaction === item ? "chosenReaction" : ""} onClick={() => void sendReaction(item)}>{sendingReaction ? "发送中…" : item}</button>)}</div>
           {reaction && <small aria-live="polite">收到你的回应：{reaction}。创作者已经可以在心意收件箱里看到它。</small>}
         </div>
         <button type="button" className="journeyDialogDone" onClick={closeSelected}>把这份心意收好 ♡</button>

@@ -18,6 +18,10 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
   }
   const reaction = (parsed.value as { reaction?: unknown }).reaction;
   const levelId = (parsed.value as { levelId?: unknown }).levelId;
+  const messageValue = (parsed.value as { message?: unknown }).message;
+  if (messageValue !== undefined && typeof messageValue !== "string") return NextResponse.json({ error: "INVALID_MESSAGE" }, { status: 400, headers });
+  const message = typeof messageValue === "string" ? messageValue.trim() : "";
+  if (Array.from(message).length > 500) return NextResponse.json({ error: "MESSAGE_TOO_LONG" }, { status: 400, headers });
   if (typeof levelId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(levelId)) {
     return NextResponse.json({ error: "INVALID_LEVEL" }, { status: 400, headers });
   }
@@ -31,16 +35,16 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
     const tokenHash = createHash("sha256").update(token).digest("hex");
     const db = requireDb();
     const rows = await db.unsafe(
-      `INSERT INTO journey_responses (experience_id, level_id, buyer_ref, reaction)
-       SELECT e.id, l.id, b.buyer_ref, $4
+      `INSERT INTO journey_responses (experience_id, level_id, buyer_ref, reaction, message)
+       SELECT e.id, l.id, b.buyer_ref, $4, $5
        FROM experiences e
        JOIN experience_levels l ON l.experience_id = e.id AND l.is_active = TRUE
        JOIN buyer_sessions b ON b.token_hash = $3 AND b.expires_at > now()
        WHERE e.slug = $1 AND e.status = 'published' AND l.id = $2::uuid
        ON CONFLICT (level_id, buyer_ref)
-       DO UPDATE SET reaction = EXCLUDED.reaction, updated_at = now(), read_at = NULL
+       DO UPDATE SET reaction = EXCLUDED.reaction, message = EXCLUDED.message, updated_at = now(), read_at = NULL
        RETURNING id`,
-      [slug, levelId, tokenHash, reaction]
+      [slug, levelId, tokenHash, reaction, message]
     );
     if (!rows.length) return NextResponse.json({ error: "LEVEL_NOT_AVAILABLE" }, { status: 404, headers });
     return NextResponse.json({ ok: true }, { headers });
