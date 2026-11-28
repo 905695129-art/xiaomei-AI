@@ -5,7 +5,8 @@ import { requireDb } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_request: Request, context: { params: { slug: string; levelId: string } }) {
+export async function GET(_request: Request, context: { params: Promise<{ slug: string; levelId: string }> }) {
+  const { slug, levelId } = await context.params;
   try {
     // Opaque HttpOnly cookie; never accept buyer identity from a query string.
     const cookieStore = await cookies();
@@ -19,7 +20,7 @@ export async function GET(_request: Request, context: { params: { slug: string; 
     // A verified paid entitlement remains valid even if the creator later archives
     // the experience or removes this level from the public list. Prefer immutable
     // purchase-time snapshots so later edits cannot change what was bought.
-    const rows = await db.unsafe("SELECT COALESCE(en.level_title_snapshot, l.title) AS title, COALESCE(en.private_content_snapshot, l.private_content) AS private_content FROM experiences e JOIN experience_levels l ON l.experience_id = e.id JOIN entitlements en ON en.level_id = l.id AND en.buyer_ref = $1 JOIN orders o ON o.id = en.order_id AND o.status = 'paid' AND o.buyer_ref = en.buyer_ref AND o.level_id = l.id WHERE e.slug = $2 AND l.id = $3::uuid LIMIT 1", [buyerRef, context.params.slug, context.params.levelId]);
+    const rows = await db.unsafe("SELECT COALESCE(en.level_title_snapshot, l.title) AS title, COALESCE(en.private_content_snapshot, l.private_content) AS private_content FROM experiences e JOIN experience_levels l ON l.experience_id = e.id JOIN entitlements en ON en.level_id = l.id AND en.buyer_ref = $1 JOIN orders o ON o.id = en.order_id AND o.status = 'paid' AND o.buyer_ref = en.buyer_ref AND o.level_id = l.id WHERE e.slug = $2 AND l.id = $3::uuid LIMIT 1", [buyerRef, slug, levelId]);
     if (!rows.length) return NextResponse.json({ error: "PURCHASE_REQUIRED" }, { status: 403 });
     return NextResponse.json({ title: rows[0].title, content: rows[0].private_content }, { headers: { "Cache-Control": "private, no-store", "Vary": "Cookie" } });
   } catch (error) {
