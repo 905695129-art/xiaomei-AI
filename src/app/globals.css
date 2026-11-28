@@ -123,3 +123,40 @@
 .privateMediaItem audio{width:100%;display:block}
 .privateMediaItem figcaption{font-size:12px;color:#8c6878;padding:8px 3px 0}
 @media(min-width:640px){.levelMediaRow{grid-template-columns:100px minmax(0,1fr) minmax(0,1fr) auto}.levelMediaRow input:nth-of-type(2){grid-column:auto}}
+
+/* Expanded creator-selected palettes: shared by creator preview and recipient view */
+.themeOptions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.themeChoice{justify-content:flex-start;min-height:42px;padding:8px 10px;border-radius:13px}
+.themeChoice.selected{box-shadow:0 0 0 2px #c47d9120}
+.whiteSwatch{background:linear-gradient(135deg,#fff,#e9e9ee);border:1px solid #dedde4}
+.mintSwatch{background:linear-gradient(135deg,#cceee2,#75bda9)}
+.skySwatch{background:linear-gradient(135deg,#d9edff,#78aeda)}
+.peachSwatch{background:linear-gradient(135deg,#ffe0cf,#eaa58d)}
+.midnightSwatch{background:linear-gradient(135deg,#202a48,#7788b8)}
+.champagneSwatch{background:linear-gradient(135deg,#f5e6bd,#c29a56)}
+.themePreview-white,.publicTheme-white{background:linear-gradient(180deg,#fff,#f7f7fa)}
+.themePreview-white .creatorPreviewHero>span,.publicTheme-white .publicHalo{color:#92919c}
+.themePreview-mint,.publicTheme-mint{background:linear-gradient(180deg,#f0faf6,#fff)}
+.themePreview-mint .creatorPreviewHero>span,.themePreview-mint .creatorPreviewLevels strong,.publicTheme-mint .publicHalo,.publicTheme-mint .publicEyebrow,.publicTheme-mint .journeyAction strong{color:#579c87}
+.themePreview-mint .creatorPreviewNumber,.publicTheme-mint .journeyNumber{background:#e1f3ec;color:#579c87}
+.publicTheme-mint .journeyAction button{background:#579c87}.publicTheme-mint .journeySection{border-color:#d7eee5}
+.themePreview-sky,.publicTheme-sky{background:linear-gradient(180deg,#f0f7ff,#fff)}
+.themePreview-sky .creatorPreviewHero>span,.themePreview-sky .creatorPreviewLevels strong,.publicTheme-sky .publicHalo,.publicTheme-sky .publicEyebrow,.publicTheme-sky .journeyAction strong{color:#679bc8}
+.themePreview-sky .creatorPreviewNumber,.publicTheme-sky .journeyNumber{background:#e4f0fc;color:#679bc8}
+.publicTheme-sky .journeyAction button{background:#679bc8}.publicTheme-sky .journeySection{border-color:#dceafa}
+.themePreview-peach,.publicTheme-peach{background:linear-gradient(180deg,#fff4ee,#fff)}
+.themePreview-peach .creatorPreviewHero>span,.themePreview-peach .creatorPreviewLevels strong,.publicTheme-peach .publicHalo,.publicTheme-peach .publicEyebrow,.publicTheme-peach .journeyAction strong{color:#d28b70}
+.themePreview-peach .creatorPreviewNumber,.publicTheme-peach .journeyNumber{background:#ffebe1;color:#d28b70}
+.publicTheme-peach .journeyAction button{background:#d28b70}.publicTheme-peach .journeySection{border-color:#f6e0d5}
+.themePreview-midnight,.publicTheme-midnight{background:linear-gradient(180deg,#252d49,#353e5c);color:#f6f3ff}
+.themePreview-midnight .creatorPreviewHero h2,.themePreview-midnight .creatorPreviewLevels b,.publicTheme-midnight .publicHero h1,.publicTheme-midnight .journeyHeading h2{color:#f8f4ff}
+.themePreview-midnight .creatorPreviewHero p,.themePreview-midnight .creatorPreviewFoot,.publicTheme-midnight .publicDescription,.publicTheme-midnight .journeyCopy p{color:#d0cde0}
+.themePreview-midnight .creatorPreviewLevels article,.publicTheme-midnight .journeyCard,.publicTheme-midnight .journeySection{background:#3c4565;border-color:#596181}
+.themePreview-midnight .creatorPreviewNumber,.publicTheme-midnight .journeyNumber{background:#535d80;color:#f0d8ee}
+.themePreview-midnight .creatorPreviewHero>span,.themePreview-midnight .creatorPreviewLevels strong,.publicTheme-midnight .publicHalo,.publicTheme-midnight .publicEyebrow,.publicTheme-midnight .journeyAction strong{color:#e4c2e9}
+.publicTheme-midnight .journeyAction button{background:#8778b5}
+.themePreview-champagne,.publicTheme-champagne{background:linear-gradient(180deg,#fbf5e7,#fff)}
+.themePreview-champagne .creatorPreviewHero>span,.themePreview-champagne .creatorPreviewLevels strong,.publicTheme-champagne .publicHalo,.publicTheme-champagne .publicEyebrow,.publicTheme-champagne .journeyAction strong{color:#b08b4d}
+.themePreview-champagne .creatorPreviewNumber,.publicTheme-champagne .journeyNumber{background:#f4ecd8;color:#a98950}
+.publicTheme-champagne .journeyAction button{background:#ad8a4e}.publicTheme-champagne .journeySection{border-color:#eee4ce}
+@media(max-width:520px){.themeOptions{grid-template-columns:repeat(2,minmax(0,1fr))}}
