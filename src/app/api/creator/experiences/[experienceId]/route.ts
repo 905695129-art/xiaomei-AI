@@ -59,7 +59,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ exper
         theme = COALESCE(${parsed.data.theme ?? null}, theme),
         cover_url = COALESCE(${parsed.data.coverUrl ?? null}, cover_url),
         cover_position = COALESCE(${parsed.data.coverPosition ?? null}, cover_position),
-        payment_qr_url = COALESCE(${parsed.data.paymentQrUrl ?? null}, payment_qr_url),
+        payment_qr_url = CASE WHEN ${parsed.data.paymentQrUrl ?? null} IS NULL THEN payment_qr_url ELSE NULLIF(${parsed.data.paymentQrUrl ?? ""}, '') END,
         status = COALESCE(${parsed.data.status ?? null}, status),
         updated_at = now()
       WHERE id = ${experienceId}::uuid AND creator_id = ${creator.id}
