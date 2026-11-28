@@ -277,3 +277,26 @@
 .heartTapSpark:nth-child(2n){color:#ffda7c;text-shadow:0 0 9px #f4d47b}
 @keyframes heartTapSparkle{0%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(-25deg)}22%{opacity:1;transform:translate(-50%,-50%) scale(1.12) rotate(12deg)}100%{opacity:0;transform:translate(calc(-50% + var(--bubble-x)),calc(-50% + var(--bubble-y))) scale(.55) rotate(70deg)}}
 @media(prefers-reduced-motion:reduce){.heartTapSpark{display:none!important}}
+
+
+/* First-arrival emotional welcome: a calm, warm pause before the creator tools. */
+.heartWelcomeBackdrop{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:22px;background:radial-gradient(circle at 50% 18%,rgba(255,224,237,.82),rgba(255,244,248,.94) 48%,rgba(248,239,249,.97));backdrop-filter:blur(18px);animation:heartWelcomeFade .42s ease both}
+.heartWelcomeCard{position:relative;isolation:isolate;width:min(100%,430px);padding:38px 27px 29px;border:1px solid rgba(255,255,255,.9);border-radius:32px;background:linear-gradient(155deg,#fff 0%,#fff8fb 58%,#fff1f7 100%);box-shadow:0 24px 80px rgba(183,104,143,.2),inset 0 1px 0 #fff;text-align:center;overflow:hidden;animation:heartWelcomeRise .58s cubic-bezier(.2,.8,.2,1) both}
+.heartWelcomeCard:before,.heartWelcomeCard:after{content:"";position:absolute;z-index:-1;border-radius:50%;filter:blur(2px);pointer-events:none}
+.heartWelcomeCard:before{width:190px;height:190px;top:-110px;right:-70px;background:radial-gradient(circle,rgba(255,190,218,.58),transparent 70%)}
+.heartWelcomeCard:after{width:170px;height:170px;bottom:-105px;left:-75px;background:radial-gradient(circle,rgba(255,220,174,.4),transparent 70%)}
+.heartWelcomeOrbits{margin:0 auto 18px;color:#e58aaf;font-size:24px;letter-spacing:7px;animation:heartWelcomeFloat 3.2s ease-in-out infinite}
+.heartWelcomeCard .eyebrow{margin:0 0 13px;color:#c17b9a;font-size:10px;letter-spacing:2.2px;font-weight:700}
+.heartWelcomeCard h1{margin:0 auto 14px;max-width:330px;color:#75485e;font-size:clamp(25px,7vw,31px);line-height:1.42;letter-spacing:.02em}
+.heartWelcomeLead{max-width:325px;margin:0 auto 22px;color:#987487;font-size:14px;line-height:1.9}
+.heartWelcomeNote{display:flex;gap:12px;align-items:flex-start;margin:0 0 24px;padding:15px 16px;border:1px solid #f8e3ec;border-radius:19px;background:rgba(255,255,255,.76);text-align:left}
+.heartWelcomeNote span{flex:0 0 auto;color:#e58aaf;font-size:19px}
+.heartWelcomeNote p{margin:0;color:#987487;font-size:12px;line-height:1.85}
+.heartWelcomeStart{width:100%;min-height:52px;border:0;border-radius:18px;background:linear-gradient(100deg,#ed9cbd,#e783aa);color:white;font-size:14px;font-weight:700;box-shadow:0 9px 22px rgba(222,127,166,.28);transition:transform .2s,box-shadow .2s}
+.heartWelcomeStart span{margin-left:8px;font-size:18px}
+.heartWelcomeStart:active{transform:scale(.975)}
+.heartWelcomeCard>small{display:block;margin-top:14px;color:#bd9bad;font-size:10px;letter-spacing:.04em}
+@keyframes heartWelcomeFade{from{opacity:0}to{opacity:1}}
+@keyframes heartWelcomeRise{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes heartWelcomeFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@media(prefers-reduced-motion:reduce){.heartWelcomeBackdrop,.heartWelcomeCard,.heartWelcomeOrbits{animation:none}}
