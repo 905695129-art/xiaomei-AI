@@ -37,11 +37,15 @@ export async function POST(request: Request) {
         { status: parsedBody.error === "REQUEST_TOO_LARGE" ? 413 : 400, headers: privateHeaders }
       );
     }
-    const body = parsedBody.value as { contentType?: unknown; fileSize?: unknown } | null;
+    const body = parsedBody.value as { contentType?: unknown; fileSize?: unknown; purpose?: unknown } | null;
+    const purpose = body?.purpose === "payment-qr" ? "payment-qr" : "cover";
+    if (body?.purpose !== undefined && body.purpose !== "cover" && body.purpose !== "payment-qr") {
+      return NextResponse.json({ error: "INVALID_PURPOSE" }, { status: 400, headers: privateHeaders });
+    }
     const contentType = typeof body?.contentType === "string" ? body.contentType : "";
     const fileSize = Number(body?.fileSize);
     const extension = allowedTypes[contentType];
-    if (!extension || !Number.isFinite(fileSize) || fileSize <= 0 || fileSize > 8 * 1024 * 1024) {
+    if (!extension || !Number.isFinite(fileSize) || fileSize <= 0 || fileSize > 8 * 1024 * 1024 || (purpose === "payment-qr" && !["image/jpeg","image/png","image/webp"].includes(contentType))) {
       return NextResponse.json({ error: "INVALID_IMAGE" }, { status: 400, headers: privateHeaders });
     }
 
@@ -59,7 +63,7 @@ export async function POST(request: Request) {
     const [experience] = await db`SELECT id FROM experiences WHERE id = ${experienceId}::uuid AND creator_id = ${creator.id} LIMIT 1`;
     if (!experience) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404, headers: privateHeaders });
 
-    const key = `covers/${experience.id}/${randomUUID()}.${extension}`;
+    const key = `${purpose === "payment-qr" ? "payment-qr" : "covers"}/${experience.id}/${randomUUID()}.${extension}`;
     const client = new S3Client({
       region,
       endpoint,
