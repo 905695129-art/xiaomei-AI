@@ -23,13 +23,13 @@ BEGIN
   INSERT INTO buyer_sessions (buyer_ref, token_hash, expires_at)
   VALUES (v_buyer_ref, encode(digest(gen_random_uuid()::text, 'sha256'), 'hex'), now() + interval '1 day');
 
-  INSERT INTO journey_responses (experience_id, level_id, buyer_ref, reaction)
-  VALUES (v_experience_id, v_level_id, v_buyer_ref, 'heart');
+  INSERT INTO journey_responses (experience_id, level_id, buyer_ref, reaction, message)
+  VALUES (v_experience_id, v_level_id, v_buyer_ref, 'heart', '初次回应');
 
-  INSERT INTO journey_responses (experience_id, level_id, buyer_ref, reaction)
-  VALUES (v_experience_id, v_level_id, v_buyer_ref, 'miss_you')
+  INSERT INTO journey_responses (experience_id, level_id, buyer_ref, reaction, message)
+  VALUES (v_experience_id, v_level_id, v_buyer_ref, 'miss_you', '其实我也想你')
   ON CONFLICT (level_id, buyer_ref)
-  DO UPDATE SET reaction = EXCLUDED.reaction, updated_at = now();
+  DO UPDATE SET reaction = EXCLUDED.reaction, message = EXCLUDED.message, updated_at = now();
 
   SELECT COUNT(*) INTO found_count
   FROM journey_responses jr
@@ -41,21 +41,21 @@ BEGIN
     SELECT 1 FROM journey_responses jr
     WHERE jr.level_id = v_level_id
       AND jr.buyer_ref = v_buyer_ref
-      AND jr.reaction = 'miss_you' AND jr.read_at IS NULL
+      AND jr.reaction = 'miss_you' AND jr.message = '其实我也想你' AND jr.read_at IS NULL
   ) THEN
     RAISE EXCEPTION 'JOURNEY_RESPONSE_UPSERT_FAILED';
   END IF;
 
   UPDATE journey_responses SET read_at = now()
   WHERE level_id = v_level_id AND buyer_ref = v_buyer_ref;
-  INSERT INTO journey_responses (experience_id, level_id, buyer_ref, reaction)
-  VALUES (v_experience_id, v_level_id, v_buyer_ref, 'hug')
+  INSERT INTO journey_responses (experience_id, level_id, buyer_ref, reaction, message)
+  VALUES (v_experience_id, v_level_id, v_buyer_ref, 'hug', '给你一个抱抱')
   ON CONFLICT (level_id, buyer_ref)
-  DO UPDATE SET reaction = EXCLUDED.reaction, updated_at = now(), read_at = NULL;
+  DO UPDATE SET reaction = EXCLUDED.reaction, message = EXCLUDED.message, updated_at = now(), read_at = NULL;
   IF NOT EXISTS (
     SELECT 1 FROM journey_responses jr
     WHERE jr.level_id = v_level_id AND jr.buyer_ref = v_buyer_ref
-      AND jr.reaction = 'hug' AND jr.read_at IS NULL
+      AND jr.reaction = 'hug' AND jr.message = '给你一个抱抱' AND jr.read_at IS NULL
   ) THEN
     RAISE EXCEPTION 'UPDATED_RESPONSE_NOT_MARKED_UNREAD';
   END IF;
@@ -64,6 +64,13 @@ BEGIN
     INSERT INTO journey_responses (experience_id, level_id, buyer_ref, reaction)
     VALUES (v_experience_id, v_level_id, v_buyer_ref, 'unknown');
     RAISE EXCEPTION 'INVALID_JOURNEY_REACTION_ACCEPTED';
+  EXCEPTION WHEN check_violation THEN
+    NULL;
+  END;
+  BEGIN
+    INSERT INTO journey_responses (experience_id, level_id, buyer_ref, reaction, message)
+    VALUES (v_experience_id, v_level_id, v_buyer_ref, 'heart', repeat('字', 501));
+    RAISE EXCEPTION 'OVERSIZED_JOURNEY_MESSAGE_ACCEPTED';
   EXCEPTION WHEN check_violation THEN
     NULL;
   END;

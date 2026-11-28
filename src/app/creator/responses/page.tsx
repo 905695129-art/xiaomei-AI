@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 type ResponseItem = {
   id: string;
   reaction: "heart" | "miss_you" | "hug";
+  message: string;
   created_at: string;
   updated_at: string;
   read_at: string | null;
@@ -104,6 +105,7 @@ export default function CreatorResponsesPage() {
             <b style={{ color: "#a7657a", fontSize: 14 }}>{labels[item.reaction].text}{!item.read_at && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 500 }}>· 新</span>}</b>
           </div>
           <p style={{ margin: "9px 0 5px", color: "#805d68", fontSize: 13 }}>{labels[item.reaction].detail}</p>
+          {item.message && <div className="responseMessage"><span>留给你的一句话</span><p>{item.message}</p></div>}
           <small style={{ color: "#b49ca1" }}>{item.experience_title} · {new Date(item.updated_at).toLocaleString()}</small>
           <div style={{ marginTop: 8 }}><a href={`/p/${item.slug}`} target="_blank" rel="noreferrer" style={{ color: "#b87589", fontSize: 11 }}>查看作品 ↗</a></div>
         </article>)}
