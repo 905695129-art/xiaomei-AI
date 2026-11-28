@@ -16,12 +16,13 @@ const updateSchema = z.object({
 }).refine(value => Object.keys(value).length > 0);
 
 
-export async function GET(_request: Request, context: { params: { experienceId: string } }) {
+export async function GET(_request: Request, context: { params: Promise<{ experienceId: string }> }) {
+  const { experienceId } = await context.params;
   try {
     const creator = await getCurrentCreator();
     if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
     const db = requireDb();
-    const [experience] = await db`SELECT id, slug, title, description, status, theme, cover_url, cover_position FROM experiences WHERE id = ${context.params.experienceId}::uuid AND creator_id = ${creator.id} LIMIT 1`;
+    const [experience] = await db`SELECT id, slug, title, description, status, theme, cover_url, cover_position FROM experiences WHERE id = ${experienceId}::uuid AND creator_id = ${creator.id} LIMIT 1`;
     if (!experience) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
     return NextResponse.json({ experience }, { headers: { "Cache-Control": "private, no-store", "Vary": "Cookie" } });
   } catch (error) {
@@ -31,7 +32,8 @@ export async function GET(_request: Request, context: { params: { experienceId: 
   }
 }
 
-export async function PATCH(request: Request, context: { params: { experienceId: string } }) {
+export async function PATCH(request: Request, context: { params: Promise<{ experienceId: string }> }) {
+  const { experienceId } = await context.params;
   if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403 });
   try {
     const creator = await getCurrentCreator();
@@ -50,7 +52,7 @@ export async function PATCH(request: Request, context: { params: { experienceId:
         cover_position = COALESCE(${parsed.data.coverPosition ?? null}, cover_position),
         status = COALESCE(${parsed.data.status ?? null}, status),
         updated_at = now()
-      WHERE id = ${context.params.experienceId}::uuid AND creator_id = ${creator.id}
+      WHERE id = ${experienceId}::uuid AND creator_id = ${creator.id}
       RETURNING id, slug, title, description, status, theme, cover_url, cover_position, updated_at
     `;
     if (!updated) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
