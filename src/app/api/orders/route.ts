@@ -7,5 +7,5 @@ export async function POST() {
   return NextResponse.json({
     error: "PAYMENTS_NOT_CONFIGURED",
     message: "当前版本尚未开通真实支付，请勿向任何人转账。"
-  }, { status: 503 });
+  }, { status: 503, headers: { "Cache-Control": "no-store" } });
 }
