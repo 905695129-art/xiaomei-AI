@@ -48,7 +48,11 @@ try {
   assert.equal(listingJson.experience.levels.length, 3);
   assert.equal(listingJson.experience.levels[0].completed, false);
 
-  const lockedFreeGet = await call("/api/experiences/" + slug + "/levels/" + thirdId, cookie1);\n  assert.equal(lockedFreeGet.status, 409, "free level must still respect sequential progression");\n  assert.equal((await lockedFreeGet.json()).error, "LEVEL_LOCKED");\n\n  const lockedGet = await call("/api/experiences/" + slug + "/levels/" + secondId, cookie1);
+  const lockedFreeGet = await call("/api/experiences/" + slug + "/levels/" + thirdId, cookie1);
+  assert.equal(lockedFreeGet.status, 409, "free level must still respect sequential progression");
+  assert.equal((await lockedFreeGet.json()).error, "LEVEL_LOCKED");
+
+  const lockedGet = await call("/api/experiences/" + slug + "/levels/" + secondId, cookie1);
   assert.equal(lockedGet.status, 409, "direct URL must not bypass sequential lock");
   assert.equal((await lockedGet.json()).error, "LEVEL_LOCKED");
 
