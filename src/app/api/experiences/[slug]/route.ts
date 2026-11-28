@@ -7,10 +7,15 @@ export const dynamic = "force-dynamic";
 
 export async function GET(_request: Request, context: { params: Promise<{ slug: string }> }) {
   const { slug } = await context.params;
+  let hasBuyerCookie = false;
+  const responseHeaders = () => hasBuyerCookie
+    ? { "Cache-Control": "private, no-store", Vary: "Cookie" }
+    : { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60", Vary: "Cookie" };
   try {
     const db = requireDb();
     const cookieStore = await cookies();
     const token = cookieStore.get("heart_buyer")?.value;
+    hasBuyerCookie = Boolean(token);
     let buyerRef: string | null = null;
     if (token) {
       const tokenHash = createHash("sha256").update(token).digest("hex");
@@ -37,7 +42,7 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
         ))
       ORDER BY l.position ASC
     `;
-    if (!rows.length) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
+    if (!rows.length) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404, headers: responseHeaders() });
     const first = rows[0];
     return NextResponse.json({
       experience: {
@@ -48,10 +53,10 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
           teaser: r.teaser, priceMinor: r.price_minor
         }))
       }
-    }, { headers: { "Cache-Control": buyerRef ? "private, no-store" : "public, s-maxage=30, stale-while-revalidate=60" } });
+    }, { headers: responseHeaders() });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
     const status = code === "DATABASE_NOT_CONFIGURED" ? 503 : 500;
-    return NextResponse.json({ error: status === 503 ? "SERVICE_NOT_CONFIGURED" : "INTERNAL_ERROR" }, { status });
+    return NextResponse.json({ error: status === 503 ? "SERVICE_NOT_CONFIGURED" : "INTERNAL_ERROR" }, { status, headers: responseHeaders() });
   }
 }
