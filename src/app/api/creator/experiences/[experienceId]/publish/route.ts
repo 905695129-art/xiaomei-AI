@@ -4,7 +4,8 @@ import { requireDb } from "@/lib/db";
 import { getCurrentCreator } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
-export async function POST(_request: Request, context: { params: { experienceId: string } }) {
+export async function POST(_request: Request, context: { params: Promise<{ experienceId: string }> }) {
+  const { experienceId } = await context.params;
   if (!isSameOriginWrite(_request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403 });
   try {
     const creator = await getCurrentCreator();
@@ -16,7 +17,7 @@ export async function POST(_request: Request, context: { params: { experienceId:
     }
     const result = await db`
       UPDATE experiences e SET status = 'published', updated_at = now()
-      WHERE e.id = ${context.params.experienceId}::uuid AND e.creator_id = ${creator.id}
+      WHERE e.id = ${experienceId}::uuid AND e.creator_id = ${creator.id}
         AND EXISTS (SELECT 1 FROM experience_levels l WHERE l.experience_id = e.id AND l.is_active = true)
       RETURNING e.id, e.slug, e.title, e.status
     `;
