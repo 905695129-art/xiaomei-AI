@@ -1,5 +1,4 @@
 import { scryptSync, timingSafeEqual } from "node:crypto";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { requireDb } from "@/lib/db";
 import { getCurrentCreator } from "@/lib/session";
@@ -100,7 +99,6 @@ export async function POST(request: Request) {
       ok: true,
       message: "账户已注销。账户资料和私密创作内容已清除；依法或为财务审计必须保留的订单记录会继续保留并与账户身份分离。"
     }, { headers: privateHeaders });
-    const cookieStore = await cookies();
     response.cookies.set("heart_session", "", {
       httpOnly: true, secure: process.env.NODE_ENV === "production",
       sameSite: "lax", path: "/", maxAge: 0
