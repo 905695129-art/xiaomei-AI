@@ -19,7 +19,7 @@ const updateSchema = z.object({
   theme: z.enum(["rose", "cream", "lavender"]).optional(),
   coverPosition: z.enum(["top", "center", "bottom"]).optional(),
   coverUrl: z.string().max(2048).refine(value => value === "" || /^preset:(rose|cream|lavender|night)$/.test(value) || /^https:\/\//i.test(value), "Invalid cover URL").optional(),
-  paymentQrUrl: z.string().max(2048).refine(value => value === "" || /^https:\/\//i.test(value), "Invalid payment QR URL").optional(),
+  paymentQrUrl: z.string().max(2048).refine(value => value === "" || Boolean(process.env.STORAGE_PUBLIC_URL && value.startsWith(process.env.STORAGE_PUBLIC_URL.replace(/\/$/, "") + "/payment-qr/")), "Invalid payment QR URL").optional(),
   // Publishing is deliberately handled only by the dedicated publish endpoint.
   status: z.enum(["draft", "archived"]).optional()
 }).refine(value => Object.keys(value).length > 0);
