@@ -270,3 +270,10 @@
 .creatorStepNext,.creatorGuideNext,.creatorGuideThemes button,.creatorStepProgress button{transition:transform .18s ease,box-shadow .22s ease,background .22s ease}
 .creatorStepNext:hover,.creatorGuideNext:hover{box-shadow:0 9px 24px #d28da155;filter:saturate(1.06)}
 @media(prefers-reduced-motion:reduce){.heartTapBubble{display:none!important}.creatorShell .editorCard button,.creatorShell .editorCard a{transition:none!important}}
+
+
+/* Golden star / stardust tap feedback, alternating with the existing pink bubbles. */
+.heartTapSpark{position:fixed;z-index:20000;pointer-events:none;display:block;color:#f0c65e;font-size:var(--bubble-size);line-height:1;text-shadow:0 1px 5px #e7bd5a88,0 0 10px #ffe7a7aa;transform:translate(-50%,-50%) scale(.2) rotate(-18deg);animation:heartTapSparkle .78s cubic-bezier(.16,.72,.3,1) var(--bubble-delay) both}
+.heartTapSpark:nth-child(2n){color:#ffda7c;text-shadow:0 0 9px #f4d47b}
+@keyframes heartTapSparkle{0%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(-25deg)}22%{opacity:1;transform:translate(-50%,-50%) scale(1.12) rotate(12deg)}100%{opacity:0;transform:translate(calc(-50% + var(--bubble-x)),calc(-50% + var(--bubble-y))) scale(.55) rotate(70deg)}}
+@media(prefers-reduced-motion:reduce){.heartTapSpark{display:none!important}}
