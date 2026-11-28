@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 
 type MediaItem = { type: "image" | "audio" | "video"; url: string; name?: string };
 type Level = { id: string; position: number; title: string; teaser: string | null; priceMinor: number; completed?: boolean };
-type Experience = { slug: string; title: string; description: string | null; coverUrl: string | null; coverPosition?: "top" | "center" | "bottom"; currency: string; theme?: "rose" | "white" | "lavender" | "mint" | "sky" | "peach" | "midnight" | "champagne"; levels: Level[] };
+type Experience = { slug: string; title: string; description: string | null; coverUrl: string | null; paymentQrUrl?: string | null; coverPosition?: "top" | "center" | "bottom"; currency: string; theme?: "rose" | "white" | "lavender" | "mint" | "sky" | "peach" | "midnight" | "champagne"; levels: Level[] };
 
 function money(minor: number, currency: string) {
   try { return new Intl.NumberFormat("zh-CN", { style: "currency", currency }).format(minor / 100); }
@@ -208,7 +208,7 @@ export default function PublicExperiencePage() {
     </section>
     <section className="journeySection">
       <div className="journeyHeading"><div><p className="publicEyebrow">YOUR LITTLE JOURNEY</p><h2>一关一关，慢慢打开</h2></div><span>{experience.levels.length} LEVELS</span></div>
-      <div className="paymentStatusNotice"><span>♡</span><div><b>这是一段为你准备的小旅程</b><p>慢慢体验每一关吧。进入任意一关即可查看专属惊喜并留下心意回应；金额仅作展示参考，当前不会收款。</p></div></div>
+      <div className="paymentStatusNotice"><span>♡</span><div><b>这是一段为你准备的小旅程</b><p>慢慢体验每一关吧。创作者如设置了收款码，你可以自愿扫码支持；平台不代收款，也不会验证转账是否到账。</p></div></div>
       {experience.levels.length === 0 ? <div className="emptyJourney">这段旅程还在准备中，稍后再来看看吧。</div> :
         <div className="journeyList">{experience.levels.map((level, index) => <article className={selected?.id === level.id ? "journeyCard activeJourney" : "journeyCard"} key={level.id}>
           <div className="journeyNumber">{String(level.position || index + 1).padStart(2, "0")}</div>
@@ -225,7 +225,7 @@ export default function PublicExperiencePage() {
         <p className="journeyDialogEyebrow">A LITTLE SECRET FOR YOU</p>
         <h2 id="journeyDialogTitle">{selected.title}</h2>
         <p className="journeyDialogDescription" id="journeyDialogDescription">{selected.teaser || "一份为你准备的小惊喜，打开后就能看到更多。"}</p>
-        <div className="journeyDialogPrice">{money(selected.priceMinor, experience.currency || "CNY")} <span>心意参考</span></div>
+        <div className="journeyDialogPrice">{money(selected.priceMinor, experience.currency || "CNY")} <span>心意参考</span></div>\n        {experience.paymentQrUrl&&<div className="creatorPaymentQr"><p>创作者提供的收款码</p><img src={experience.paymentQrUrl} alt="创作者收款二维码" /><small>如你愿意支持创作者，可自行扫码转账。请先核对收款方信息；平台不代收款、不验证到账，也不提供退款或支付担保。</small></div>}
         <div className="journeyDialogStatus" aria-live="polite">{checkingLevel ? <><span className="journeySpinner" />正在为你打开这一关…</> : notice || "慢慢来，看看这份心意为你准备了什么。"}</div>
         {privateContent && <div className="privateContentView">{privateContent}</div>}
         {privateMedia.length > 0 && <div className="privateMediaGallery">{privateMedia.map((item,index) => <figure className="privateMediaItem" key={`${item.url}-${index}`}>{item.type === "image" ? <img src={item.url} alt={item.name || "专属照片"} loading="lazy" /> : item.type === "audio" ? <audio controls preload="none" src={item.url}>当前浏览器暂不支持播放音频</audio> : <video controls playsInline preload="metadata" src={item.url}>当前浏览器暂不支持播放视频</video>}{item.name && <figcaption>{item.name}</figcaption>}</figure>)}</div>}
