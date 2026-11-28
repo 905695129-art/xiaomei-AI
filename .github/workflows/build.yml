@@ -84,12 +84,23 @@ jobs:
                       text = "启用屏幕文字读取（默认关闭）"
                       isChecked = prefs.getBoolean("capture_enabled", false)
                       setOnCheckedChangeListener { _, enabled ->
-                          prefs.edit().putBoolean("capture_enabled", enabled).apply()
-                          result.text = if (enabled) {
-                              "屏幕文字读取已开启。请同时在系统辅助功能设置中启用小美 AI 服务；关闭此开关即可停止读取。"
-                          } else {
-                              "屏幕文字读取已关闭。"
+                          val editor = prefs.edit().putBoolean("capture_enabled", enabled)
+                          if (!enabled) {
+                              editor.remove("screen_snapshot").remove("capture_package").remove("capture_time")
                           }
+                          editor.apply()
+                          result.text = if (enabled) {
+                              "屏幕文字读取已开启。请同时在系统辅助功能设置中启用小美 AI 服务；关闭此开关会停止读取并清除本机缓存。"
+                          } else {
+                              "屏幕文字读取已关闭，本机已读取的屏幕文字缓存也已清除。"
+                          }
+                      }
+                  })
+                  root.addView(Button(this).apply {
+                      text = "清除已读取的屏幕文字"
+                      setOnClickListener {
+                          prefs.edit().remove("screen_snapshot").remove("capture_package").remove("capture_time").apply()
+                          result.text = "已清除本机暂存的屏幕文字。"
                       }
                   })
                   root.addView(Button(this).apply {
