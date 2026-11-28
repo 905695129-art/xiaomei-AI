@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { isSameOriginWrite } from "@/lib/security";
 import { randomUUID } from "node:crypto";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 import { requireDb } from "@/lib/db";
 import { getCurrentCreator } from "@/lib/session";
@@ -93,6 +93,17 @@ export async function POST(request: Request) {
       ContentType: "image/webp", CacheControl: "public, max-age=31536000, immutable"
     }));
     const publicUrl = `${publicBase.replace(/\/$/, "")}/${key.split("/").map(encodeURIComponent).join("/")}`;
+    try {
+      const [updated] = await db`
+        UPDATE experiences SET cover_url = ${publicUrl}, updated_at = now()
+        WHERE id = ${experience.id} AND creator_id = ${creator.id}
+        RETURNING id
+      `;
+      if (!updated) throw new Error("EXPERIENCE_UPDATE_FAILED");
+    } catch (error) {
+      await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key })).catch(() => undefined);
+      throw error;
+    }
     return NextResponse.json({ publicUrl }, { headers: privateHeaders });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
