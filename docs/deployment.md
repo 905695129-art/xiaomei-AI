@@ -40,6 +40,8 @@ Compose 会先启动 PostgreSQL，等待数据库健康检查通过，再执行�
 
 应用容器监听 3000 端口，Compose 默认只将其绑定到主机回环地址 `127.0.0.1:3000`，便于主机上的 Caddy/Nginx 反向代理访问。生产环境应通过 HTTPS 反向代理访问，并确保反向代理正确传递 Host、协议和请求头；不要将应用端口改为公网监听。
 
+健康检查分为两层：`GET /api/health` 只检查 Next.js 进程是否存活；`GET /api/ready` 会实际执行数据库查询，返回数据库是否就绪。部署验收时应两者都返回 HTTP 200。
+
 ## 4. 备份与升级
 
 升级前先备份数据库：
@@ -83,4 +85,6 @@ cat heart-studio-backup.sql | docker compose exec -T db psql -U heart -d heart_s
 - `SERVICE_NOT_CONFIGURED`：检查 `DATABASE_URL` 和数据库连接。
 - 邮件接口返回 `EMAIL_DELIVERY_NOT_CONFIGURED`：检查 `RESEND_API_KEY`、`EMAIL_FROM`、`APP_URL`。
 - 照片上传提示存储未配置：检查 S3 兼容存储的 endpoint、bucket、公开 URL 和凭据。
+- 应用进程未就绪：检查 `curl -i http://127.0.0.1:3000/api/health`。
+- 应用可响应但数据库未就绪：检查 `curl -i http://127.0.0.1:3000/api/ready`、`DATABASE_URL` 和数据库日志。
 - 应用无法启动：查看 `docker compose logs app`；迁移失败时查看 `docker compose logs migrate`。
