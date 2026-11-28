@@ -78,9 +78,11 @@ export async function POST(request: Request) {
     } finally {
       reader.releaseLock();
     }
+    const boundedHeaders = new Headers(request.headers);
+    boundedHeaders.delete("content-length");
     const boundedRequest = new Request(request.url, {
       method: "POST",
-      headers: request.headers,
+      headers: boundedHeaders,
       body: Buffer.concat(chunks, received)
     });
     let form: FormData;
