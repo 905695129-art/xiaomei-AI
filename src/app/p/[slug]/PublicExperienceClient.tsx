@@ -23,6 +23,7 @@ export default function PublicExperiencePage() {
   const [checkingLevel, setCheckingLevel] = useState(false);
   const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState(false);
+  const [reaction, setReaction] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -63,6 +64,7 @@ export default function PublicExperiencePage() {
 
   async function beginUnlock(level: Level) {
     setSelected(level);
+    setReaction(null);
     setPrivateContent("");
     setCheckingLevel(true);
     setNotice("正在确认这台设备是否已经解锁过本关…");
@@ -151,7 +153,7 @@ export default function PublicExperiencePage() {
         </article>)}</div>}
       <div className="journeyTotal"><span>全部关卡合计（仅供参考）</span><strong>{money(total, experience.currency || "CNY")}</strong></div>
     </section>
-    {selected && <section className="unlockNotice" aria-live="polite"><div className="noticeIcon">♡</div><div><b>{selected.title}</b><p>{notice || "选择了这一关。"}</p>{privateContent && <div className="privateContentView">{privateContent}</div>}</div><button onClick={() => setSelected(null)} aria-label="关闭">×</button></section>}
+    {selected && <section className="unlockNotice" aria-live="polite"><div className="noticeIcon">♡</div><div><b>{selected.title}</b><p>{notice || "选择了这一关。"}</p>{privateContent && <div className="privateContentView">{privateContent}</div>}<div className="heartReaction"><span>此刻，你想给这份心意什么回应？</span><div>{["心动 ♡","想你 ✨","抱抱 🫶"].map(item => <button type="button" key={item} className={reaction === item ? "chosenReaction" : ""} onClick={() => setReaction(item)}>{item}</button>)}</div>{reaction && <small aria-live="polite">收到你的回应：{reaction}。把这一刻的心情留给自己吧。</small>}</div></div><button onClick={() => setSelected(null)} aria-label="关闭">×</button></section>}
     <footer className="publicFooter"><span>用一点点心意，开启一段小旅程。</span><b>HEART STUDIO ♡</b><small>展示页面 · 真实支付暂未开通</small></footer>
   </main>;
 }
