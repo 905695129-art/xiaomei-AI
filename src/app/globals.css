@@ -239,3 +239,16 @@
  .creatorShell .editorCard>.creatorEditorHeading h1{font-size:24px}
 }
 @media(prefers-reduced-motion:reduce){.creatorStepProgress button{transition:none}}
+
+/* Keep only the active editor panel visible; heading, guidance and status remain. */
+.creatorShell .editorCard>:not(.creatorEditorHeading):not(.sub):not(.creatorStepNav):not(.notice){display:none}
+.creatorShell .editorCard[data-editor-step="0"]>.themePicker{display:block}
+.creatorShell .editorCard[data-editor-step="1"]>.coverEditor{display:block}
+.creatorShell .editorCard[data-editor-step="2"]>.levelEditor{display:block}
+.creatorShell .editorCard[data-editor-step="2"]>.addLevel{display:block}
+.creatorShell .editorCard[data-editor-step="2"]>.editorActions{display:flex}
+.creatorShell .editorCard[data-editor-step="3"]>.previewToolbar{display:flex}
+.creatorShell .editorCard[data-editor-step="3"]>.creatorPreview{display:block}
+.creatorShell .editorCard[data-editor-step="3"]>.editorActions{display:flex}
+.creatorShell .editorCard[data-editor-step="3"]>.shareResult{display:flex}
+.creatorShell .editorCard[data-editor-step="3"]>.journeyModalBackdrop{display:grid}
