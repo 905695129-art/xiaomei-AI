@@ -358,22 +358,22 @@ END $account_privacy_erasure_test$;
 
 DO $cover_upload_rate_limit_test$
 DECLARE
-  creator_id UUID;
+  test_creator_id UUID;
   current_count INTEGER;
   attempt INTEGER;
 BEGIN
   INSERT INTO users (email, display_name, password_hash, role)
   VALUES ('ci-upload-limit-' || gen_random_uuid()::text || '@example.test', 'Upload Limit CI', 'scrypt:test:test', 'creator')
-  RETURNING id INTO creator_id;
+  RETURNING id INTO test_creator_id;
 
-  INSERT INTO creator_upload_rate_limits (creator_id, window_started_at, request_count)
-  VALUES (creator_id, now(), 1)
+  INSERT INTO creator_upload_rate_limits (test_creator_id, window_started_at, request_count)
+  VALUES (test_creator_id, now(), 1)
   RETURNING request_count INTO current_count;
 
   FOR attempt IN 2..10 LOOP
-    INSERT INTO creator_upload_rate_limits (creator_id, window_started_at, request_count)
-    VALUES (creator_id, now(), 1)
-    ON CONFLICT (creator_id) DO UPDATE SET
+    INSERT INTO creator_upload_rate_limits (test_creator_id, window_started_at, request_count)
+    VALUES (test_creator_id, now(), 1)
+    ON CONFLICT (test_creator_id) DO UPDATE SET
       window_started_at = CASE
         WHEN creator_upload_rate_limits.window_started_at <= now() - interval '1 minute' THEN now()
         ELSE creator_upload_rate_limits.window_started_at
@@ -390,9 +390,9 @@ BEGIN
     END IF;
   END LOOP;
 
-  INSERT INTO creator_upload_rate_limits (creator_id, window_started_at, request_count)
-  VALUES (creator_id, now(), 1)
-  ON CONFLICT (creator_id) DO UPDATE SET request_count = creator_upload_rate_limits.request_count + 1
+  INSERT INTO creator_upload_rate_limits (test_creator_id, window_started_at, request_count)
+  VALUES (test_creator_id, now(), 1)
+  ON CONFLICT (test_creator_id) DO UPDATE SET request_count = creator_upload_rate_limits.request_count + 1
   WHERE creator_upload_rate_limits.request_count < 10
   RETURNING request_count INTO current_count;
   IF FOUND THEN
@@ -400,10 +400,10 @@ BEGIN
   END IF;
 
   UPDATE creator_upload_rate_limits SET window_started_at = now() - interval '2 minutes'
-  WHERE creator_upload_rate_limits.creator_id = creator_id;
-  INSERT INTO creator_upload_rate_limits (creator_id, window_started_at, request_count)
-  VALUES (creator_id, now(), 1)
-  ON CONFLICT (creator_id) DO UPDATE SET
+  WHERE creator_upload_rate_limits.test_creator_id = test_creator_id;
+  INSERT INTO creator_upload_rate_limits (test_creator_id, window_started_at, request_count)
+  VALUES (test_creator_id, now(), 1)
+  ON CONFLICT (test_creator_id) DO UPDATE SET
     window_started_at = now(),
     request_count = 1
   WHERE creator_upload_rate_limits.window_started_at <= now() - interval '1 minute'
@@ -412,7 +412,7 @@ BEGIN
     RAISE EXCEPTION 'UPLOAD_RATE_LIMIT_WINDOW_DID_NOT_RESET';
   END IF;
 
-  DELETE FROM users WHERE id = creator_id;
+  DELETE FROM users WHERE id = test_creator_id;
 END $cover_upload_rate_limit_test$;
 
 ROLLBACK;
