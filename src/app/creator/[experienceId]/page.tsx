@@ -91,6 +91,8 @@ export default function ExperienceEditor() {
     try{
       const invalidIndex=levels.findIndex(l=>!l.title.trim() || !Number.isFinite(Number(l.priceMinor)) || Number(l.priceMinor)<1 || Number(l.priceMinor)>100000000);
       if(invalidIndex>=0) throw new Error(`请检查第 ${invalidIndex+1} 关：标题不能为空，价格须为 0.01 至 1,000,000 元。`);
+      const invalidMediaIndex=levels.findIndex(level=>level.media.some(item=>!item.url.trim()||!/^https:\/\//i.test(item.url.trim())));
+      if(invalidMediaIndex>=0) throw new Error(`请检查第 ${invalidMediaIndex+1} 关的媒体地址：每个素材都需要填写有效的 HTTPS 地址，或先移除空素材。`);
       const payload={levels:levels.map(l=>({...(l.id?{id:l.id}:{}),title:l.title.trim(),teaser:l.teaser,priceMinor:Number(l.priceMinor),privateContent:l.privateContent,media:l.media}))};
       const r=await fetch(`/api/creator/experiences/${experienceId}/levels`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
       const d=await r.json();
