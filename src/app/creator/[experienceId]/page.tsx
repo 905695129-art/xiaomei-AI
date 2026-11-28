@@ -42,7 +42,7 @@ export default function ExperienceEditor() {
       const bitmap=await createImageBitmap(file);
       const pixels=bitmap.width*bitmap.height;
       bitmap.close();
-      if(!pixels||pixels>40000000)throw new Error("图片尺寸过大，请选择长宽乘积不超过 4000 万像素的图片。");
+      if(!pixels||pixels>20000000)throw new Error("图片尺寸过大，请选择长宽乘积不超过 2000 万像素的图片。");
       setCoverMessage("正在上传封面…");
       const form=new FormData();
       form.append("file",file);
