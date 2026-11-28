@@ -71,8 +71,33 @@ jobs:
           from pathlib import Path
           p=Path("extracted/xiaomei-ai/app/src/main/java/com/xiaomei/ai/MainActivity.kt")
           s=p.read_text()
+          s=s.replace("import android.widget.TextView", "import android.widget.TextView\\nimport android.widget.Switch", 1)
           needle='        root.addView(input, ViewGroup.LayoutParams(-1, -2))'
           addition=r'''
+                  root.addView(TextView(this).apply {
+                      text = "屏幕辅助只在你主动开启后读取当前页面可访问文字，并暂存在本机；只有你点击 AI 分析后，才会将输入内容发送到你配置的 AI 服务商。不会自动发送消息。"
+                      textSize = 11f
+                      setTextColor(0xFF78616D.toInt())
+                      setPadding(0, dp(8), 0, dp(6))
+                  })
+                  root.addView(Switch(this).apply {
+                      text = "启用屏幕文字读取（默认关闭）"
+                      isChecked = prefs.getBoolean("capture_enabled", false)
+                      setOnCheckedChangeListener { _, enabled ->
+                          prefs.edit().putBoolean("capture_enabled", enabled).apply()
+                          result.text = if (enabled) {
+                              "屏幕文字读取已开启。请同时在系统辅助功能设置中启用小美 AI 服务；关闭此开关即可停止读取。"
+                          } else {
+                              "屏幕文字读取已关闭。"
+                          }
+                      }
+                  })
+                  root.addView(Button(this).apply {
+                      text = "前往系统辅助功能设置"
+                      setOnClickListener {
+                          startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                      }
+                  })
                   val keyword = EditText(this).apply {
                       hint = "输入获客关键词，例如：情感咨询、脱单、相亲"
                       setText(getSharedPreferences("xiaomei", MODE_PRIVATE).getString("lead_keyword", "情感咨询"))
@@ -376,6 +401,18 @@ jobs:
           s=s.replace("versionCode = 6", "versionCode = 10", 1)
           s=s.replace('versionName = "0.6.0"', 'versionName = "0.9.1"', 1)
           p.write_text(s)
+          readme=Path("extracted/xiaomei-ai/README.md")
+          if readme.exists():
+              doc=readme.read_text().replace("Android 0.4.0", "Android 0.9.1")
+              extra="""## 0.9.1 本版新增
+- 抖音关键词搜索入口；可手动粘贴评论文本，调用用户配置的 AI 服务分析需求并生成私信草稿。
+- 新增默认关闭的屏幕文字读取开关；需用户主动开启并在系统辅助功能中启用服务，读取内容仅暂存在本机，点击 AI 分析后才会发送给用户配置的 AI 服务商。
+- 新增甜美风格悬浮聊天建议面板与本地关系沟通知识库；只生成建议和复制文本，不自动发送消息。
+
+"""
+              if "## 0.9.1 本版新增" not in doc:
+                  doc=doc.replace("## 使用", extra+"## 使用", 1)
+              readme.write_text(doc)
           PY
 
       - name: Diagnose Kotlin source
