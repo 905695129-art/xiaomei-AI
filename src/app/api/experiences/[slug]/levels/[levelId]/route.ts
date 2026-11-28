@@ -18,9 +18,8 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
     const sessions = await db.unsafe("SELECT buyer_ref FROM buyer_sessions WHERE token_hash = $1 AND expires_at > now() LIMIT 1", [tokenHash]);
     if (!sessions.length) return NextResponse.json({ error: "PURCHASE_REQUIRED" }, { status: 403, headers: privateHeaders });
     const buyerRef = sessions[0].buyer_ref;
-    // Published journeys are share-link experiences: anyone with the link and
-    // a valid HttpOnly visitor session can open active levels without paying.
-    // Paid entitlements remain valid for archived/removed levels and use snapshots.
+    // Each priced level requires its own visitor-scoped self-attested unlock.
+    // Provider-verified historical entitlements remain valid for archived levels and use snapshots.
     const rows = await db.unsafe(
       `SELECT
          CASE WHEN o.id IS NOT NULL THEN COALESCE(en.level_title_snapshot, l.title) ELSE l.title END AS title,
