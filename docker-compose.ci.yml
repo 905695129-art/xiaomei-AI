@@ -1,38 +1,24 @@
 services:
-  minio:
-    image: quay.io/minio/minio:RELEASE.2025-02-07T23-21-09Z
-    command: server /data
+  s3mock:
+    image: adobe/s3mock:5.2.3
     environment:
-      MINIO_ROOT_USER: heart-ci
-      MINIO_ROOT_PASSWORD: heart-ci-storage-secret
+      COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: heart-test
     ports:
-      - "127.0.0.1:9000:9000"
-    volumes:
-      - heart_ci_storage:/data
-    restart: unless-stopped
-
-  minio-init:
-    image: quay.io/minio/mc:RELEASE.2025-02-08T19-14-21Z
-    depends_on:
-      minio:
-        condition: service_started
-    entrypoint: ["/bin/sh", "-c"]
-    command: >
-      until mc alias set local http://minio:9000 heart-ci heart-ci-storage-secret; do sleep 1; done &&
-      mc mb --ignore-existing local/heart-test &&
-      mc anonymous set download local/heart-test
+      - "127.0.0.1:9090:9090"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/favicon.ico"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
 
   app:
     depends_on:
-      minio-init:
-        condition: service_completed_successfully
+      s3mock:
+        condition: service_healthy
     environment:
-      STORAGE_ENDPOINT: http://minio:9000
-      STORAGE_PUBLIC_URL: http://127.0.0.1:9000/heart-test
+      STORAGE_ENDPOINT: http://s3mock:9090
+      STORAGE_PUBLIC_URL: http://127.0.0.1:9090/heart-test
       STORAGE_REGION: us-east-1
       STORAGE_BUCKET: heart-test
-      STORAGE_ACCESS_KEY: heart-ci
-      STORAGE_SECRET_KEY: heart-ci-storage-secret
-
-volumes:
-  heart_ci_storage:
+      STORAGE_ACCESS_KEY: ci-access-key
+      STORAGE_SECRET_KEY: ci-secret-key
