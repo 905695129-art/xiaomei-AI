@@ -199,16 +199,16 @@ export default function PublicExperiencePage() {
       <p className="publicEyebrow">A LITTLE JOURNEY FOR YOU</p>
       <h1>{experience.title}</h1>
       <p className="publicDescription">{experience.description || "有人为你准备了一段小小的心意旅程。每打开一扇门，都有一份认真准备的惊喜。"}</p>
-      <div className="publicMeta"><span>✦ {experience.levels.length} 份专属心意</span><span>♡ 每一关独立解锁</span></div>
+      <div className="publicMeta"><span>✦ {experience.levels.length} 份专属心意</span><span>♡ 每一关都是一次互动</span></div>
     </section>
     <section className="journeySection">
       <div className="journeyHeading"><div><p className="publicEyebrow">YOUR LITTLE JOURNEY</p><h2>一关一关，慢慢打开</h2></div><span>{experience.levels.length} LEVELS</span></div>
-      <div className="paymentStatusNotice"><span>♡</span><div><b>这是一段为你准备的小旅程</b><p>慢慢体验每一关吧。页面上的金额仅作心意参考，当前不会在这里收款或自动扣款。</p></div></div>
+      <div className="paymentStatusNotice"><span>♡</span><div><b>这是一段为你准备的小旅程</b><p>慢慢体验每一关吧。你可以浏览每一关并留下心意回应；金额仅作展示参考，当前不会收款或自动解锁私密内容。</p></div></div>
       {experience.levels.length === 0 ? <div className="emptyJourney">这段旅程还在准备中，稍后再来看看吧。</div> :
         <div className="journeyList">{experience.levels.map((level, index) => <article className={selected?.id === level.id ? "journeyCard activeJourney" : "journeyCard"} key={level.id}>
           <div className="journeyNumber">{String(level.position || index + 1).padStart(2, "0")}</div>
           <div className="journeyCopy"><span className="journeyLabel">A LITTLE SECRET</span><h3>{level.title}</h3><p>{level.teaser || "一份为你准备的小惊喜，打开后就能看到更多。"}</p></div>
-          <div className="journeyAction"><strong>{money(level.priceMinor, experience.currency || "CNY")}</strong><small className="levelPriceCaption">关卡标价</small><button disabled={checkingLevel} onClick={event => beginUnlock(level, event.currentTarget)}>{checkingLevel && selected?.id === level.id ? "确认中…" : unlockedIds.has(level.id) ? "已解锁 · 查看" : selected?.id === level.id ? "查看本关" : "查看解锁状态"} <span>♡</span></button></div>
+          <div className="journeyAction"><strong>{money(level.priceMinor, experience.currency || "CNY")}</strong><small className="levelPriceCaption">心意金额参考</small><button disabled={checkingLevel} onClick={event => beginUnlock(level, event.currentTarget)}>{checkingLevel && selected?.id === level.id ? "确认中…" : unlockedIds.has(level.id) ? "查看已解锁内容" : selected?.id === level.id ? "进入互动" : "进入互动"} <span>♡</span></button></div>
         </article>)}</div>}
       <div className="journeyTotal"><span>全部关卡合计（仅供参考）</span><strong>{money(total, experience.currency || "CNY")}</strong></div>
     </section>
