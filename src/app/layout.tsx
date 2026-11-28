@@ -1,7 +1,17 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
+const metadataBase = (() => {
+  try {
+    const value = process.env.APP_URL;
+    return value ? new URL(value) : undefined;
+  } catch {
+    return undefined;
+  }
+})();
+
 export const metadata: Metadata = {
+  metadataBase,
   applicationName: "心意闯关 · Heart Studio",
   title: "心意闯关 · Heart Studio",
   description: "把心意设计成一场逐关解锁的小小旅程。",
