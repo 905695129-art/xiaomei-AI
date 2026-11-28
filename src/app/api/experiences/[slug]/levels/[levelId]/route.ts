@@ -46,7 +46,25 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
        LIMIT 1`,
       [buyerRef, slug, levelId]
     );
-    if (!rows.length) return NextResponse.json({ error: "LEVEL_NOT_AVAILABLE" }, { status: 404, headers: privateHeaders });
+    if (!rows.length) {
+      const [target] = await db.unsafe(
+        `SELECT l.id,
+           EXISTS (
+             SELECT 1 FROM experience_levels previous
+             WHERE previous.experience_id = l.experience_id
+               AND previous.is_active = TRUE AND previous.position < l.position
+               AND NOT EXISTS (
+                 SELECT 1 FROM journey_level_progress progress
+                 WHERE progress.level_id = previous.id AND progress.buyer_ref = $1
+               )
+           ) AS locked
+         FROM experiences e JOIN experience_levels l ON l.experience_id = e.id
+         WHERE e.slug = $2 AND l.id = $3::uuid AND l.is_active = TRUE AND e.status = 'published'
+         LIMIT 1`,
+        [buyerRef, slug, levelId]
+      );
+      return NextResponse.json({ error: target?.locked ? "LEVEL_LOCKED" : "LEVEL_NOT_AVAILABLE" }, { status: target?.locked ? 409 : 404, headers: privateHeaders });
+    }
     return NextResponse.json({ title: rows[0].title, content: rows[0].private_content }, { headers: privateHeaders });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
