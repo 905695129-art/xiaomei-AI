@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     const resetUrl = new URL("/creator/reset-password", appBaseUrl);
     resetUrl.searchParams.set("token", token);
     const resetLink = resetUrl.toString();
-    const safeUrl = escapeEmailHtml(resetUrl);
+    const safeUrl = escapeEmailHtml(resetLink);
     await sendTransactionalEmail({
       to: user.email,
       subject: "心意闯关：重置登录密码",
