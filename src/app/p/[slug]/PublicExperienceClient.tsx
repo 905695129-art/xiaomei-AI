@@ -23,7 +23,8 @@ export default function PublicExperiencePage() {
   const [checkingLevel, setCheckingLevel] = useState(false);
   const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState(false);
-  const [reaction, setReaction] = useState<string | null>(null);\n  const responsePanelRef = useRef<HTMLElement | null>(null);
+  const [reaction, setReaction] = useState<string | null>(null);
+  const responsePanelRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -58,7 +59,12 @@ export default function PublicExperiencePage() {
     return () => { alive = false; };
   }, [slug]);
 
-  const total = useMemo(() => experience?.levels.reduce((sum, level) => sum + level.priceMinor, 0) ?? 0, [experience]);\n\n  useEffect(() => {\n    if (!selected) return;\n    window.requestAnimationFrame(() => responsePanelRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));\n  }, [selected?.id]);
+  const total = useMemo(() => experience?.levels.reduce((sum, level) => sum + level.priceMinor, 0) ?? 0, [experience]);
+
+  useEffect(() => {
+    if (!selected) return;
+    window.requestAnimationFrame(() => responsePanelRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
+  }, [selected?.id]);
 
 
 
