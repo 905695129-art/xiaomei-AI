@@ -58,15 +58,20 @@ export default function ExperienceEditor() {
   }
 
   async function changeTheme(theme:"rose"|"white"|"lavender"|"mint"|"sky"|"peach"|"midnight"|"champagne"){
+    const previousTheme=experienceInfo.theme;
+    // 先更新本地主题，让下方男生端预览立即切换；保存失败时再回滚。
+    setExperienceInfo(old=>({...old,theme}));
     setThemeBusy(true);setMessage("");
     try{
       const response=await fetch(`/api/creator/experiences/${experienceId}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({theme})});
       const data=await response.json();
       if(!response.ok) throw new Error("主题保存失败，请稍后重试。");
       setExperienceInfo(old=>({...old,theme:data.experience.theme||theme}));
-      setMessage("分享页主题已保存。");
-    }catch(error){setMessage(error instanceof Error?error.message:"主题保存失败");}
-    finally{setThemeBusy(false);}
+      setMessage("主题已保存，男生端预览已同步。");
+    }catch(error){
+      setExperienceInfo(old=>({...old,theme:previousTheme}));
+      setMessage(error instanceof Error?error.message:"主题保存失败，已恢复上一个主题。");
+    }finally{setThemeBusy(false);}
   }
   useEffect(()=>{
     fetch(`/api/creator/experiences/${experienceId}`).then(async r=>{const d=await r.json();if(r.ok&&d.experience)setExperienceInfo({title:d.experience.title||"一份专属心意",description:d.experience.description||"有人为你准备了一段小小的心意旅程。每打开一扇门，都有一份认真准备的惊喜。",theme:["rose","white","lavender","mint","sky","peach","midnight","champagne"].includes(d.experience.theme)?d.experience.theme:"rose",coverUrl:d.experience.cover_url||d.experience.coverUrl||"",coverPosition:d.experience.cover_position||"center"});}).catch(()=>{});
