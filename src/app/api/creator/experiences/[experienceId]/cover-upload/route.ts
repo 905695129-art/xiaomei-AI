@@ -43,7 +43,38 @@ export async function POST(request: Request) {
     if (!(request.headers.get("content-type") || "").toLowerCase().includes("multipart/form-data")) {
       return NextResponse.json({ error: "INVALID_IMAGE" }, { status: 400, headers: privateHeaders });
     }
-    const form = await request.formData();
+
+    // Enforce the request-body ceiling while streaming, including when Content-Length is absent
+    // or dishonest. Do not let multipart parsing buffer an unbounded body first.
+    if (!request.body) return NextResponse.json({ error: "INVALID_IMAGE" }, { status: 400, headers: privateHeaders });
+    const reader = request.body.getReader();
+    const chunks: Buffer[] = [];
+    let received = 0;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        received += value.byteLength;
+        if (received > maxBytes + 64 * 1024) {
+          await reader.cancel();
+          return NextResponse.json({ error: "REQUEST_TOO_LARGE" }, { status: 413, headers: privateHeaders });
+        }
+        chunks.push(Buffer.from(value));
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    const boundedRequest = new Request(request.url, {
+      method: "POST",
+      headers: request.headers,
+      body: Buffer.concat(chunks, received)
+    });
+    let form: FormData;
+    try {
+      form = await boundedRequest.formData();
+    } catch {
+      return NextResponse.json({ error: "INVALID_IMAGE" }, { status: 400, headers: privateHeaders });
+    }
     const file = form.get("file");
     if (!(file instanceof File) || file.size <= 0 || file.size > maxBytes || !allowedTypes[file.type]) {
       return NextResponse.json({ error: "INVALID_IMAGE" }, { status: 400, headers: privateHeaders });
