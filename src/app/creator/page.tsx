@@ -85,7 +85,7 @@ export default function CreatorPage() {
     try{
       const r=await fetch("/api/account/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:deletePassword,confirmation:deleteConfirmation})});
       const d=await r.json();
-      if(!r.ok)throw new Error(({INVALID_PASSWORD:"当前密码不正确。",INVALID_CONFIRMATION:"请准确输入 DELETE。",UNAUTHORIZED:"登录状态已失效，请重新登录。"} as Record<string,string>)[d.error]||"账户注销失败，请稍后重试。");
+      if(!r.ok)throw new Error(({INVALID_PASSWORD:"当前密码不正确。",INVALID_CONFIRMATION:"请准确输入 DELETE。",TOO_MANY_ATTEMPTS:"注销验证尝试过于频繁，请 15 分钟后再试。",UNAUTHORIZED:"登录状态已失效，请重新登录。"} as Record<string,string>)[d.error]||"账户注销失败，请稍后重试。");
       setUser(null);setExperiences([]);setSessions([]);setDeletePassword("");setDeleteConfirmation("");setMessage(d.message||"账户已注销。");
     }catch(e){setMessage(e instanceof Error?e.message:"注销失败");}finally{setBusy(false);}
   }
