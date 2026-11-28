@@ -455,11 +455,22 @@ BEGIN
      OR NEW.buyer_ref IS DISTINCT FROM OLD.buyer_ref
      OR NEW.amount_minor IS DISTINCT FROM OLD.amount_minor
      OR NEW.currency IS DISTINCT FROM OLD.currency
-     OR NEW.level_title_snapshot IS DISTINCT FROM OLD.level_title_snapshot
-     OR NEW.level_position_snapshot IS DISTINCT FROM OLD.level_position_snapshot
-     OR NEW.private_content_snapshot IS DISTINCT FROM OLD.private_content_snapshot
      OR NEW.provider IS DISTINCT FROM OLD.provider
      OR (OLD.provider_order_id IS NOT NULL AND NEW.provider_order_id IS DISTINCT FROM OLD.provider_order_id) THEN
+    RAISE EXCEPTION 'ORDER_COMMERCIAL_IDENTITY_IMMUTABLE';
+  END IF;
+
+  -- Permit a narrowly-scoped privacy erasure after the owning creator account
+  -- has been soft-deleted; ordinary edits cannot rewrite purchase snapshots.
+  IF (NEW.level_title_snapshot IS DISTINCT FROM OLD.level_title_snapshot
+      OR NEW.level_position_snapshot IS DISTINCT FROM OLD.level_position_snapshot
+      OR NEW.private_content_snapshot IS DISTINCT FROM OLD.private_content_snapshot)
+     AND NOT (
+       EXISTS (SELECT 1 FROM users u WHERE u.id = OLD.creator_id AND u.deleted_at IS NOT NULL)
+       AND NEW.level_title_snapshot = '已删除的关卡'
+       AND NEW.level_position_snapshot IS NOT DISTINCT FROM OLD.level_position_snapshot
+       AND NEW.private_content_snapshot IS NULL
+     ) THEN
     RAISE EXCEPTION 'ORDER_COMMERCIAL_IDENTITY_IMMUTABLE';
   END IF;
   RETURN NEW;
