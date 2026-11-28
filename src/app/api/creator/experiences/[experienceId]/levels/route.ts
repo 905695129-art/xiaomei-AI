@@ -5,6 +5,14 @@ import { requireDb } from "@/lib/db";
 import { getCurrentCreator } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
+
+const privateHeaders = { "Cache-Control": "private, no-store", Vary: "Cookie" };
+function privateJson(body: unknown, init: ResponseInit = {}) {
+  const headers = new Headers(init.headers);
+  headers.set("Cache-Control", privateHeaders["Cache-Control"]);
+  headers.set("Vary", privateHeaders.Vary);
+  return NextResponse.json(body, { ...init, headers });
+}
 const levelSchema = z.object({
   id: z.string().uuid().optional(),
   title: z.string().trim().min(1).max(80),
@@ -18,28 +26,28 @@ export async function GET(_request: Request, context: { params: Promise<{ experi
   const { experienceId } = await context.params;
   try {
     const creator = await getCurrentCreator();
-    if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+    if (!creator) return privateJson({ error: "UNAUTHORIZED" }, { status: 401 });
     const db = requireDb();
     const owns = await db`SELECT id FROM experiences WHERE id = ${experienceId}::uuid AND creator_id = ${creator.id} LIMIT 1`;
-    if (!owns.length) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
+    if (!owns.length) return privateJson({ error: "NOT_FOUND" }, { status: 404 });
     const rows = await db`SELECT id, position, title, teaser, price_minor, private_content, is_active FROM experience_levels WHERE experience_id = ${experienceId}::uuid AND is_active = true ORDER BY position`;
-    return NextResponse.json({ levels: rows }, { headers: { "Cache-Control": "private, no-store", "Vary": "Cookie" } });
+    return privateJson({ levels: rows }, { headers: { "Cache-Control": "private, no-store", "Vary": "Cookie" } });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
-    return NextResponse.json({ error: code === "DATABASE_NOT_CONFIGURED" ? "SERVICE_NOT_CONFIGURED" : "INTERNAL_ERROR" }, { status: code === "DATABASE_NOT_CONFIGURED" ? 503 : 500 });
+    return privateJson({ error: code === "DATABASE_NOT_CONFIGURED" ? "SERVICE_NOT_CONFIGURED" : "INTERNAL_ERROR" }, { status: code === "DATABASE_NOT_CONFIGURED" ? 503 : 500 });
   }
 }
 
 export async function PUT(request: Request, context: { params: Promise<{ experienceId: string }> }) {
   const { experienceId } = await context.params;
-  if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403 });
+  if (!isSameOriginWrite(request)) return privateJson({ error: "BAD_ORIGIN" }, { status: 403 });
   try {
     const creator = await getCurrentCreator();
-    if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+    if (!creator) return privateJson({ error: "UNAUTHORIZED" }, { status: 401 });
     const body = await readJsonLimited(request, 1024 * 1024);
-    if (!body.ok) return NextResponse.json({ error: body.error }, { status: body.error === "REQUEST_TOO_LARGE" ? 413 : 400 });
+    if (!body.ok) return privateJson({ error: body.error }, { status: body.error === "REQUEST_TOO_LARGE" ? 413 : 400 });
     const parsed = bodySchema.safeParse(body.value);
-    if (!parsed.success) return NextResponse.json({ error: "INVALID_INPUT", details: parsed.error.flatten() }, { status: 400 });
+    if (!parsed.success) return privateJson({ error: "INVALID_INPUT", details: parsed.error.flatten() }, { status: 400 });
     const db = requireDb();
     const result = await db.begin(async tx => {
       const owns = await tx`SELECT id FROM experiences WHERE id = ${experienceId}::uuid AND creator_id = ${creator.id} FOR UPDATE`;
@@ -96,11 +104,11 @@ export async function PUT(request: Request, context: { params: Promise<{ experie
       await tx`UPDATE experiences SET updated_at = now() WHERE id = ${experienceId}::uuid`;
       return saved;
     });
-    if (!result) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
-    if (result === "INVALID_LEVEL_IDS") return NextResponse.json({ error: "INVALID_LEVEL_IDS" }, { status: 400 });
-    return NextResponse.json({ levels: result });
+    if (!result) return privateJson({ error: "NOT_FOUND" }, { status: 404 });
+    if (result === "INVALID_LEVEL_IDS") return privateJson({ error: "INVALID_LEVEL_IDS" }, { status: 400 });
+    return privateJson({ levels: result });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
-    return NextResponse.json({ error: code === "DATABASE_NOT_CONFIGURED" ? "SERVICE_NOT_CONFIGURED" : "INTERNAL_ERROR" }, { status: code === "DATABASE_NOT_CONFIGURED" ? 503 : 500 });
+    return privateJson({ error: code === "DATABASE_NOT_CONFIGURED" ? "SERVICE_NOT_CONFIGURED" : "INTERNAL_ERROR" }, { status: code === "DATABASE_NOT_CONFIGURED" ? 503 : 500 });
   }
 }
