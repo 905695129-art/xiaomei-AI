@@ -29,6 +29,7 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
         FOR UPDATE OF e, l
       `;
       if (!target) return { error: "LEVEL_NOT_AVAILABLE", status: 404 };
+      if (target.price_minor === 0) return { error: "FREE_LEVEL_DOES_NOT_REQUIRE_PAYMENT", status: 409 };
       if (!target.payment_qr_url) return { error: "PAYMENT_QR_NOT_CONFIGURED", status: 409 };
       const [prior] = await tx`
         SELECT 1 FROM experience_levels previous
