@@ -22,6 +22,28 @@ export async function POST(request: Request) {
     const creator = await getCurrentCreator();
     if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401, headers: privateHeaders });
 
+    const db = requireDb();
+    const [experience] = await db`SELECT id FROM experiences WHERE id = ${experienceId}::uuid AND creator_id = ${creator.id} LIMIT 1`;
+    if (!experience) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404, headers: privateHeaders });
+
+    const [uploadQuota] = await db`
+      INSERT INTO creator_upload_rate_limits (creator_id, window_started_at, request_count)
+      VALUES (${creator.id}, now(), 1)
+      ON CONFLICT (creator_id) DO UPDATE SET
+        window_started_at = CASE
+          WHEN creator_upload_rate_limits.window_started_at <= now() - interval '1 minute' THEN now()
+          ELSE creator_upload_rate_limits.window_started_at
+        END,
+        request_count = CASE
+          WHEN creator_upload_rate_limits.window_started_at <= now() - interval '1 minute' THEN 1
+          ELSE creator_upload_rate_limits.request_count + 1
+        END
+      WHERE creator_upload_rate_limits.window_started_at <= now() - interval '1 minute'
+         OR creator_upload_rate_limits.request_count < 10
+      RETURNING request_count
+    `;
+    if (!uploadQuota) return NextResponse.json({ error: "UPLOAD_RATE_LIMITED" }, { status: 429, headers: { ...privateHeaders, "Retry-After": "60" } });
+
     const contentLengthHeader = request.headers.get("content-length");
     if (contentLengthHeader) {
       if (!/^\d+$/.test(contentLengthHeader)) {
@@ -91,10 +113,6 @@ export async function POST(request: Request) {
     if (!endpoint || !bucket || !accessKeyId || !secretAccessKey || !publicBase) {
       return NextResponse.json({ error: "STORAGE_NOT_CONFIGURED" }, { status: 503, headers: privateHeaders });
     }
-
-    const db = requireDb();
-    const [experience] = await db`SELECT id FROM experiences WHERE id = ${experienceId}::uuid AND creator_id = ${creator.id} LIMIT 1`;
-    if (!experience) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404, headers: privateHeaders });
 
     const key = `covers/${experience.id}/${randomUUID()}.webp`;
     const client = new S3Client({ region, endpoint, forcePathStyle: true, credentials: { accessKeyId, secretAccessKey } });
