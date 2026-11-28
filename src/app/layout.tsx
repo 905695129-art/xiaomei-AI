@@ -2,8 +2,17 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  applicationName: "心意闯关 · Heart Studio",
   title: "心意闯关 · Heart Studio",
   description: "把心意设计成一场逐关解锁的小小旅程。",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }]
+  },
+  appleWebApp: {
+    capable: true,
+    title: "心意闯关",
+    statusBarStyle: "default"
+  },
   openGraph: {
     title: "心意闯关 · Heart Studio",
     description: "有人为你准备了一段专属心意，来看看吧。",
