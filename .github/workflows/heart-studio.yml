@@ -6,6 +6,8 @@ on:
   push:
     paths:
       - 'src/**'
+      - 'app/**'
+      - 'android/**'
       - 'db/**'
       - 'docs/**'
       - 'README.md'
