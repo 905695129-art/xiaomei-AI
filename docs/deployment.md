@@ -54,9 +54,10 @@ cp .env.example .env
 编辑 `.env`，至少将 `POSTGRES_PASSWORD` 替换为长随机密码；同时检查 `.env.example` 中所有适用变量。不要沿用示例占位值。可使用 `openssl rand -hex 32` 生成数据库密码。当前应用的登录会话令牌由服务端使用密码学安全随机数生成，并以哈希形式存储在数据库中；代码没有读取 `SESSION_SECRET`，因此模板不再提供一个未接入的伪配置项。生产部署还应设置：
 
 - `APP_URL=https://你的正式域名`（必须与实际对外 HTTPS 地址一致，邮件验证和密码重置链接依赖它）
-- `RESEND_API_KEY`：当前代码唯一已实现的邮件服务商 Resend API Key；仅在适用地区完成可达性、数据处理和合规评估后配置
+- `EMAIL_PROVIDER=disabled`：默认关闭邮件发送；仅在适用地区完成可达性、数据处理和合规评估后，才可显式设置为 `resend`。当前唯一实现的服务商是 Resend
+- `RESEND_API_KEY`：仅当 `EMAIL_PROVIDER=resend` 时使用
 - `EMAIL_FROM`：Resend 已验证域名中的发件地址
-- `REQUIRE_VERIFIED_EMAIL=true`：只有在邮件发送已完成验证后再启用。**中国大陆生产上线阻断：** 当前尚未实现境内邮件/短信 provider，不能只改环境变量就切换服务商；必须先抽象邮件 provider 接口、接入选定的境内服务商，并完成实名/签名/模板、送达率、退订/投诉及数据地域验收。在此之前不得把 Resend 当作大陆生产邮件方案，也不得启用依赖邮件的生产注册/找回流程。
+- `REQUIRE_VERIFIED_EMAIL=true`：只有在邮件发送已完成验证后再启用。**中国大陆生产上线阻断：** 当前尚未实现境内邮件/短信 provider，不能只改环境变量就切换服务商；`EMAIL_PROVIDER` 默认 `disabled`，不会因配置了 Resend 密钥而自动向境外发送邮件。必须先接入选定的境内服务商，并完成实名/签名/模板、送达率、退订/投诉及数据地域验收。在此之前不得把 Resend 当作大陆生产邮件方案，也不得启用依赖邮件的生产注册/找回流程。
 - `STORAGE_ENDPOINT`、`STORAGE_PUBLIC_URL`、`STORAGE_REGION`、`STORAGE_BUCKET`、`STORAGE_ACCESS_KEY`、`STORAGE_SECRET_KEY`：需要真实照片上传时配置
 
 不要把 `.env` 提交到 Git。生产密钥应使用服务器密钥管理能力保存，并定期轮换。
@@ -105,7 +106,7 @@ cat heart-studio-backup.sql | docker compose exec -T db psql -U heart -d heart_s
 - [ ] PostgreSQL 未暴露公网，数据库密码为强随机值。
 - [ ] Resend 发件域名已验证，实际收到邮箱验证和密码重置邮件。
 - [ ] 开启 `REQUIRE_VERIFIED_EMAIL=true` 后，未验证账户不能发布作品。
-- [ ] 对象存储桶权限仅允许应用服务端写入，公开读取仅开放封面对象；测试上传 JPG/PNG/WEBP/GIF，确认 8MB、2000 万像素限制、真实解码、格式核验、重编码为 WebP、EXIF 方向处理、元数据剥离及公开图片 URL。当前服务端使用 Sharp 解码后缩放并重编码，浏览器不再获得对象存储直传凭证；仍需补恶意内容扫描、上传失败对象清理和并发/速率限制。反向代理/网关必须对请求体设置不低于 8MB 加 multipart 开销、且有上限的 body-size 限制和请求超时。
+- [ ] 对象存储桶权限仅允许应用服务端写入，公开读取仅开放封面对象；测试上传 JPG/PNG/WEBP/GIF，确认 8MB、2000 万像素限制、真实解码、格式核验、重编码为 WebP、EXIF 方向处理、元数据剥离及公开图片 URL。当前服务端使用 Sharp 解码后缩放并重编码，浏览器不再获得对象存储直传凭证；已增加每位创作者每分钟最多 10 次上传的数据库原子限流，并对数据库保存失败的对象执行清理尝试；仍需补恶意内容扫描、对象存储生命周期/孤儿对象巡检和跨节点压力测试。反向代理/网关必须对请求体设置不低于 8MB 加 multipart 开销、且有上限的 body-size 限制和请求超时。
 - [ ] 备份和恢复演练成功。
 - [ ] 隐私政策、服务条款已由运营主体补齐并完成目标市场法律审查。
 - [ ] 支付机构商户准入、创作者结算安排和退款规则已获批准。
