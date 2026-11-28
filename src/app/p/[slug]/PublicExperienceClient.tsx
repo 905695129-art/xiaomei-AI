@@ -19,6 +19,24 @@ export default function PublicExperiencePage() {
   const [loading, setLoading] = useState(true);
   const [introOpen, setIntroOpen] = useState(true);
   const [playfulNoteIndex, setPlayfulNoteIndex] = useState(-1);
+  const [gardenMessage, setGardenMessage] = useState("");
+  const [gardenCollected, setGardenCollected] = useState<string[]>([]);
+  const [bottleOpen, setBottleOpen] = useState(false);
+  const gardenItems = [
+    { id: "star", icon: "✦", name: "星星", notes: ["愿你今天遇见的小事，都有一点点温柔。", "把这一颗星星收好，愿你心里一直有光。", "有些闪耀，不需要被谁看见。"] },
+    { id: "bubble", icon: "🫧", name: "泡泡", notes: ["吹走一点烦恼，给快乐留个位置。", "今天也请允许自己轻盈一点。", "咕噜咕噜，一颗小小的好心情送给你。"] },
+    { id: "flower", icon: "🌷", name: "花朵", notes: ["愿你被认真对待，也被好好珍惜。", "慢慢盛开也很好，不必和谁比较。", "送你一朵花，祝今天有好消息。"] },
+    { id: "moon", icon: "☾", name: "月亮", notes: ["累了就歇一会儿，温柔不需要赶时间。", "愿每一个夜晚，都有安心的归处。", "你不必一直发光，也值得被爱。"] },
+    { id: "gift", icon: "🎁", name: "礼物", notes: ["叮！拆到一份随机好运，请查收。", "生活偶尔会把惊喜藏在小角落。", "愿你期待的事情，正在悄悄靠近。"] }
+  ];
+  function exploreGarden(id: string) {
+    const item = gardenItems.find(entry => entry.id === id);
+    if (!item) return;
+    const note = item.notes[Math.floor(Math.random() * item.notes.length)];
+    setGardenMessage(note);
+    setGardenCollected(current => current.includes(id) ? current : [...current, id]);
+  }
+
   const playfulNotes = ["今天也值得被认真对待，记得对自己温柔一点。 ✨","偷偷送你一颗星星：愿你打开的每一份心意都是真诚的。 ⭐","暂停一下，深呼吸。此刻不用赶路，慢慢感受就好。 ♡","叮！你收到了一个隔空的小小拥抱。 🫧","愿今天有一点点甜，刚好落在你的心上。 💗"];
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<Level | null>(null);
@@ -209,6 +227,17 @@ export default function PublicExperiencePage() {
       <p className="publicDescription">{experience.description || "有人为你准备了一段小小的心意旅程。每打开一扇门，都有一份认真准备的惊喜。"}</p>
       <div className="publicMeta"><span>✦ {experience.levels.length} 份专属心意</span><span>♡ 每一关都是一次互动</span></div>
       <div className="playfulCorner" aria-live="polite">{playfulNoteIndex >= 0 ? <div className="playfulNote">✦ {playfulNotes[playfulNoteIndex]}</div> : <span>这里不只是一个链接，也是一段可以慢慢探索的小小空间</span>}<button type="button" onClick={() => setPlayfulNoteIndex(index => (index + 1) % playfulNotes.length)}>{playfulNoteIndex < 0 ? "拆一张今日悄悄话" : "再拆一张 ✨"}</button></div>
+    </section>
+    <section className="discoveryGarden" aria-labelledby="discoveryGardenTitle">
+      <div className="gardenHeading"><span className="gardenKicker">A TINY PLAYGROUND</span><h2 id="discoveryGardenTitle">先在这里，收下一点小惊喜</h2><p>没有任务，也不用着急。轻轻点一点，看看藏着什么。</p></div>
+      <div className="gardenSky" aria-label="可探索的小惊喜">
+        <span className="gardenCloud cloudOne" aria-hidden="true">☁</span><span className="gardenCloud cloudTwo" aria-hidden="true">☁</span>
+        {gardenItems.map((item,index)=><button key={item.id} type="button" className={`gardenObject gardenObject-${item.id} ${gardenCollected.includes(item.id)?"gardenFound":""}`} style={{"--garden-index":index} as React.CSSProperties} onClick={()=>exploreGarden(item.id)} aria-label={`探索${item.name}`} aria-pressed={gardenCollected.includes(item.id)}><span>{item.icon}</span>{gardenCollected.includes(item.id)&&<i aria-hidden="true">✓</i>}</button>)}
+        <div className="gardenCenter"><span>♡</span><small>点一点，收集温柔</small></div>
+      </div>
+      <div className="gardenResult" aria-live="polite">{gardenMessage ? <><span className="gardenResultSpark">✧</span><p>{gardenMessage}</p></> : <p>星星、泡泡和小礼物都在等你发现。</p>}</div>
+      <div className="gardenProgress"><span>已发现 {gardenCollected.length} / {gardenItems.length} 份小惊喜</span><div className="gardenProgressTrack"><i style={{width:`${gardenCollected.length/gardenItems.length*100}%`}} /></div></div>
+      <button type="button" className={bottleOpen?"gardenBottle opened":"gardenBottle"} onClick={()=>{setBottleOpen(value=>!value);setGardenMessage(bottleOpen?"漂流瓶又轻轻合上啦。":"你捡到一只漂流瓶：愿你所到之处，都有好风景。");}}><span>{bottleOpen?"💌":"🧴"}</span><span><b>{bottleOpen?"把漂流瓶收好":"海边漂来一只漂流瓶"}</b><small>{bottleOpen?"里面的话，已经送到你心里。":"点开看看，里面藏着一句话。"}</small></span><i>{bottleOpen?"✓":"打开 ↗"}</i></button>
     </section>
     <section className="journeySection">
       <div className="journeyHeading"><div><p className="publicEyebrow">YOUR LITTLE JOURNEY</p><h2>一关一关，慢慢打开</h2></div><span>{experience.levels.length} LEVELS</span></div>
