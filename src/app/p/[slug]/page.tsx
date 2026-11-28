@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import PublicExperienceClient from "./PublicExperienceClient";
 import { requireDb } from "@/lib/db";
 
-type Props = { params: { slug: string } };
+type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
   const fallback: Metadata = {
     title: "一份专属心意 · 心意闯关",
     description: "有人为你准备了一段小小的心意旅程。打开分享链接，看看专属惊喜。",
@@ -14,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const rows = await db`
       SELECT title, description
       FROM experiences
-      WHERE slug = ${params.slug} AND status = 'published'
+      WHERE slug = ${slug} AND status = 'published'
       LIMIT 1
     `;
     if (!rows.length) return fallback;
