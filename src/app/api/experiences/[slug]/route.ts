@@ -12,10 +12,10 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
     ? { "Cache-Control": "private, no-store", Vary: "Cookie" }
     : { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60", Vary: "Cookie" };
   try {
-    const db = requireDb();
     const cookieStore = await cookies();
     const token = cookieStore.get("heart_buyer")?.value;
     hasBuyerCookie = Boolean(token);
+    const db = requireDb();
     let buyerRef: string | null = null;
     if (token) {
       const tokenHash = createHash("sha256").update(token).digest("hex");
