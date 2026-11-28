@@ -57,6 +57,12 @@ export async function POST(request: Request) {
         WHERE l.experience_id = e.id AND e.creator_id = ${creator.id}
       `;
       await tx`
+        UPDATE users SET email = NULL, password_hash = NULL,
+          display_name = '已注销账户', email_verified_at = NULL,
+          deleted_at = now()
+        WHERE id = ${creator.id}
+      `;
+      await tx`
         UPDATE orders SET level_title_snapshot = '已删除的关卡',
           private_content_snapshot = NULL
         WHERE creator_id = ${creator.id}
@@ -82,12 +88,6 @@ export async function POST(request: Request) {
       await tx`
         DELETE FROM email_action_rate_limits
         WHERE email = ${account.email}
-      `;
-      await tx`
-        UPDATE users SET email = NULL, password_hash = NULL,
-          display_name = '已注销账户', email_verified_at = NULL,
-          deleted_at = now()
-        WHERE id = ${creator.id}
       `;
       return true;
     });
