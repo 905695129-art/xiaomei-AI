@@ -11,6 +11,13 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_guest BOOLEAN NOT NULL DEFAULT false;
+
+CREATE TABLE IF NOT EXISTS guest_creator_rate_limits (
+  address_hash CHAR(64) PRIMARY KEY,
+  window_started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0)
+);
 
 CREATE TABLE IF NOT EXISTS creator_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
