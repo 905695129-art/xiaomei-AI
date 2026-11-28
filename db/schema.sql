@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS experiences (
 ALTER TABLE experiences ADD COLUMN IF NOT EXISTS cover_position TEXT NOT NULL DEFAULT 'center';
 CREATE INDEX IF NOT EXISTS experiences_creator_idx ON experiences(creator_id, updated_at DESC);
 CREATE INDEX IF NOT EXISTS experiences_public_idx ON experiences(slug, status);
+ALTER TABLE experiences ADD COLUMN IF NOT EXISTS payment_qr_url TEXT;
 
 CREATE TABLE IF NOT EXISTS experience_levels (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
