@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS buyer_sessions (
   expires_at TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+CREATE INDEX IF NOT EXISTS buyer_sessions_expiry_idx ON buyer_sessions(expires_at);
 
 CREATE TABLE IF NOT EXISTS experiences (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
