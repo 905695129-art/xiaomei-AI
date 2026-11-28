@@ -15,7 +15,8 @@ const allowedTypes: Record<string, string> = {
   "image/gif": "gif"
 };
 
-export async function POST(request: Request, context: { params: { experienceId: string } }) {
+export async function POST(request: Request, context: { params: Promise<{ experienceId: string }> }) {
+  const { experienceId } = await context.params;
   if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403 });
   try {
     const creator = await getCurrentCreator();
@@ -47,7 +48,7 @@ export async function POST(request: Request, context: { params: { experienceId: 
     }
 
     const db = requireDb();
-    const [experience] = await db`SELECT id FROM experiences WHERE id = ${context.params.experienceId}::uuid AND creator_id = ${creator.id} LIMIT 1`;
+    const [experience] = await db`SELECT id FROM experiences WHERE id = ${experienceId}::uuid AND creator_id = ${creator.id} LIMIT 1`;
     if (!experience) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
 
     const key = `covers/${experience.id}/${randomUUID()}.${extension}`;
