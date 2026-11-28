@@ -107,14 +107,14 @@ try {
   assert.equal((await freeConfirm.json()).error, "FREE_LEVEL_DOES_NOT_REQUIRE_PAYMENT");
 
   psql(`
-    DO $ BEGIN
+    DO $$ BEGIN
       IF EXISTS (SELECT 1 FROM orders WHERE level_id = '${thirdId}') THEN
         RAISE EXCEPTION 'FREE_LEVEL_CREATED_ORDER';
       END IF;
       IF EXISTS (SELECT 1 FROM journey_level_unlocks WHERE level_id = '${thirdId}') THEN
         RAISE EXCEPTION 'FREE_LEVEL_CREATED_PAYMENT_UNLOCK';
       END IF;
-    END $;
+    END $$;
   `);
 
   const refreshed = await call("/api/experiences/" + slug, cookie1);
