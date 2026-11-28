@@ -36,7 +36,7 @@ try {
       ('${secondId}', '${experienceId}', 2, '第二关', '完成第一关后出现', 200, '第二关专属惊喜');
   `);
 
-  const session1 = await call("/api/buyer/session", null, { method: "POST", headers: { origin: baseUrl } });
+  const session1 = await call("/api/buyer/session", null, { method: "POST", headers: { "sec-fetch-site": "same-origin" } });
   assert.equal(session1.status, 200);
   const cookie1 = cookieFrom(session1);
 
@@ -55,13 +55,13 @@ try {
   assert.equal((await firstGet.json()).content, "第一关专属惊喜");
 
   const lockedPost = await call("/api/experiences/" + slug + "/responses", cookie1, {
-    method: "POST", headers: { origin: baseUrl, "content-type": "application/json" },
+    method: "POST", headers: { "sec-fetch-site": "same-origin", "content-type": "application/json" },
     body: JSON.stringify({ levelId: secondId, reaction: "heart", message: "skip" })
   });
   assert.equal(lockedPost.status, 409, "locked level response must be rejected");
 
   const submitted = await call("/api/experiences/" + slug + "/responses", cookie1, {
-    method: "POST", headers: { origin: baseUrl, "content-type": "application/json" },
+    method: "POST", headers: { "sec-fetch-site": "same-origin", "content-type": "application/json" },
     body: JSON.stringify({ levelId: firstId, reaction: "heart", message: "这一关我完成啦" })
   });
   assert.equal(submitted.status, 200);
@@ -74,7 +74,7 @@ try {
   const refreshed = await call("/api/experiences/" + slug, cookie1);
   assert.equal((await refreshed.json()).experience.levels[0].completed, true);
 
-  const session2 = await call("/api/buyer/session", null, { method: "POST", headers: { origin: baseUrl } });
+  const session2 = await call("/api/buyer/session", null, { method: "POST", headers: { "sec-fetch-site": "same-origin" } });
   assert.equal(session2.status, 200);
   const cookie2 = cookieFrom(session2);
   const otherListing = await call("/api/experiences/" + slug, cookie2);
