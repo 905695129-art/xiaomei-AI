@@ -30,7 +30,19 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
        LEFT JOIN entitlements en ON en.level_id = l.id AND en.buyer_ref = $1
        LEFT JOIN orders o ON o.id = en.order_id AND o.status = 'paid' AND o.buyer_ref = en.buyer_ref AND o.level_id = l.id
        WHERE e.slug = $2 AND l.id = $3::uuid
-         AND ((e.status = 'published' AND l.is_active = TRUE) OR o.id IS NOT NULL)
+         AND (
+           (e.status = 'published' AND l.is_active = TRUE AND (
+             NOT EXISTS (
+               SELECT 1 FROM experience_levels previous
+               WHERE previous.experience_id = l.experience_id
+                 AND previous.is_active = TRUE AND previous.position < l.position
+                 AND NOT EXISTS (
+                   SELECT 1 FROM journey_level_progress progress
+                   WHERE progress.level_id = previous.id AND progress.buyer_ref = $1
+                 )
+             )
+           )) OR o.id IS NOT NULL
+         )
        LIMIT 1`,
       [buyerRef, slug, levelId]
     );
