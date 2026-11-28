@@ -3,7 +3,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'docs/index.html'
+      - 'docs/**'
       - '.github/workflows/pages-preview.yml'
   workflow_dispatch:
 permissions:
