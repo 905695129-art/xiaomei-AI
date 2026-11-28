@@ -61,10 +61,14 @@
 
 ## 容器部署
 
-已提供 `Dockerfile`、`docker-compose.yml` 和 `.dockerignore`，可用 Docker Compose 启动 PostgreSQL、执行数据库迁移并运行 Next.js standalone 应用；`/api/health` 检查应用进程存活，`/api/ready` 实际检查数据库连通性。CI 会执行 Compose 配置校验、生产容器构建及应用与数据库双层冒烟测试。应用端口默认只绑定 `127.0.0.1:3000`。完整的服务器准备、HTTPS 反向代理、邮件/对象存储配置、备份恢复和上线验收步骤见 [`docs/deployment.md`](docs/deployment.md)。容器配置不会自动创建云服务器、域名或服务商账户；真实支付仍保持关闭。
+已提供 `Dockerfile`、`docker-compose.yml` 和 `.dockerignore`，可用 Docker Compose 启动 PostgreSQL、执行数据库迁移并运行 Next.js standalone 应用；`/api/health` 检查应用进程存活，`/api/ready` 实际检查数据库连通性；生产响应还设置 `nosniff`、禁止 iframe 嵌入、Referrer Policy、Permissions Policy 和 HSTS 等基础浏览器安全响应头。CI 会执行 Compose 配置校验、生产容器构建及应用与数据库双层冒烟测试。应用端口默认只绑定 `127.0.0.1:3000`。完整的服务器准备、HTTPS 反向代理、邮件/对象存储配置、备份恢复和上线验收步骤见 [`docs/deployment.md`](docs/deployment.md)。容器配置不会自动创建云服务器、域名或服务商账户；真实支付仍保持关闭。
+
+## 安卓伴侣应用
+
+安卓测试版安装与屏幕辅助权限说明见 [`docs/android-setup.md`](docs/android-setup.md)。当前版本 0.9.2（versionCode 11）为调试构建，不是应用商店正式发行版。
 
 ## 本地开发
-需要 Node.js 20+ 与 PostgreSQL 15+。
+需要 Node.js 22+ 与 PostgreSQL 15+。
 
 ```bash
 npm install
