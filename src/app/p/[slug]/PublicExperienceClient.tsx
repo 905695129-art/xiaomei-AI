@@ -144,7 +144,7 @@ export default function PublicExperiencePage() {
     </section>
     <section className="journeySection">
       <div className="journeyHeading"><div><p className="publicEyebrow">YOUR LITTLE JOURNEY</p><h2>一关一关，慢慢打开</h2></div><span>{experience.levels.length} LEVELS</span></div>
-      <div className="paymentStatusNotice"><span>♡</span><div><b>当前为体验版本</b><p>页面会展示每关标价，但真实支付尚未开通。点击关卡只会检查此前是否已解锁，不会向你收款或创建订单。</p></div></div>
+      <div className="paymentStatusNotice"><span>♡</span><div><b>这是一段为你准备的小旅程</b><p>慢慢体验每一关吧。页面上的金额仅作心意参考，当前不会在这里收款或自动扣款。</p></div></div>
       {experience.levels.length === 0 ? <div className="emptyJourney">这段旅程还在准备中，稍后再来看看吧。</div> :
         <div className="journeyList">{experience.levels.map((level, index) => <article className={selected?.id === level.id ? "journeyCard activeJourney" : "journeyCard"} key={level.id}>
           <div className="journeyNumber">{String(level.position || index + 1).padStart(2, "0")}</div>
@@ -154,6 +154,6 @@ export default function PublicExperiencePage() {
       <div className="journeyTotal"><span>全部关卡合计（仅供参考）</span><strong>{money(total, experience.currency || "CNY")}</strong></div>
     </section>
     {selected && <section className="unlockNotice" aria-live="polite"><div className="noticeIcon">♡</div><div><b>{selected.title}</b><p>{notice || "选择了这一关。"}</p>{privateContent && <div className="privateContentView">{privateContent}</div>}<div className="heartReaction"><span>此刻，你想给这份心意什么回应？</span><div>{["心动 ♡","想你 ✨","抱抱 🫶"].map(item => <button type="button" key={item} className={reaction === item ? "chosenReaction" : ""} onClick={() => setReaction(item)}>{item}</button>)}</div>{reaction && <small aria-live="polite">收到你的回应：{reaction}。把这一刻的心情留给自己吧。</small>}</div></div><button onClick={() => setSelected(null)} aria-label="关闭">×</button></section>}
-    <footer className="publicFooter"><span>用一点点心意，开启一段小旅程。</span><b>HEART STUDIO ♡</b><small>展示页面 · 真实支付暂未开通</small></footer>
+    <footer className="publicFooter"><span>用一点点心意，开启一段小旅程。</span><b>HEART STUDIO ♡</b><small>一段专属互动体验 · Heart Studio</small></footer>
   </main>;
 }
