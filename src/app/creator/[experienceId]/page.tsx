@@ -102,20 +102,41 @@ export default function ExperienceEditor() {
       const url=window.location.origin+d.shareUrl;setShareUrl(url);setMessage("作品已发布，可以复制链接分享。");
     }catch(e){setMessage(e instanceof Error?e.message:"发布失败");}finally{setBusy(false);}
   }
-  async function copy(){if(shareUrl){await navigator.clipboard.writeText(shareUrl);setMessage("分享链接已复制。");}}
+  async function copy(){
+    if(!shareUrl)return;
+    try{
+      if(navigator.clipboard?.writeText){
+        await navigator.clipboard.writeText(shareUrl);
+      }else{
+        const input=document.createElement("textarea");
+        input.value=shareUrl;
+        input.setAttribute("readonly","");
+        input.style.position="fixed";
+        input.style.opacity="0";
+        document.body.appendChild(input);
+        input.select();
+        const copied=document.execCommand("copy");
+        input.remove();
+        if(!copied)throw new Error("COPY_FAILED");
+      }
+      setMessage("分享链接已复制，可以发送给对方了。");
+    }catch{
+      setMessage("自动复制暂不可用，请长按上方分享链接并选择复制。");
+    }
+  }
   if(loading)return <main className="creatorShell"><p className="notice">正在加载关卡…</p></main>;
   return <main className="creatorShell"><a href="/creator" className="back">← 返回工作台</a><section className="creatorCard editorCard"><p className="eyebrow">DESIGN YOUR JOURNEY</p><h1>关卡设计</h1><p className="sub">每一关都可以单独定价。公开页面只展示标题、提示和价格，私密内容仅在真实付款验证后开放。</p>
     <section className="themePicker"><div><b>分享页主题</b><span>选择对方打开链接时看到的整体氛围</span></div><div className="themeOptions"><button type="button" className={experienceInfo.theme==="rose"?"themeChoice selected":"themeChoice"} disabled={themeBusy} onClick={()=>changeTheme("rose")}><i className="themeSwatch roseSwatch"/>甜粉</button><button type="button" className={experienceInfo.theme==="cream"?"themeChoice selected":"themeChoice"} disabled={themeBusy} onClick={()=>changeTheme("cream")}><i className="themeSwatch creamSwatch"/>奶油</button><button type="button" className={experienceInfo.theme==="lavender"?"themeChoice selected":"themeChoice"} disabled={themeBusy} onClick={()=>changeTheme("lavender")}><i className="themeSwatch lavenderSwatch"/>梦幻紫</button></div></section>
     <section className="coverEditor"><div className="coverEditorHeading"><b>专属封面</b><span>上传手机相册照片，或选择一款氛围素材</span></div><div className="coverPreview" style={{background:experienceInfo.coverUrl?.startsWith("preset:")?coverPresets.find(x=>x.id===experienceInfo.coverUrl)?.style:undefined}}>{experienceInfo.coverUrl&&!experienceInfo.coverUrl.startsWith("preset:")?<img src={experienceInfo.coverUrl} alt="作品封面预览" style={{objectPosition:experienceInfo.coverPosition}}/>:<span>♡<small>{coverPresets.find(x=>x.id===experienceInfo.coverUrl)?.label||"为这段旅程选择一张封面"}</small></span>}</div><div className="coverPresetGrid">{coverPresets.map(item=><button type="button" key={item.id} disabled={coverBusy} className={experienceInfo.coverUrl===item.id?"coverPreset selected":"coverPreset"} onClick={()=>saveCover(item.id)}><i style={{background:item.style}}/><span>{item.label}</span></button>)}</div>{experienceInfo.coverUrl&&<button type="button" className="coverRemoveButton" disabled={coverBusy} onClick={clearCover}>移除当前封面</button>}<label className="coverUploadButton">从手机相册上传照片<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={coverBusy} onChange={e=>{void uploadCover(e.target.files?.[0]);e.currentTarget.value="";}}/></label><div className="coverPositionPicker"><span>照片构图</span>{[{id:"top",label:"上方"},{id:"center",label:"居中"},{id:"bottom",label:"下方"}].map(item=><button type="button" key={item.id} disabled={coverBusy||!experienceInfo.coverUrl||experienceInfo.coverUrl.startsWith("preset:")} className={experienceInfo.coverPosition===item.id?"active":""} onClick={()=>saveCoverPosition(item.id)}>{item.label}</button>)}</div><small className="coverHint">支持 JPG、PNG、WEBP、GIF，最大 8MB、4000 万像素；会先检查图片格式与尺寸。上传照片需要配置对象存储。</small>{coverMessage&&<p className="coverMessage" role="status">{coverMessage}</p>}</section>
     <div className="previewToolbar"><div><b>体验者视角预览</b><span>只预览公开展示内容，不会创建订单或解锁内容</span></div><button type="button" onClick={()=>setPreviewMode(value=>!value)}>{previewMode?"收起预览":"打开预览 ↗"}</button></div>
     {previewMode&&<section className={`creatorPreview themePreview-${experienceInfo.theme}`}><div className="creatorPreviewHero">{experienceInfo.coverUrl&&!experienceInfo.coverUrl.startsWith("preset:")?<img className="creatorPreviewCover" src={experienceInfo.coverUrl} alt="封面" style={{objectPosition:experienceInfo.coverPosition}}/>:experienceInfo.coverUrl?<div className="creatorPreviewCover" style={{background:coverPresets.find(x=>x.id===experienceInfo.coverUrl)?.style}}>♡</div>:null}<span>♡</span><small>A LITTLE JOURNEY FOR YOU</small><h2>{experienceInfo.title}</h2><p>{experienceInfo.description}</p></div><div className="creatorPreviewLevels">{levels.map((level,index)=><article key={index}><span className="creatorPreviewNumber">{String(index+1).padStart(2,"0")}</span><div><b>{level.title.trim()||"未填写关卡标题"}</b><p>{level.teaser.trim()||"一份为你准备的小惊喜，打开后就能看到更多。"}</p></div><strong>¥{(Number(level.priceMinor||0)/100).toFixed(2)}</strong></article>)}</div><p className="creatorPreviewFoot">预览不代表真实支付状态；私密内容不会在公开预览中展示。</p></section>}
-    {levels.map((level,index)=><article className="levelEditor" key={index}><div className="levelEditorTop"><b>第 {index+1} 关</b><div className="levelEditorControls"><button type="button" className="moveLevel" aria-label={`第 ${index+1} 关上移`} disabled={index===0} onClick={()=>{setIsDirty(true);setLevels(old=>{const next=[...old];[next[index-1],next[index]]=[next[index],next[index-1]];return next;});}}>↑ 上移</button><button type="button" className="moveLevel" aria-label={`第 ${index+1} 关下移`} disabled={index===levels.length-1} onClick={()=>{setIsDirty(true);setLevels(old=>{const next=[...old];[next[index],next[index+1]]=[next[index+1],next[index]];return next;});}}>↓ 下移</button><button type="button" className="removeLevel" disabled={levels.length===1} onClick={()=>{setIsDirty(true);setLevels(old=>old.filter((_,i)=>i!==index));}}>删除此关</button></div></div>
-      <label>关卡标题<input value={level.title} maxLength={80} onChange={e=>change(index,"title",e.target.value)} placeholder="例如：第一份小惊喜"/></label>
-      <label>关卡提示（对方付款前可见）<textarea value={level.teaser} maxLength={240} onChange={e=>change(index,"teaser",e.target.value)} placeholder="写一小段提示，让对方知道这一关有什么期待…" rows={2}/></label>
-      <label>本关价格（人民币）<div className="priceInput"><span>¥</span><input type="number" min="0" max="1000000" step="0.01" value={(level.priceMinor/100).toFixed(2)} onChange={e=>change(index,"priceMinor",Math.round(Number(e.target.value||0)*100))}/></div></label>
-      <label>解锁后的私密内容<textarea value={level.privateContent} maxLength={20000} onChange={e=>change(index,"privateContent",e.target.value)} placeholder="写下只有对方完成本关付款后才能看到的内容…" rows={5}/></label>
+    {levels.map((level,index)=><article className="levelEditor" key={index}><div className="levelEditorTop"><b>第 {index+1} 关</b><div className="levelEditorControls"><button type="button" className="moveLevel" aria-label={`第 ${index+1} 关上移`} disabled={busy||index===0} onClick={()=>{setIsDirty(true);setLevels(old=>{const next=[...old];[next[index-1],next[index]]=[next[index],next[index-1]];return next;});}}>↑ 上移</button><button type="button" className="moveLevel" aria-label={`第 ${index+1} 关下移`} disabled={busy||index===levels.length-1} onClick={()=>{setIsDirty(true);setLevels(old=>{const next=[...old];[next[index],next[index+1]]=[next[index+1],next[index]];return next;});}}>↓ 下移</button><button type="button" className="removeLevel" disabled={busy||levels.length===1} onClick={()=>{setIsDirty(true);setLevels(old=>old.filter((_,i)=>i!==index));}}>删除此关</button></div></div>
+      <label>关卡标题<input disabled={busy} value={level.title} maxLength={80} onChange={e=>change(index,"title",e.target.value)} placeholder="例如：第一份小惊喜"/></label>
+      <label>关卡提示（对方付款前可见）<textarea disabled={busy} value={level.teaser} maxLength={240} onChange={e=>change(index,"teaser",e.target.value)} placeholder="写一小段提示，让对方知道这一关有什么期待…" rows={2}/></label>
+      <label>本关价格（人民币）<div className="priceInput"><span>¥</span><input disabled={busy} type="number" min="0" max="1000000" step="0.01" value={(level.priceMinor/100).toFixed(2)} onChange={e=>change(index,"priceMinor",Math.round(Number(e.target.value||0)*100))}/></div></label>
+      <label>解锁后的私密内容<textarea disabled={busy} value={level.privateContent} maxLength={20000} onChange={e=>change(index,"privateContent",e.target.value)} placeholder="写下只有对方完成本关付款后才能看到的内容…" rows={5}/></label>
     </article>)}
-    <button className="addLevel" type="button" disabled={levels.length>=30} onClick={()=>{setIsDirty(true);setLevels(old=>[...old,blank()]);}}>＋ 添加下一关（最多 30 关）</button>
+    <button className="addLevel" type="button" disabled={busy||levels.length>=30} onClick={()=>{setIsDirty(true);setLevels(old=>[...old,blank()]);}}>＋ 添加下一关（最多 30 关）</button>
     <div className="editorActions"><button className="primary" disabled={busy} onClick={save}>{busy?"处理中…":isDirty?"保存修改 · 有未保存内容":"保存所有关卡"}</button><button className="publishButton" disabled={busy||isDirty} onClick={publish}>发布并生成分享链接 ↗</button></div>
     {shareUrl&&<div className="shareResult"><span>{shareUrl}</span><button onClick={copy}>复制链接</button><a href={shareUrl} target="_blank" rel="noreferrer">预览</a></div>}
     {isDirty&&<p className="notice" role="status">你有尚未保存的修改。离开页面前请先保存；发布按钮会在保存后开放。</p>}
