@@ -107,6 +107,8 @@ jobs:
         run: node --experimental-strip-types scripts/cover-image-test.mjs
       - name: Test fail-closed transactional email provider selection
         run: node --experimental-strip-types scripts/email-provider-test.mjs
+      - name: Test interaction motion coverage
+        run: node scripts/interaction-motion-test.mjs
       - run: npm run build
       - name: Validate Docker Compose configuration
         env:
