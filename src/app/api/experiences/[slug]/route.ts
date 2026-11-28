@@ -23,13 +23,17 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
       buyerRef = buyer?.buyer_ref ?? null;
     }
     const rows = await db`
-      SELECT e.slug, e.title, e.description, e.cover_url, e.cover_position, e.currency, e.theme,
+      SELECT e.slug, e.title, e.description, e.cover_url, e.cover_position, e.currency, e.theme, e.payment_qr_url,
         l.id AS level_id, l.position, l.title AS level_title,
         l.teaser, l.price_minor,
         EXISTS (
           SELECT 1 FROM journey_level_progress progress
           WHERE progress.level_id = l.id AND progress.buyer_ref = ${buyerRef}
-        ) AS completed
+        ) AS completed,
+        EXISTS (
+          SELECT 1 FROM journey_level_unlocks unlocks
+          WHERE unlocks.level_id = l.id AND unlocks.buyer_ref = ${buyerRef}
+        ) AS self_unlocked
       FROM experiences e
       LEFT JOIN experience_levels l
         ON l.experience_id = e.id
@@ -51,10 +55,10 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
     return NextResponse.json({
       experience: {
         slug: first.slug, title: first.title, description: first.description,
-        coverUrl: first.cover_url, coverPosition: ["top", "center", "bottom"].includes(first.cover_position) ? first.cover_position : "center", currency: first.currency, theme: ["rose", "cream", "lavender"].includes(first.theme) ? first.theme : "rose",
+        coverUrl: first.cover_url, paymentQrUrl: first.payment_qr_url, coverPosition: ["top", "center", "bottom"].includes(first.cover_position) ? first.cover_position : "center", currency: first.currency, theme: ["rose", "cream", "lavender"].includes(first.theme) ? first.theme : "rose",
         levels: rows.filter((r: any) => r.level_id).map((r: any) => ({
           id: r.level_id, position: r.position, title: r.level_title,
-          teaser: r.teaser, priceMinor: r.price_minor, completed: Boolean(r.completed)
+          teaser: r.teaser, priceMinor: r.price_minor, completed: Boolean(r.completed), selfUnlocked: Boolean(r.self_unlocked)
         }))
       }
     }, { headers: responseHeaders() });
