@@ -18,6 +18,7 @@ export default function PublicExperiencePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<Level | null>(null);
+  const [closing, setClosing] = useState(false);
   const [notice, setNotice] = useState("");
   const [privateContent, setPrivateContent] = useState("");
   const [checkingLevel, setCheckingLevel] = useState(false);
@@ -25,6 +26,14 @@ export default function PublicExperiencePage() {
   const [copied, setCopied] = useState(false);
   const [reaction, setReaction] = useState<string | null>(null);
   const responsePanelRef = useRef<HTMLElement | null>(null);
+  function closeSelected() {
+    if (!selected || closing) return;
+    setClosing(true);
+    window.setTimeout(() => {
+      setSelected(null);
+      setClosing(false);
+    }, 180);
+  }
 
   useEffect(() => {
     let alive = true;
@@ -69,7 +78,7 @@ export default function PublicExperiencePage() {
       document.querySelector<HTMLButtonElement>(".journeyDialogClose")?.focus();
     }, 40);
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setSelected(null);
+      if (event.key === "Escape") closeSelected();
       if (event.key === "Tab") {
         const dialog = document.querySelector<HTMLElement>(".journeyDialog");
         const focusable = dialog?.querySelectorAll<HTMLElement>('button:not(:disabled),a[href],[tabindex]:not([tabindex="-1"])');
@@ -200,9 +209,9 @@ export default function PublicExperiencePage() {
         </article>)}</div>}
       <div className="journeyTotal"><span>全部关卡合计（仅供参考）</span><strong>{money(total, experience.currency || "CNY")}</strong></div>
     </section>
-    {selected && <div className="journeyModalBackdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setSelected(null); }}>
+    {selected && <div className={closing ? "journeyModalBackdrop closing" : "journeyModalBackdrop"} role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) closeSelected(); }}>
       <section ref={responsePanelRef} className="journeyDialog" role="dialog" aria-modal="true" aria-labelledby="journeyDialogTitle" aria-describedby="journeyDialogDescription">
-        <button type="button" className="journeyDialogClose" onClick={() => setSelected(null)} aria-label="关闭这份心意">×</button>
+        <button type="button" className="journeyDialogClose" onClick={closeSelected} aria-label="关闭这份心意">×</button>
         <div className="journeyDialogGlow" aria-hidden="true" />
         <div className="journeyDialogSeal">♡</div>
         <p className="journeyDialogEyebrow">A LITTLE SECRET FOR YOU</p>
@@ -216,7 +225,7 @@ export default function PublicExperiencePage() {
           <div>{["心动 ♡","想你 ✨","抱抱 🫶"].map(item => <button type="button" key={item} disabled={checkingLevel} className={reaction === item ? "chosenReaction" : ""} onClick={() => void sendReaction(item)}>{item}</button>)}</div>
           {reaction && <small aria-live="polite">收到你的回应：{reaction}。创作者已经可以在心意收件箱里看到它。</small>}
         </div>
-        <button type="button" className="journeyDialogDone" onClick={() => setSelected(null)}>把这份心意收好 ♡</button>
+        <button type="button" className="journeyDialogDone" onClick={closeSelected}>把这份心意收好 ♡</button>
         <p className="journeyDialogFootnote">一段专属互动体验 · Heart Studio</p>
       </section>
     </div>}

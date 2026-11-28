@@ -90,3 +90,6 @@
 @keyframes journeySpin{to{transform:rotate(360deg)}}
 @media(max-width:520px){.journeyModalBackdrop{align-items:end;padding:12px 12px max(12px,env(safe-area-inset-bottom))}.journeyDialog{width:100%;max-height:88dvh;border-radius:28px 28px 24px 24px;padding:29px 21px 19px}.journeyDialog h2{font-size:24px}.journeyDialogDone{margin-top:15px}}
 @media(prefers-reduced-motion:reduce){.journeyModalBackdrop,.journeyDialog,.journeyDialogClose,.journeyDialogDone,.journeySpinner{animation:none!important;transition:none!important}.journeyModalBackdrop{opacity:1;background:rgba(57,36,45,.48);backdrop-filter:blur(5px)}.journeyDialog{opacity:1;transform:none}}
+
+.journeyModalBackdrop.closing{opacity:0;background:rgba(57,36,45,0);backdrop-filter:blur(0);-webkit-backdrop-filter:blur(0);transition:opacity .18s ease,background .18s ease,backdrop-filter .18s ease}
+.journeyModalBackdrop.closing .journeyDialog{opacity:0;transform:translateY(12px) scale(.97);transition:opacity .16s ease,transform .18s ease}
