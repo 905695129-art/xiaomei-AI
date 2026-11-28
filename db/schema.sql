@@ -60,19 +60,11 @@ CREATE TABLE IF NOT EXISTS experience_levels (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
--- Existing installations may contain legacy zero-priced levels. Keep those rows
--- readable/editable, but reject every new or updated row until free unlock exists.
-DO $
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-    WHERE conrelid = 'experience_levels'::regclass
-      AND conname = 'experience_levels_price_positive'
-  ) THEN
-    ALTER TABLE experience_levels
-      ADD CONSTRAINT experience_levels_price_positive CHECK (price_minor >= 1) NOT VALID;
-  END IF;
-END $;
+-- Recreate the NOT VALID constraint idempotently. Existing legacy zero-priced
+-- rows remain readable, while new inserts/updates must use a positive price.
+ALTER TABLE experience_levels DROP CONSTRAINT IF EXISTS experience_levels_price_positive;
+ALTER TABLE experience_levels
+  ADD CONSTRAINT experience_levels_price_positive CHECK (price_minor >= 1) NOT VALID;
 CREATE UNIQUE INDEX IF NOT EXISTS levels_active_position_unique ON experience_levels(experience_id, position) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS levels_experience_idx ON experience_levels(experience_id, is_active, position);
 
