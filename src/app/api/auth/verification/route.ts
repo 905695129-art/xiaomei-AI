@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { requireDb } from "@/lib/db";
 import { getCurrentCreator } from "@/lib/session";
-import { escapeEmailHtml, isEmailDeliveryConfigured, sendTransactionalEmail } from "@/lib/email";
+import { escapeEmailHtml, getPublicAppBaseUrl, isEmailDeliveryConfigured, sendTransactionalEmail } from "@/lib/email";
 import { isSameOriginWrite } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
@@ -43,12 +43,16 @@ export async function POST(request: Request) {
       await tx`DELETE FROM email_verification_tokens WHERE user_id = ${creator.id} AND consumed_at IS NULL`;
       await tx`INSERT INTO email_verification_tokens (user_id, token_hash, expires_at) VALUES (${creator.id}, ${tokenHash}, now() + interval '24 hours')`;
     });
-    const verifyUrl = `${process.env.APP_URL!.replace(/\/$/, "")}/creator/verify-email?token=${encodeURIComponent(token)}`;
+    const appBaseUrl = getPublicAppBaseUrl();
+    if (!appBaseUrl) return NextResponse.json({ error: "EMAIL_DELIVERY_NOT_CONFIGURED" }, { status: 503, headers });
+    const verifyUrl = new URL("/creator/verify-email", appBaseUrl);
+    verifyUrl.searchParams.set("token", token);
+    const verifyLink = verifyUrl.toString();
     const safeUrl = escapeEmailHtml(verifyUrl);
     await sendTransactionalEmail({
       to: user.email,
       subject: "心意闯关：验证你的邮箱",
-      text: `请在 24 小时内打开以下链接验证邮箱：${verifyUrl}\n如果不是你本人操作，请忽略此邮件。`,
+      text: `请在 24 小时内打开以下链接验证邮箱：${verifyLink}\n如果不是你本人操作，请忽略此邮件。`,
       html: `<div style="font-family:Arial,sans-serif;line-height:1.8;color:#654f58"><h2>验证邮箱</h2><p>请在 24 小时内点击下方按钮完成验证。</p><p><a href="${safeUrl}" style="display:inline-block;padding:12px 22px;background:#d98da4;color:white;border-radius:10px;text-decoration:none">验证邮箱</a></p><p>如果不是你本人操作，请忽略此邮件。</p></div>`
     });
     return NextResponse.json({ ok: true, message: "验证邮件已发送，请检查收件箱。" }, { headers });
