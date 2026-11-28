@@ -79,12 +79,18 @@ jobs:
         run: |
           docker compose up -d --build
           for attempt in $(seq 1 60); do
-            if curl --fail --silent http://127.0.0.1:3000/api/health; then
-              echo "Heart Studio container is healthy."
-              exit 0
+            if curl --fail --silent http://127.0.0.1:3000/api/health >/dev/null; then
+              if curl --fail --silent http://127.0.0.1:3000/api/ready; then
+                echo "Heart Studio application and database are ready."
+                exit 0
+              fi
             fi
             sleep 2
           done
+          echo "Liveness probe:"
+          curl --silent --show-error http://127.0.0.1:3000/api/health || true
+          echo "Readiness probe:"
+          curl --silent --show-error http://127.0.0.1:3000/api/ready || true
           docker compose ps
           docker compose logs --no-color app migrate db
           exit 1
