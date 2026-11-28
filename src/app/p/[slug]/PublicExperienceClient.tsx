@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 
 type MediaItem = { type: "image" | "audio" | "video"; url: string; name?: string };
 type Level = { id: string; position: number; title: string; teaser: string | null; priceMinor: number; completed?: boolean };
-type Experience = { slug: string; title: string; description: string | null; coverUrl: string | null; coverPosition?: "top" | "center" | "bottom"; currency: string; theme?: "rose" | "cream" | "lavender"; levels: Level[] };
+type Experience = { slug: string; title: string; description: string | null; coverUrl: string | null; coverPosition?: "top" | "center" | "bottom"; currency: string; theme?: "rose" | "white" | "lavender" | "mint" | "sky" | "peach" | "midnight" | "champagne"; levels: Level[] };
 
 function money(minor: number, currency: string) {
   try { return new Intl.NumberFormat("zh-CN", { style: "currency", currency }).format(minor / 100); }
