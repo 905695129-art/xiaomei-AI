@@ -31,6 +31,12 @@ CREATE TABLE IF NOT EXISTS buyer_sessions (
 );
 CREATE INDEX IF NOT EXISTS buyer_sessions_expiry_idx ON buyer_sessions(expires_at);
 
+CREATE TABLE IF NOT EXISTS creator_upload_rate_limits (
+  creator_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  window_started_at TIMESTAMPTZ NOT NULL,
+  request_count INTEGER NOT NULL CHECK (request_count >= 1 AND request_count <= 10)
+);
+
 CREATE TABLE IF NOT EXISTS experiences (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   creator_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
