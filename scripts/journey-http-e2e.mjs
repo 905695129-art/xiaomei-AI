@@ -91,6 +91,13 @@ try {
   const freeGet = await call("/api/experiences/" + slug + "/levels/" + thirdId, cookie1);
   assert.equal(freeGet.status, 200, "free level should open after prior level completion without QR payment");
   assert.equal((await freeGet.json()).content, "免费关卡专属惊喜");
+  const freeResponse = await call("/api/experiences/" + slug + "/responses", cookie1, {
+    method: "POST", headers: { "sec-fetch-site": "same-origin", "content-type": "application/json" },
+    body: JSON.stringify({ levelId: thirdId, reaction: "heart", message: "免费关卡也可以互动" })
+  });
+  assert.equal(freeResponse.status, 200, "free level must accept the same interaction after opening");
+  const afterFreeResponse = await call("/api/experiences/" + slug, cookie1);
+  assert.equal((await afterFreeResponse.json()).experience.levels[2].completed, true);
   const freeConfirm = await call("/api/experiences/" + slug + "/levels/" + thirdId + "/confirm-payment", cookie1, { method: "POST", headers: { "sec-fetch-site": "same-origin" } });
   assert.equal(freeConfirm.status, 409, "free levels must not create transfer confirmations");
   assert.equal((await freeConfirm.json()).error, "FREE_LEVEL_DOES_NOT_REQUIRE_PAYMENT");
