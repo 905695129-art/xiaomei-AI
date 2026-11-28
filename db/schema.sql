@@ -544,6 +544,7 @@ BEGIN
   NEW.level_title_snapshot := level_row.title;
   NEW.level_position_snapshot := level_row.position;
   NEW.private_content_snapshot := level_row.private_content;
+  NEW.private_media_snapshot := level_row.private_media;
   RETURN NEW;
 END;
 $$;
@@ -567,6 +568,7 @@ BEGIN
   NEW.level_title_snapshot := COALESCE(order_row.level_title_snapshot, NEW.level_title_snapshot);
   NEW.level_position_snapshot := COALESCE(order_row.level_position_snapshot, NEW.level_position_snapshot);
   NEW.private_content_snapshot := COALESCE(order_row.private_content_snapshot, NEW.private_content_snapshot);
+  NEW.private_media_snapshot := COALESCE(order_row.private_media_snapshot, NEW.private_media_snapshot);
   NEW.price_minor_snapshot := COALESCE(order_row.amount_minor, NEW.price_minor_snapshot);
   NEW.currency_snapshot := COALESCE(order_row.currency, NEW.currency_snapshot);
   RETURN NEW;
