@@ -17,6 +17,10 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
     return NextResponse.json({ error: "INVALID_INPUT" }, { status: 400, headers });
   }
   const reaction = (parsed.value as { reaction?: unknown }).reaction;
+  const levelId = (parsed.value as { levelId?: unknown }).levelId;
+  if (typeof levelId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(levelId)) {
+    return NextResponse.json({ error: "INVALID_LEVEL" }, { status: 400, headers });
+  }
   if (typeof reaction !== "string" || !allowed.has(reaction)) {
     return NextResponse.json({ error: "INVALID_REACTION" }, { status: 400, headers });
   }
@@ -36,7 +40,7 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
        ON CONFLICT (level_id, buyer_ref)
        DO UPDATE SET reaction = EXCLUDED.reaction, updated_at = now()
        RETURNING id`,
-      [slug, (parsed.value as { levelId?: string }).levelId ?? "", tokenHash, reaction]
+      [slug, levelId, tokenHash, reaction]
     );
     if (!rows.length) return NextResponse.json({ error: "LEVEL_NOT_AVAILABLE" }, { status: 404, headers });
     return NextResponse.json({ ok: true }, { headers });
