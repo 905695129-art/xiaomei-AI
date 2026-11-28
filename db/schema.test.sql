@@ -298,4 +298,42 @@ BEGIN
   END IF;
 END $email_token_test$;
 
+
+DO $account_privacy_erasure_test$
+DECLARE
+  creator_id UUID;
+  experience_id UUID;
+  level_id UUID;
+  buyer_ref_value TEXT := 'ci-delete-' || replace(gen_random_uuid()::text, '-', '');
+  order_id_value UUID;
+BEGIN
+  INSERT INTO users (email, display_name, password_hash, role)
+  VALUES ('ci-delete-' || gen_random_uuid()::text || '@example.test', 'Delete CI', 'scrypt:test:test', 'creator')
+  RETURNING id INTO creator_id;
+  INSERT INTO experiences (creator_id, slug, title, status)
+  VALUES (creator_id, 'ci-delete-' || replace(gen_random_uuid()::text, '-', ''), 'Private work', 'published')
+  RETURNING id INTO experience_id;
+  INSERT INTO buyer_sessions (buyer_ref, token_hash, expires_at)
+  VALUES (buyer_ref_value, encode(digest(gen_random_uuid()::text, 'sha256'), 'hex'), now() + interval '1 day');
+  INSERT INTO experience_levels (experience_id, position, title, price_minor, private_content)
+  VALUES (experience_id, 1, 'Secret level', 500, 'Secret private content')
+  RETURNING id INTO level_id;
+  INSERT INTO orders (experience_id, level_id, creator_id, buyer_ref, amount_minor, currency, status, provider)
+  VALUES (experience_id, level_id, creator_id, buyer_ref_value, 500, 'CNY', 'pending', 'ci-test')
+  RETURNING id INTO order_id_value;
+  UPDATE users SET email = NULL, password_hash = NULL, display_name = '已注销账户', deleted_at = now()
+  WHERE id = creator_id;
+  UPDATE orders SET level_title_snapshot = '已删除的关卡', private_content_snapshot = NULL
+  WHERE id = order_id_value;
+  IF NOT EXISTS (SELECT 1 FROM orders WHERE id = order_id_value AND level_title_snapshot = '已删除的关卡' AND private_content_snapshot IS NULL) THEN
+    RAISE EXCEPTION 'ACCOUNT_PRIVACY_ERASURE_DID_NOT_REDACT_ORDER_SNAPSHOT';
+  END IF;
+  BEGIN
+    UPDATE orders SET level_title_snapshot = 'tampered snapshot' WHERE id = order_id_value;
+    RAISE EXCEPTION 'DELETED_ACCOUNT_ALLOWED_ARBITRARY_ORDER_SNAPSHOT_EDIT';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM <> 'ORDER_COMMERCIAL_IDENTITY_IMMUTABLE' THEN RAISE; END IF;
+  END;
+END $account_privacy_erasure_test$;
+
 ROLLBACK;
