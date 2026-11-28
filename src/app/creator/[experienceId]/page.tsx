@@ -21,7 +21,8 @@ export default function ExperienceEditor() {
   function openPreviewLevel(index:number, opener:HTMLButtonElement){previewOpenerRef.current=opener;setPreviewReaction(null);setPreviewLevelIndex(index);}
   function closePreviewLevel(){if(previewLevelIndex===null||previewClosing)return;setPreviewClosing(true);window.setTimeout(()=>{setPreviewLevelIndex(null);setPreviewClosing(false);window.requestAnimationFrame(()=>previewOpenerRef.current?.focus());},180);}
   useEffect(()=>{if(previewLevelIndex===null)return;const previous=document.body.style.overflow;document.body.style.overflow="hidden";const focus=window.setTimeout(()=>document.querySelector<HTMLButtonElement>(".creatorJourneyDialogClose")?.focus(),40);const key=(event:KeyboardEvent)=>{if(event.key==="Escape")closePreviewLevel();if(event.key==="Tab"){const dialog=document.querySelector<HTMLElement>(".creatorJourneyDialog");const items=dialog?.querySelectorAll<HTMLElement>('button:not(:disabled),[tabindex]:not([tabindex="-1"])');if(!items?.length)return;const first=items[0],last=items[items.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}};document.addEventListener("keydown",key);return()=>{window.clearTimeout(focus);document.removeEventListener("keydown",key);document.body.style.overflow=previous;};},[previewLevelIndex]);
-  // Soft pink bubble feedback on every creator-side tap; decorative only, never blocks controls.
+  // Randomly alternate soft pink bubbles and golden twinkles on creator-side taps.
+  // The feedback is decorative, lightweight and never blocks the control being used.
   useEffect(()=>{
     const onPointerDown=(event:PointerEvent)=>{
       const target=event.target;
@@ -29,20 +30,22 @@ export default function ExperienceEditor() {
       const control=target.closest("button,a,label,select,input[type='checkbox'],input[type='radio'],.themeOption,.coverPreset");
       if(!control||!control.closest(".creatorShell"))return;
       if(window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
-      const count=5;
+      const sparkle=Math.random()>.48;
+      const count=sparkle?4+Math.floor(Math.random()*3):5;
       for(let i=0;i<count;i++){
-        const bubble=document.createElement("i");
-        bubble.className="heartTapBubble";
-        const angle=(Math.PI*2*i/count)+(Math.random()-.5)*.45;
-        const distance=24+Math.random()*24;
-        bubble.style.left=`${event.clientX}px`;
-        bubble.style.top=`${event.clientY}px`;
-        bubble.style.setProperty("--bubble-x",`${Math.cos(angle)*distance}px`);
-        bubble.style.setProperty("--bubble-y",`${-18-Math.random()*38}px`);
-        bubble.style.setProperty("--bubble-size",`${5+Math.random()*7}px`);
-        bubble.style.setProperty("--bubble-delay",`${i*22}ms`);
-        document.body.appendChild(bubble);
-        window.setTimeout(()=>bubble.remove(),850);
+        const particle=document.createElement("i");
+        particle.className=sparkle?"heartTapSpark":"heartTapBubble";
+        if(sparkle)particle.textContent=Math.random()>.5?"✦":"★";
+        const angle=(Math.PI*2*i/count)+(Math.random()-.5)*.55;
+        const distance=20+Math.random()*34;
+        particle.style.left=`${event.clientX}px`;
+        particle.style.top=`${event.clientY}px`;
+        particle.style.setProperty("--bubble-x",`${Math.cos(angle)*distance}px`);
+        particle.style.setProperty("--bubble-y",`${-16-Math.random()*44}px`);
+        particle.style.setProperty("--bubble-size",`${sparkle?9+Math.random()*8:5+Math.random()*7}px`);
+        particle.style.setProperty("--bubble-delay",`${i*18}ms`);
+        document.body.appendChild(particle);
+        window.setTimeout(()=>particle.remove(),900);
       }
     };
     document.addEventListener("pointerdown",onPointerDown,{passive:true});
