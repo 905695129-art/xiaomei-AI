@@ -152,30 +152,47 @@ export default function PublicExperiencePage() {
       }
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
+      // Some embedded browsers expose Web Share but reject it at runtime.
+      // Continue to the clipboard fallback instead of leaving the button inert.
     }
-    if (isWeChat) {
-      setNotice("微信内分享：请点击右上角「…」，选择发送给朋友或分享到朋友圈 ♡");
-      return;
-    }
+
+    let copiedToClipboard = false;
     try {
-      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(url);
-      else {
-        const input = document.createElement("textarea");
-        input.value = url;
-        input.setAttribute("readonly", "");
-        input.style.position = "fixed";
-        input.style.opacity = "0";
-        document.body.appendChild(input);
-        input.select();
-        const ok = document.execCommand("copy");
-        input.remove();
-        if (!ok) throw new Error("COPY_FAILED");
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        copiedToClipboard = true;
       }
+    } catch {
+      // Clipboard API can be unavailable in insecure or embedded webviews.
+    }
+
+    if (!copiedToClipboard) {
+      const input = document.createElement("textarea");
+      input.value = url;
+      input.setAttribute("readonly", "");
+      input.setAttribute("aria-hidden", "true");
+      input.style.position = "fixed";
+      input.style.top = "0";
+      input.style.left = "-9999px";
+      input.style.opacity = "0";
+      document.body.appendChild(input);
+      input.select();
+      try { copiedToClipboard = document.execCommand("copy"); }
+      finally { input.remove(); }
+    }
+
+    if (copiedToClipboard) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2200);
-    } catch {
-      setNotice("暂时无法自动复制，请长按浏览器地址栏复制分享链接。");
+      if (isWeChat) {
+        setNotice("链接已复制。若要在微信内转发，请点击右上角「…」，选择发送给朋友或分享到朋友圈 ♡");
+      }
+      return;
     }
+
+    setNotice(isWeChat
+      ? "请点击右上角「…」分享给朋友；也可以长按页面链接复制 ♡"
+      : "暂时无法自动复制，请长按浏览器地址栏复制分享链接。");
   }
 
   async function confirmSelfAttestedTransfer() {
