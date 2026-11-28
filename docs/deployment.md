@@ -18,9 +18,9 @@
 cp .env.example .env
 ```
 
-编辑 `.env`，至少将 `POSTGRES_PASSWORD` 替换为长随机密码。生产部署还应设置：
+编辑 `.env`，至少将 `POSTGRES_PASSWORD` 替换为长随机密码；同时检查 `.env.example` 中所有适用变量。不要沿用示例占位值。建议使用 openssl rand -hex 32 生成数据库密码及应用所需随机密钥（分别生成、不要复用）。生产部署还应设置：
 
-- `APP_URL=https://你的正式域名`
+- `APP_URL=https://你的正式域名`（必须与实际对外 HTTPS 地址一致，邮件验证和密码重置链接依赖它）
 - `RESEND_API_KEY`：Resend 服务端 API Key
 - `EMAIL_FROM`：Resend 已验证域名中的发件地址
 - `REQUIRE_VERIFIED_EMAIL=true`：只有在邮件发送已完成验证后再启用
@@ -37,7 +37,7 @@ docker compose ps
 docker compose logs -f app
 ```
 
-Compose 会先启动 PostgreSQL，等待数据库健康检查通过，再依次执行可重复的 `db/schema.sql`、互动回应和收件箱已读状态迁移，最后启动 Next.js 应用。数据库数据保存在名为 `heart_studio_data` 的 Docker volume 中。
+Compose 会先启动 PostgreSQL，等待数据库健康检查通过，再依次执行可重复的 `db/schema.sql`、互动回应、收件箱已读状态、回应消息和逐关进度迁移，最后启动 Next.js 应用。迁移文件清单以 `docker-compose.yml` 的 `migrate.command` 为准；升级前务必核对该清单与 `db/migrations/` 中的迁移顺序一致。数据库数据保存在名为 `heart_studio_data` 的 Docker volume 中。
 
 应用容器监听 3000 端口，Compose 默认只将其绑定到主机回环地址 `127.0.0.1:3000`，便于主机上的 Caddy/Nginx 反向代理访问。应用对所有路由设置 `X-Content-Type-Options`、`X-Frame-Options`、`Referrer-Policy`、`Permissions-Policy` 等浏览器安全响应头；生产环境还会发送 HSTS。生产环境应通过 HTTPS 反向代理访问，并确保反向代理正确传递 Host、协议和请求头；不要将应用端口改为公网监听。
 
@@ -89,3 +89,26 @@ cat heart-studio-backup.sql | docker compose exec -T db psql -U heart -d heart_s
 - 应用进程未就绪：检查 `curl -i http://127.0.0.1:3000/api/health`。
 - 应用可响应但数据库未就绪：检查 `curl -i http://127.0.0.1:3000/api/ready`、`DATABASE_URL` 和数据库日志。
 - 应用无法启动：查看 `docker compose logs app`；迁移失败时查看 `docker compose logs migrate`。
+
+## 8. 部署前配置核对（逐项完成）
+
+| 配置 | 何时需要 | 验收方式 |
+| --- | --- | --- |
+| `POSTGRES_PASSWORD` | 始终需要 | 使用独立强随机值；确认未提交到 Git |
+| `DATABASE_URL` | 应用容器内部由 Compose 根据数据库服务生成 | 检查容器运行环境指向内部数据库服务，不使用公网数据库端口 |
+| `APP_URL` | 生产环境始终需要 | 与正式 HTTPS 域名完全一致；测试邮件中的链接 |
+| `RESEND_API_KEY`、`EMAIL_FROM` | 启用邮箱验证、密码找回时需要 | 使用服务端密钥；发件域名已验证并收到真实测试邮件 |
+| `STORAGE_*` 六项 | 启用自定义照片上传时需要 | 用正式域名完成一次上传、读取和删除测试；限制桶权限与 CORS |
+| `PAYMENT_PROVIDER` | 当前必须保持 `disabled`，直到真实支付集成完成 | `POST /api/orders` 应继续明确返回未配置状态；不要在没有验签回调和退款流程时开放收费 |
+
+**发布前禁止项：** 不要将 `.env`、数据库备份、用户上传图片、Resend/S3/支付密钥或生产数据提交到仓库；不要把 PostgreSQL 端口暴露到公网；不要把 GitHub Pages 静态预览当作正式应用。真实支付尚未接入，不能向体验者收取平台订单款项。
+
+## 9. 回滚与恢复演练
+
+1. 在升级前记录当前部署的 Git commit SHA，并创建加密数据库备份。
+2. 在预发布环境先执行迁移和核心流程验收；确认新版本可读写后再切换生产流量。
+3. 若应用版本出现问题，回滚应用镜像到记录的上一版本；不要未经评估就回滚数据库 schema。
+4. 若迁移已改变 schema，先按迁移兼容策略修复或向前迁移；只有确认备份时间点、数据损失范围和恢复影响后，才执行数据库恢复。
+5. 恢复后重新检查 `/api/health`、`/api/ready`、创作者登录、分享页、关卡回应、收件箱及账户数据导出。
+
+生产备份应定期自动化、加密并进行异地保存；至少定期做一次实际恢复演练。仅确认备份命令成功，不等于已经验证可恢复。
