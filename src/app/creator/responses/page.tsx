@@ -39,7 +39,7 @@ export default function CreatorResponsesPage() {
       setMessage("");
       setLastUpdated(new Date());
     } catch (error) {
-      if (!quiet || items.length === 0) setMessage(error instanceof Error ? error.message : "读取失败");
+      if (!quiet) setMessage(error instanceof Error ? error.message : "读取失败");
     } finally {
       if (!quiet) setRefreshing(false);
     }
@@ -91,6 +91,7 @@ export default function CreatorResponsesPage() {
         <button type="button" disabled={refreshing} onClick={() => void refresh()} style={{ border: "1px solid #f0dfe4", borderRadius: 20, padding: "8px 14px", background: "#fff8fa", color: "#a7657a", cursor: refreshing ? "wait" : "pointer" }}>
           {refreshing ? "更新中…" : "刷新收件箱 ↻"}
         </button>
+        </div>
       </div>
       {message && <p className="notice" role="status">{message}</p>}
       {!message && items.length === 0 && <div className="empty">还没有收到回应。把作品分享出去，等待一份小小的心意吧 ♡</div>}
