@@ -369,7 +369,7 @@ jobs:
                   for(i in 0 until node.childCount){val child=node.getChild(i)?:continue;collect(child,out,depth+1)}
               }
               override fun onInterrupt(){}
-              override fun onDestroy(){try{unregisterReceiver(refreshReceiver)}catch(_:Exception){};super.onDestroy()}
+              override fun onDestroy(){try{unregisterReceiver(refreshReceiver)}catch(_:Exception){};getSharedPreferences("xiaomei",Context.MODE_PRIVATE).edit().remove("screen_snapshot").remove("capture_package").remove("capture_time").apply();super.onDestroy()}
           }
           EOF
           cat > "$RES/xiaomei_accessibility.xml" <<'EOF'
@@ -408,8 +408,8 @@ jobs:
           from pathlib import Path
           p=Path("extracted/xiaomei-ai/app/build.gradle.kts")
           s=p.read_text()
-          s=s.replace("versionCode = 6", "versionCode = 10", 1)
-          s=s.replace('versionName = "0.6.0"', 'versionName = "0.9.1"', 1)
+          s=s.replace("versionCode = 6", "versionCode = 11", 1)
+          s=s.replace('versionName = "0.6.0"', 'versionName = "0.9.2"', 1)
           p.write_text(s)
           PY
 
