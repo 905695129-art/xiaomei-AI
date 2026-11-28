@@ -30,7 +30,7 @@ async function call(path, cookie, options = {}) {
 try {
   psql(`
     INSERT INTO users (id, display_name, role) VALUES ('${creatorId}', 'Journey HTTP CI', 'creator');
-    INSERT INTO experiences (id, creator_id, slug, title, status) VALUES ('${experienceId}', '${creatorId}', '${slug}', 'Journey HTTP CI', 'published');
+    INSERT INTO experiences (id, creator_id, slug, title, status, payment_qr_url) VALUES ('${experienceId}', '${creatorId}', '${slug}', 'Journey HTTP CI', 'published', 'https://assets.example.test/payment-qr.png');
     INSERT INTO experience_levels (id, experience_id, position, title, teaser, price_minor, private_content) VALUES
       ('${firstId}', '${experienceId}', 1, '第一关', '先完成这一关', 100, '第一关专属惊喜'),
       ('${secondId}', '${experienceId}', 2, '第二关', '完成第一关后出现', 200, '第二关专属惊喜');
@@ -51,8 +51,14 @@ try {
   assert.equal((await lockedGet.json()).error, "LEVEL_LOCKED");
 
   const firstGet = await call("/api/experiences/" + slug + "/levels/" + firstId, cookie1);
-  assert.equal(firstGet.status, 200);
-  assert.equal((await firstGet.json()).content, "第一关专属惊喜");
+  assert.equal(firstGet.status, 402, "priced level must require explicit self-attested transfer");
+  assert.equal((await firstGet.json()).error, "PAYMENT_CONFIRMATION_REQUIRED");
+  const confirmFirst = await call("/api/experiences/" + slug + "/levels/" + firstId + "/confirm-payment", cookie1, { method: "POST", headers: { "sec-fetch-site": "same-origin" } });
+  assert.equal(confirmFirst.status, 200);
+  assert.equal((await confirmFirst.json()).confirmationMethod, "self_attested_transfer");
+  const firstUnlocked = await call("/api/experiences/" + slug + "/levels/" + firstId, cookie1);
+  assert.equal(firstUnlocked.status, 200);
+  assert.equal((await firstUnlocked.json()).content, "第一关专属惊喜");
 
   const lockedPost = await call("/api/experiences/" + slug + "/responses", cookie1, {
     method: "POST", headers: { "sec-fetch-site": "same-origin", "content-type": "application/json" },
@@ -68,8 +74,12 @@ try {
   assert.equal((await submitted.json()).ok, true);
 
   const secondGet = await call("/api/experiences/" + slug + "/levels/" + secondId, cookie1);
-  assert.equal(secondGet.status, 200, "level two should unlock after response");
-  assert.equal((await secondGet.json()).content, "第二关专属惊喜");
+  assert.equal(secondGet.status, 402, "level two must require its own independent unlock");
+  const confirmSecond = await call("/api/experiences/" + slug + "/levels/" + secondId + "/confirm-payment", cookie1, { method: "POST", headers: { "sec-fetch-site": "same-origin" } });
+  assert.equal(confirmSecond.status, 200);
+  const secondUnlocked = await call("/api/experiences/" + slug + "/levels/" + secondId, cookie1);
+  assert.equal(secondUnlocked.status, 200, "level two should unlock after its own confirmation");
+  assert.equal((await secondUnlocked.json()).content, "第二关专属惊喜");
 
   const refreshed = await call("/api/experiences/" + slug, cookie1);
   assert.equal((await refreshed.json()).experience.levels[0].completed, true);
@@ -80,7 +90,9 @@ try {
   const otherListing = await call("/api/experiences/" + slug, cookie2);
   assert.equal((await otherListing.json()).experience.levels[0].completed, false, "progress must be visitor-scoped");
   const otherSecond = await call("/api/experiences/" + slug + "/levels/" + secondId, cookie2);
-  assert.equal(otherSecond.status, 409, "another visitor must not inherit unlocked levels");
+  assert.equal(otherSecond.status, 409, "another visitor must not inherit sequential progress");
+  const otherFirst = await call("/api/experiences/" + slug + "/levels/" + firstId, cookie2);
+  assert.equal(otherFirst.status, 402, "another visitor must not inherit self-attested payment unlocks");
 
   console.log("PASS: session, direct-link lock, interaction, sequential unlock, progress read, visitor isolation.");
 } finally {
