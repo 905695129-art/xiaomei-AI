@@ -37,7 +37,7 @@ docker compose ps
 docker compose logs -f app
 ```
 
-Compose 会先启动 PostgreSQL，等待数据库健康检查通过，再执行可重复的 `db/schema.sql` 迁移，最后启动 Next.js 应用。数据库数据保存在名为 `heart_studio_data` 的 Docker volume 中。
+Compose 会先启动 PostgreSQL，等待数据库健康检查通过，再依次执行可重复的 `db/schema.sql`、互动回应和收件箱已读状态迁移，最后启动 Next.js 应用。数据库数据保存在名为 `heart_studio_data` 的 Docker volume 中。
 
 应用容器监听 3000 端口，Compose 默认只将其绑定到主机回环地址 `127.0.0.1:3000`，便于主机上的 Caddy/Nginx 反向代理访问。应用对所有路由设置 `X-Content-Type-Options`、`X-Frame-Options`、`Referrer-Policy`、`Permissions-Policy` 等浏览器安全响应头；生产环境还会发送 HSTS。生产环境应通过 HTTPS 反向代理访问，并确保反向代理正确传递 Host、协议和请求头；不要将应用端口改为公网监听。
 

@@ -41,9 +41,23 @@ BEGIN
     SELECT 1 FROM journey_responses jr
     WHERE jr.level_id = v_level_id
       AND jr.buyer_ref = v_buyer_ref
-      AND jr.reaction = 'miss_you'
+      AND jr.reaction = 'miss_you' AND jr.read_at IS NULL
   ) THEN
     RAISE EXCEPTION 'JOURNEY_RESPONSE_UPSERT_FAILED';
+  END IF;
+
+  UPDATE journey_responses SET read_at = now()
+  WHERE level_id = v_level_id AND buyer_ref = v_buyer_ref;
+  INSERT INTO journey_responses (experience_id, level_id, buyer_ref, reaction)
+  VALUES (v_experience_id, v_level_id, v_buyer_ref, 'hug')
+  ON CONFLICT (level_id, buyer_ref)
+  DO UPDATE SET reaction = EXCLUDED.reaction, updated_at = now(), read_at = NULL;
+  IF NOT EXISTS (
+    SELECT 1 FROM journey_responses jr
+    WHERE jr.level_id = v_level_id AND jr.buyer_ref = v_buyer_ref
+      AND jr.reaction = 'hug' AND jr.read_at IS NULL
+  ) THEN
+    RAISE EXCEPTION 'UPDATED_RESPONSE_NOT_MARKED_UNREAD';
   END IF;
 
   BEGIN

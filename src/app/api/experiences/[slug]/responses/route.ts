@@ -38,7 +38,7 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
        JOIN buyer_sessions b ON b.token_hash = $3 AND b.expires_at > now()
        WHERE e.slug = $1 AND e.status = 'published' AND l.id = $2::uuid
        ON CONFLICT (level_id, buyer_ref)
-       DO UPDATE SET reaction = EXCLUDED.reaction, updated_at = now()
+       DO UPDATE SET reaction = EXCLUDED.reaction, updated_at = now(), read_at = NULL
        RETURNING id`,
       [slug, levelId, tokenHash, reaction]
     );
