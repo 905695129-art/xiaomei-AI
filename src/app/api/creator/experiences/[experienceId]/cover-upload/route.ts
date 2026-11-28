@@ -63,12 +63,14 @@ export async function POST(request: Request) {
     if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401, headers: privateHeaders });
 
     const contentLengthHeader = request.headers.get("content-length");
-    if (!contentLengthHeader || !/^\d+$/.test(contentLengthHeader)) {
-      return NextResponse.json({ error: "CONTENT_LENGTH_REQUIRED" }, { status: 411, headers: privateHeaders });
-    }
-    const contentLength = Number(contentLengthHeader);
-    if (!Number.isSafeInteger(contentLength) || contentLength <= 0 || contentLength > maxBytes + 64 * 1024) {
-      return NextResponse.json({ error: "REQUEST_TOO_LARGE" }, { status: 413, headers: privateHeaders });
+    if (contentLengthHeader) {
+      if (!/^\d+$/.test(contentLengthHeader)) {
+        return NextResponse.json({ error: "INVALID_CONTENT_LENGTH" }, { status: 400, headers: privateHeaders });
+      }
+      const contentLength = Number(contentLengthHeader);
+      if (!Number.isSafeInteger(contentLength) || contentLength <= 0 || contentLength > maxBytes + 64 * 1024) {
+        return NextResponse.json({ error: "REQUEST_TOO_LARGE" }, { status: 413, headers: privateHeaders });
+      }
     }
     if (!(request.headers.get("content-type") || "").toLowerCase().includes("multipart/form-data")) {
       return NextResponse.json({ error: "INVALID_IMAGE" }, { status: 400, headers: privateHeaders });
