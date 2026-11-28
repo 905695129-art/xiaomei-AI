@@ -38,6 +38,10 @@ services:
       - /schema/migrations/20261128_journey_response_message.sql
       - -f
       - /schema/migrations/20261128_journey_level_progress.sql
+      - -f
+      - /schema/migrations/20261128_qr_self_attested_unlocks.sql
+      - -f
+      - /schema/migrations/20261128_free_levels.sql
     restart: "no"
 
   app:
