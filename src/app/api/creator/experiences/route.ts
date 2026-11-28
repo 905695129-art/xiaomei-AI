@@ -30,7 +30,7 @@ export async function GET() {
       FROM experiences WHERE creator_id = ${user.id}
       ORDER BY updated_at DESC
     `;
-    return privateJson({ experiences: rows }, { headers: { "Cache-Control": "private, no-store", "Vary": "Cookie" } });
+    return privateJson({ experiences: rows, creator: { displayName: user.display_name, email: user.email, isGuest: Boolean(user.is_guest) } }, { headers: { "Cache-Control": "private, no-store", "Vary": "Cookie" } });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
     return privateJson({ error: code === "DATABASE_NOT_CONFIGURED" ? "SERVICE_NOT_CONFIGURED" : "INTERNAL_ERROR" }, { status: code === "DATABASE_NOT_CONFIGURED" ? 503 : 500 });
