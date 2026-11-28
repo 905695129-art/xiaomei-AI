@@ -31,12 +31,20 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
-private val Rose = Color(0xFFC47D91)
-private val Deep = Color(0xFF956B79)
-private val Ink = Color(0xFF59434F)
-private val Canvas = Color(0xFFFFF7FA)
-private val Pale = Color(0xFFFFE8F0)
-private val CardLine = Color(0xFFF2E1E6)
+private data class StudioPalette(val rose: Color, val deep: Color, val ink: Color, val canvas: Color, val pale: Color, val line: Color)
+private val paletteState = androidx.compose.runtime.mutableStateOf(
+    StudioPalette(Color(0xFFC47D91), Color(0xFF956B79), Color(0xFF59434F), Color(0xFFFFF7FA), Color(0xFFFFE8F0), Color(0xFFF2E1E6))
+)
+private val Rose get() = paletteState.value.rose
+private val Deep get() = paletteState.value.deep
+private val Ink get() = paletteState.value.ink
+private val Canvas get() = paletteState.value.canvas
+private val Pale get() = paletteState.value.pale
+private val CardLine get() = paletteState.value.line
+
+private val CherryPalette = StudioPalette(Color(0xFFD982A8), Color(0xFFAD6687), Color(0xFF654457), Color(0xFFFFF5F9), Color(0xFFFFE2EF), Color(0xFFF3D7E3))
+private val CreamPalette = StudioPalette(Color(0xFFB99B78), Color(0xFF92785E), Color(0xFF554A3D), Color(0xFFFFFBF3), Color(0xFFF5EBDD), Color(0xFFEDE3D4))
+private val MistPalette = StudioPalette(Color(0xFF9B70B5), Color(0xFF79568F), Color(0xFF51405F), Color(0xFFF8F5FC), Color(0xFFEDE4F7), Color(0xFFE2D8EF))
 
 private data class LevelData(
     val title: String,
@@ -61,7 +69,7 @@ private fun HeartStudioApp() {
     var page by remember { mutableStateOf("home") }
     var title by remember { mutableStateOf("把今天的心意，留给你") }
     var description by remember { mutableStateOf("把普通的一天，变成只属于你们的互动小旅程。") }
-    var coverTheme by remember { mutableStateOf("甜粉花雾") }
+    var coverTheme by remember { mutableStateOf("甜粉花雾") }\n    var ambience by remember { mutableStateOf("樱花粉") }
     var coverChoice by remember { mutableStateOf("主题封面") }
     var qrReady by remember { mutableStateOf(false) }
     var levels by remember { mutableStateOf(listOf(
@@ -257,10 +265,10 @@ private fun Home(title:String,create:()->Unit,tryIt:()->Unit,openFeature:(String
             Spacer(Modifier.height(25.dp));Text("把想法变成真实互动",color=Ink,fontSize=18.sp,fontWeight=FontWeight.Bold)
         }
         item { FeatureCard("01","创建专属关卡","编辑标题、封面、问题、私密内容和每关价格",Icons.Rounded.EditNote){create()} }
-        item { FeatureCard("02","自定义封面与收款码","选择主题、使用自己的照片、设置收款码",Icons.Rounded.Palette){openFeature("cover")} }
-        item { FeatureCard("03","逐关解锁体验","每关单独定价，免费关卡也可以参与",Icons.Rounded.LockOpen){tryIt()} }
-        item { FeatureCard("04","分享给对方","生成专属分享内容，邀请对方参与",Icons.Rounded.Share){openFeature("share")} }
-        item { FeatureCard("05","回应收件箱","集中查看对方提交的回答和互动回应",Icons.Rounded.Favorite){openFeature("response_detail")} }
+        item { FeatureCard("02","页面氛围与主题","樱花粉、奶油白、雾霭紫，一键切换整套界面",Icons.Rounded.Palette){openFeature("theme")} }\n        item { FeatureCard("03","自定义封面与收款码","选择主题、使用自己的照片、设置收款码",Icons.Rounded.Image){openFeature("cover")} }
+        item { FeatureCard("04","逐关解锁体验","每关单独定价，免费关卡也可以参与",Icons.Rounded.LockOpen){tryIt()} }
+        item { FeatureCard("05","分享给对方","生成专属分享内容，邀请对方参与",Icons.Rounded.Share){openFeature("share")} }
+        item { FeatureCard("06","回应收件箱","集中查看对方提交的回答和互动回应",Icons.Rounded.Favorite){openFeature("response_detail")} }
         item { Spacer(Modifier.height(18.dp));Button(onClick=create,modifier=Modifier.fillMaxWidth().height(54.dp),shape=RoundedCornerShape(18.dp)){Text("开始制作专属心意 ♡",fontWeight=FontWeight.Bold)} }
         item { Spacer(Modifier.height(10.dp));OutlinedButton(onClick=tryIt,modifier=Modifier.fillMaxWidth().height(50.dp),shape=RoundedCornerShape(18.dp)){Text("先体验一段闯关旅程")};Spacer(Modifier.height(25.dp)) }
     }
