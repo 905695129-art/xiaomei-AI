@@ -132,6 +132,11 @@
 
 /* Heart Studio: consistent motion feedback for every interactive tap/click.
    Keep the feedback short, tactile and subtle; respect reduced-motion preferences. */
+/* Catch pointer activation on custom React click targets too: React onClick is an event listener, not an [onclick] HTML attribute. */
+*:active {
+  animation: heartStudioTap 220ms cubic-bezier(.2,.8,.25,1);
+}
+
 :where(
   button,
   a,
@@ -242,16 +247,8 @@
     input,
     select
   ),
-  :where(
-    button,
-    a,
-    [role="button"],
-    [role="tab"],
-    [role="menuitem"],
-    [onclick],
-    summary,
-    label[for]
-  ):active,
+  *,
+  *:active,
   :where(input[type="checkbox"], input[type="radio"]):checked {
     animation: none !important;
     transition: none !important;
