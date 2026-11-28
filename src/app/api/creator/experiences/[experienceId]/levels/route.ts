@@ -17,7 +17,7 @@ const levelSchema = z.object({
   id: z.string().uuid().optional(),
   title: z.string().trim().min(1).max(80),
   teaser: z.string().max(240).default(""),
-  priceMinor: z.number().int().min(1).max(100000000),
+  priceMinor: z.number().int().min(0).max(100000000),
   privateContent: z.string().max(20000)
 });
 const bodySchema = z.object({ levels: z.array(levelSchema).min(1).max(30) });
