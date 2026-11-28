@@ -120,6 +120,13 @@ CREATE TABLE IF NOT EXISTS password_change_rate_limits (
   attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0)
 );
 
+-- Account deletion password verification is independently throttled per creator.
+CREATE TABLE IF NOT EXISTS account_delete_rate_limits (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  window_started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0)
+);
+
 -- Email ownership and recovery tokens. Only token hashes are persisted.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ;
 
