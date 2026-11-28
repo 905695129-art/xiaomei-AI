@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     const verifyUrl = new URL("/creator/verify-email", appBaseUrl);
     verifyUrl.searchParams.set("token", token);
     const verifyLink = verifyUrl.toString();
-    const safeUrl = escapeEmailHtml(verifyUrl);
+    const safeUrl = escapeEmailHtml(verifyLink);
     await sendTransactionalEmail({
       to: user.email,
       subject: "心意闯关：验证你的邮箱",
