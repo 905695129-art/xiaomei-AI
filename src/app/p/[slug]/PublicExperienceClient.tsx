@@ -120,6 +120,8 @@ export default function PublicExperiencePage() {
         setPrivateContent(typeof data.content === "string" ? data.content : "");
         setUnlockedIds(current => new Set(current).add(level.id));
         setNotice("这一关已经为你打开，看看专属惊喜吧 ♡");
+      } else if (response.status === 409 && data.error === "LEVEL_LOCKED") {
+        setNotice("先完成前一关的小互动，就能打开这一关啦 ♡");
       } else if (response.status === 404 && data.error === "LEVEL_NOT_AVAILABLE") {
         setNotice("这一关暂时无法访问，可能已被创作者移除或作品已归档。");
       } else if (response.status === 503) {
