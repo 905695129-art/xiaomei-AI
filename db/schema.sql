@@ -630,6 +630,7 @@ BEGIN
   NEW.level_title_snapshot := level_row.title;
   NEW.level_position_snapshot := level_row.position;
   NEW.private_content_snapshot := level_row.private_content;
+  NEW.private_media_snapshot := level_row.private_media;
   RETURN NEW;
 END;
 $$;
