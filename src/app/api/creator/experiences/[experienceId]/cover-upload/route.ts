@@ -15,8 +15,15 @@ const allowedTypes: Record<string, string> = {
   "image/gif": "gif"
 };
 
-export async function POST(request: Request, context: { params: Promise<{ experienceId: string }> }) {
-  const { experienceId } = await context.params;
+export async function POST(request: Request) {
+  // Extract the validated route segment directly to avoid Next.js generated
+  // route-context type drift across minor framework releases.
+  const segments = new URL(request.url).pathname.split("/").filter(Boolean);
+  const experiencesIndex = segments.indexOf("experiences");
+  const experienceId = experiencesIndex >= 0 ? segments[experiencesIndex + 1] : "";
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(experienceId)) {
+    return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
+  }
   if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403 });
   try {
     const creator = await getCurrentCreator();
