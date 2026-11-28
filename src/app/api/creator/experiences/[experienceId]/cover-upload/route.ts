@@ -2,21 +2,13 @@ import { NextResponse } from "next/server";
 import { isSameOriginWrite } from "@/lib/security";
 import { randomUUID } from "node:crypto";
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import sharp from "sharp";
+import { normalizeCoverImage, MAX_COVER_BYTES } from "@/lib/cover-image";
 import { requireDb } from "@/lib/db";
 import { getCurrentCreator } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 const privateHeaders = { "Cache-Control": "no-store, private", Vary: "Cookie" };
-const maxBytes = 8 * 1024 * 1024;
-const allowedTypes: Record<string, string> = {
-  "image/jpeg": "jpeg",
-  "image/png": "png",
-  "image/webp": "webp",
-  "image/gif": "gif"
-};
-const maxPixels = 20_000_000;
 
 export async function POST(request: Request) {
   const segments = new URL(request.url).pathname.split("/").filter(Boolean);
@@ -36,7 +28,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "INVALID_CONTENT_LENGTH" }, { status: 400, headers: privateHeaders });
       }
       const contentLength = Number(contentLengthHeader);
-      if (!Number.isSafeInteger(contentLength) || contentLength <= 0 || contentLength > maxBytes + 64 * 1024) {
+      if (!Number.isSafeInteger(contentLength) || contentLength <= 0 || contentLength > MAX_COVER_BYTES + 64 * 1024) {
         return NextResponse.json({ error: "REQUEST_TOO_LARGE" }, { status: 413, headers: privateHeaders });
       }
     }
@@ -55,7 +47,7 @@ export async function POST(request: Request) {
         const { done, value } = await reader.read();
         if (done) break;
         received += value.byteLength;
-        if (received > maxBytes + 64 * 1024) {
+        if (received > MAX_COVER_BYTES + 64 * 1024) {
           await reader.cancel();
           return NextResponse.json({ error: "REQUEST_TOO_LARGE" }, { status: 413, headers: privateHeaders });
         }
@@ -76,30 +68,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "INVALID_IMAGE" }, { status: 400, headers: privateHeaders });
     }
     const file = form.get("file");
-    if (!(file instanceof File) || file.size <= 0 || file.size > maxBytes || !allowedTypes[file.type]) {
+    if (!(file instanceof File) || file.size <= 0 || file.size > MAX_COVER_BYTES) {
       return NextResponse.json({ error: "INVALID_IMAGE" }, { status: 400, headers: privateHeaders });
     }
     const bytes = Buffer.from(await file.arrayBuffer());
     if (bytes.length !== file.size) return NextResponse.json({ error: "INVALID_IMAGE" }, { status: 400, headers: privateHeaders });
 
-    // Decode the full image with a pixel ceiling, verify its actual format, rotate by EXIF,
-    // resize, and re-encode. This strips source metadata and prevents serving the raw upload.
+    // Decode, verify the actual format, rotate, resize, and re-encode before storage.
     let normalized: Buffer;
     try {
-      const source = sharp(bytes, { limitInputPixels: maxPixels, failOn: "error" });
-      const metadata = await source.metadata();
-      if (!metadata.format || metadata.format !== allowedTypes[file.type] ||
-          !metadata.width || !metadata.height || metadata.width * metadata.height > maxPixels) {
-        return NextResponse.json({ error: "INVALID_IMAGE_CONTENT" }, { status: 400, headers: privateHeaders });
-      }
-      normalized = await source.rotate()
-        .resize({ width: 2400, height: 1600, fit: "inside", withoutEnlargement: true })
-        .webp({ quality: 82, effort: 4 })
-        .toBuffer();
+      normalized = await normalizeCoverImage(bytes, file.type);
     } catch {
-      return NextResponse.json({ error: "INVALID_IMAGE_CONTENT" }, { status: 400, headers: privateHeaders });
-    }
-    if (!normalized.length || normalized.length > maxBytes) {
       return NextResponse.json({ error: "INVALID_IMAGE_CONTENT" }, { status: 400, headers: privateHeaders });
     }
 
