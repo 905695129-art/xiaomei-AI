@@ -52,6 +52,7 @@ jobs:
           --health-retries 10
     env:
       DATABASE_URL: postgres://heart:heart_test_password@localhost:5432/heart_test
+      COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
     steps:
       - uses: actions/checkout@v4
       - name: Install PostgreSQL client
@@ -133,6 +134,10 @@ jobs:
         env:
           POSTGRES_PASSWORD: ci-compose-validation-password
         run: node scripts/journey-http-e2e.mjs
+      - name: Run cover upload HTTP end-to-end test
+        env:
+          POSTGRES_PASSWORD: ci-compose-validation-password
+        run: node scripts/cover-upload-http-e2e.mjs
       - name: Stop production stack
         if: always()
         env:
