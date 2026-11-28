@@ -71,7 +71,7 @@ jobs:
           from pathlib import Path
           p=Path("extracted/xiaomei-ai/app/src/main/java/com/xiaomei/ai/MainActivity.kt")
           s=p.read_text()
-          s=s.replace("import android.widget.TextView", "import android.widget.TextView\nimport android.widget.Switch", 1)
+          s=s.replace("import android.widget.TextView", "import android.widget.TextView" + chr(10) + "import android.widget.Switch", 1)
           needle='        root.addView(input, ViewGroup.LayoutParams(-1, -2))'
           addition=r'''
                   root.addView(TextView(this).apply {
