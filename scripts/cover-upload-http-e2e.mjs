@@ -22,9 +22,10 @@ function sql(value) {
   return "'" + String(value).replaceAll("'", "''") + "'";
 }
 
-async function upload(cookie, bytes, type, filename = "cover.bin") {
+async function upload(cookie, bytes, type, filename = "cover.bin", purpose = null) {
   const form = new FormData();
   form.append("file", new Blob([bytes], { type }), filename);
+  if (purpose) form.append("purpose", purpose);
   return fetch(new URL(`/api/creator/experiences/${experienceId}/cover-upload`, baseUrl), {
     method: "POST",
     headers: { cookie, "sec-fetch-site": "same-origin" },
@@ -110,7 +111,19 @@ try {
   const savedCover = psql(`SELECT cover_url FROM experiences WHERE id = '${experienceId}'`);
   assert.equal(savedCover, result.publicUrl, "upload must persist cover_url in the creator's experience");
 
-  for (let index = 0; index < 5; index++) {
+  const qrUpload = await upload(cookie, png, "image/png", "payment-qr.png", "payment_qr");
+  assert.equal(qrUpload.status, 200, "valid payment QR should upload");
+  const qrResult = await qrUpload.json();
+  assert.match(qrResult.publicUrl, /^http:\/\/127\.0\.0\.1:9090\/heart-test\/payment-qr\//);
+  const storedQr = await fetch(qrResult.publicUrl);
+  assert.equal(storedQr.status, 200, "payment QR should be publicly readable");
+  assert.match(storedQr.headers.get("content-type") || "", /image\/png/i);
+  const qrBytes = Buffer.from(await storedQr.arrayBuffer());
+  assert.equal(qrBytes.toString("hex", 0, 8), "89504e470d0a1a0a", "QR should be lossless PNG");
+  const savedQr = psql("SELECT payment_qr_url FROM experiences WHERE id = '" + experienceId + "'");
+  assert.equal(savedQr, qrResult.publicUrl, "payment_qr_url must be persisted");
+
+  for (let index = 0; index < 4; index++) {
     const limited = await upload(cookie, Buffer.from("bad"), "text/plain");
     assert.equal(limited.status, 400);
   }
@@ -120,7 +133,7 @@ try {
   assert.equal(rateLimited.status, 429, "eleventh request in one minute must be rate limited");
   assert.equal(rateLimited.headers.get("retry-after"), "60");
 
-  console.log("PASS: creator auth/ownership, MIME and byte validation, streaming body cap, Sharp normalization, S3 persistence, public WebP retrieval, and per-creator rate limit.");
+  console.log("PASS: creator auth/ownership, MIME and byte validation, streaming body cap, cover normalization, lossless QR PNG upload, S3 persistence, public image retrieval, and per-creator rate limit.");
 } finally {
   psql(`DELETE FROM experiences WHERE id = '${experienceId}'; DELETE FROM users WHERE id IN ('${creatorId}', '${otherCreatorId}');`);
 }
