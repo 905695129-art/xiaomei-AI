@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 
-type Level = { id: string; position: number; title: string; teaser: string | null; priceMinor: number };
+type Level = { id: string; position: number; title: string; teaser: string | null; priceMinor: number; completed?: boolean };
 type Experience = { slug: string; title: string; description: string | null; coverUrl: string | null; coverPosition?: "top" | "center" | "bottom"; currency: string; theme?: "rose" | "cream" | "lavender"; levels: Level[] };
 
 function money(minor: number, currency: string) {
@@ -185,9 +185,13 @@ export default function PublicExperiencePage() {
         body: JSON.stringify({ levelId: selected.id, reaction: reactionCode, message: responseMessage })
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error === "BUYER_SESSION_REQUIRED" ? "体验身份已失效，请刷新页面后再试。" : "暂时无法发送回应，请稍后再试。");
+      if (!response.ok) throw new Error(data.error === "BUYER_SESSION_REQUIRED" ? "体验身份已失效，请刷新页面后再试。" : data.error === "LEVEL_LOCKED" ? "先完成前一关的小互动，就能打开这一关啦 ♡" : "暂时无法发送回应，请稍后再试。");
       setReaction(label);
-      setNotice("你的回应已经送到创作者的心意收件箱 ♡");
+      setExperience(current => current ? {
+        ...current,
+        levels: current.levels.map(level => level.id === selected.id ? { ...level, completed: true } : level)
+      } : current);
+      setNotice("这一关完成啦！下一关已经为你解锁，创作者也收到了你的回应 ♡");
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "发送失败，请稍后再试。");
     } finally {
@@ -214,7 +218,7 @@ export default function PublicExperiencePage() {
         <div className="journeyList">{experience.levels.map((level, index) => <article className={selected?.id === level.id ? "journeyCard activeJourney" : "journeyCard"} key={level.id}>
           <div className="journeyNumber">{String(level.position || index + 1).padStart(2, "0")}</div>
           <div className="journeyCopy"><span className="journeyLabel">A LITTLE SECRET</span><h3>{level.title}</h3><p>{level.teaser || "一份为你准备的小惊喜，打开后就能看到更多。"}</p></div>
-          <div className="journeyAction"><strong>{money(level.priceMinor, experience.currency || "CNY")}</strong><small className="levelPriceCaption">心意金额参考</small><button disabled={checkingLevel} onClick={event => beginUnlock(level, event.currentTarget)}>{checkingLevel && selected?.id === level.id ? "打开中…" : unlockedIds.has(level.id) ? "再次打开这一关" : selected?.id === level.id ? "进入互动" : "进入互动"} <span>♡</span></button></div>
+          <div className="journeyAction"><strong>{money(level.priceMinor, experience.currency || "CNY")}</strong><small className="levelPriceCaption">{level.completed ? "已完成 ♡" : "心意金额参考"}</small><button disabled={checkingLevel || (index > 0 && !experience.levels.slice(0, index).every(previous => previous.completed))} onClick={event => beginUnlock(level, event.currentTarget)}>{checkingLevel && selected?.id === level.id ? "打开中…" : level.completed ? "再次回味这一关" : index > 0 && !experience.levels.slice(0, index).every(previous => previous.completed) ? "完成前一关后解锁" : "进入互动"} <span>{level.completed ? "✓" : index > 0 && !experience.levels.slice(0, index).every(previous => previous.completed) ? "🔒" : "♡"}</span></button></div>
         </article>)}</div>}
       <div className="journeyTotal"><span>每一关，都有一份专属的小惊喜</span><strong>慢慢打开 ♡</strong></div>
     </section>
