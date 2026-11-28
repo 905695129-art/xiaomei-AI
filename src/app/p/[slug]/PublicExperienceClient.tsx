@@ -17,6 +17,7 @@ export default function PublicExperiencePage() {
   const slug = params.slug;
   const [experience, setExperience] = useState<Experience | null>(null);
   const [loading, setLoading] = useState(true);
+  const [introOpen, setIntroOpen] = useState(true);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<Level | null>(null);
   const [closing, setClosing] = useState(false);
@@ -130,12 +131,12 @@ export default function PublicExperiencePage() {
   }
 
   useEffect(() => {
-    if (!experience) return;
+    if (!experience || introOpen) return;
     const requestedLevel = new URLSearchParams(window.location.search).get("level");
     if (!requestedLevel) return;
     const level = experience.levels.find(item => item.id === requestedLevel);
     if (level) void beginUnlock(level);
-  }, [experience, slug]);
+  }, [experience, slug, introOpen]);
 
   async function share() {
     const url = window.location.href;
@@ -197,7 +198,7 @@ export default function PublicExperiencePage() {
   if (loading) return <main className="publicShell"><div className="publicLoading">正在打开这份心意… ♡</div></main>;
   if (error || !experience) return <main className="publicShell"><section className="publicError"><div className="publicFlower">♡</div><h1>这份心意暂时找不到</h1><p>{error || "请检查分享链接是否正确。"}</p><a href="/">返回首页</a></section></main>;
 
-  return <main className={`publicShell publicTheme-${experience.theme || "rose"}`}> 
+  return <main className={`publicShell publicTheme-${experience.theme || "rose"}`}>{introOpen&&<div className="heartArrivalBackdrop" role="presentation"><section className="heartArrivalCard" role="dialog" aria-modal="true" aria-labelledby="heartArrivalTitle"><div className="heartArrivalSeal">♡</div><p className="publicEyebrow">A LITTLE NOTE FOR YOU</p><h1 id="heartArrivalTitle">有人把一份心意，悄悄放在了这里。</h1><p>也许是一句话、一段回忆，或一个只想让你知道的小惊喜。</p><div className="heartArrivalMessage">不必着急，也没有标准答案。按照自己的节奏，慢慢打开就好。✨</div><button type="button" onClick={()=>setIntroOpen(false)}>我想看看这份心意 ♡</button><small>你的感受和选择，始终由你自己决定。</small></section></div>} 
     <header className="publicNav"><a href="/" className="publicBrand"><span>♡</span> 心意闯关</a><div className="publicNavActions"><a href="/purchases" className="buyerCreatorLink">历史购买记录</a><button onClick={share} className="shareButton">{copied ? "已复制链接 ✓" : "分享这份心意 ↗"}</button></div></header>
     <section className="publicHero">{experience.coverUrl&&!experience.coverUrl.startsWith("preset:")?<img className="publicCoverImage" src={experience.coverUrl} alt="这份心意的专属封面" style={{objectPosition:experience.coverPosition||"center"}}/>:experience.coverUrl?<div className={`publicCoverPreset publicCover-${experience.coverUrl.slice(7)}`}>♡</div>:null}
       <div className="publicHalo">♡</div>
