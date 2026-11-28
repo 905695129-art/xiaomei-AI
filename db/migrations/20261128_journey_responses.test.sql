@@ -74,5 +74,5 @@ BEGIN
   EXCEPTION WHEN check_violation THEN
     NULL;
   END;
-END $;
+END $$;
 ROLLBACK;
