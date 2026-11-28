@@ -366,14 +366,14 @@ BEGIN
   VALUES ('ci-upload-limit-' || gen_random_uuid()::text || '@example.test', 'Upload Limit CI', 'scrypt:test:test', 'creator')
   RETURNING id INTO test_creator_id;
 
-  INSERT INTO creator_upload_rate_limits (test_creator_id, window_started_at, request_count)
+  INSERT INTO creator_upload_rate_limits (creator_id, window_started_at, request_count)
   VALUES (test_creator_id, now(), 1)
   RETURNING request_count INTO current_count;
 
   FOR attempt IN 2..10 LOOP
-    INSERT INTO creator_upload_rate_limits (test_creator_id, window_started_at, request_count)
+    INSERT INTO creator_upload_rate_limits (creator_id, window_started_at, request_count)
     VALUES (test_creator_id, now(), 1)
-    ON CONFLICT (test_creator_id) DO UPDATE SET
+    ON CONFLICT (creator_id) DO UPDATE SET
       window_started_at = CASE
         WHEN creator_upload_rate_limits.window_started_at <= now() - interval '1 minute' THEN now()
         ELSE creator_upload_rate_limits.window_started_at
@@ -390,9 +390,9 @@ BEGIN
     END IF;
   END LOOP;
 
-  INSERT INTO creator_upload_rate_limits (test_creator_id, window_started_at, request_count)
+  INSERT INTO creator_upload_rate_limits (creator_id, window_started_at, request_count)
   VALUES (test_creator_id, now(), 1)
-  ON CONFLICT (test_creator_id) DO UPDATE SET request_count = creator_upload_rate_limits.request_count + 1
+  ON CONFLICT (creator_id) DO UPDATE SET request_count = creator_upload_rate_limits.request_count + 1
   WHERE creator_upload_rate_limits.request_count < 10
   RETURNING request_count INTO current_count;
   IF FOUND THEN
@@ -400,10 +400,10 @@ BEGIN
   END IF;
 
   UPDATE creator_upload_rate_limits SET window_started_at = now() - interval '2 minutes'
-  WHERE creator_upload_rate_limits.test_creator_id = test_creator_id;
-  INSERT INTO creator_upload_rate_limits (test_creator_id, window_started_at, request_count)
+  WHERE creator_upload_rate_limits.creator_id = test_creator_id;
+  INSERT INTO creator_upload_rate_limits (creator_id, window_started_at, request_count)
   VALUES (test_creator_id, now(), 1)
-  ON CONFLICT (test_creator_id) DO UPDATE SET
+  ON CONFLICT (creator_id) DO UPDATE SET
     window_started_at = now(),
     request_count = 1
   WHERE creator_upload_rate_limits.window_started_at <= now() - interval '1 minute'
