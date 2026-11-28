@@ -1,18 +1,12 @@
 import { NextResponse } from "next/server";
-import { requireDb } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+// Liveness only: the process is serving requests. Database readiness is
+// checked separately so orchestration can distinguish a live app from a
+// temporarily unavailable database.
 export async function GET() {
-  try {
-    await requireDb()`SELECT 1`;
-    return NextResponse.json({ status: "ok" }, {
-      headers: { "Cache-Control": "no-store" }
-    });
-  } catch {
-    return NextResponse.json({ status: "unavailable" }, {
-      status: 503,
-      headers: { "Cache-Control": "no-store" }
-    });
-  }
+  return NextResponse.json({ status: "ok" }, {
+    headers: { "Cache-Control": "no-store" }
+  });
 }
