@@ -192,3 +192,20 @@
 @keyframes creatorGuidePop{0%{opacity:0;transform:translateY(18px) scale(.96)}100%{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:520px){.creatorGuideBackdrop{padding:12px 12px max(12px,env(safe-area-inset-bottom))}.creatorGuideDialog{width:100%;max-height:90dvh;border-radius:27px;padding:19px 18px 16px}.creatorGuideDialog h2{font-size:22px}.creatorGuideThemes{gap:7px}.creatorGuideThemes button{padding:9px 8px}}
 @media(prefers-reduced-motion:reduce){.creatorGuideBackdrop,.creatorGuideDialog{animation:none!important}}
+
+
+/* Creator editor: fixed step navigation with explicit previous-screen action */
+.creatorStepNav{position:fixed;z-index:900;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(calc(100% - 28px),680px);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border:1px solid rgba(238,211,221,.9);border-radius:24px;background:rgba(255,250,252,.94);box-shadow:0 12px 38px rgba(116,75,91,.16);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.creatorStepNav button{border:0;cursor:pointer}
+.creatorStepBack,.creatorStepNext{min-width:112px;padding:11px 14px;border-radius:18px;font-size:11px}
+.creatorStepBack{background:#f8edf1;color:#9c7180}
+.creatorStepBack:disabled{opacity:.35;cursor:not-allowed}
+.creatorStepNext{background:linear-gradient(110deg,#c47d91,#dc9bad);color:#fff;box-shadow:0 5px 14px rgba(196,125,145,.2)}
+.creatorStepNext:disabled{opacity:.45;cursor:not-allowed}
+.creatorStepProgress{display:flex;align-items:center;gap:8px}
+.creatorStepProgress button{width:27px;height:27px;border-radius:50%;background:#f3e9ed;color:#b69aa4;font-size:10px}
+.creatorStepProgress button.active{background:#cc879b;color:#fff;box-shadow:0 0 0 4px #f7e5eb}
+.creatorStepProgress button.done{background:#ead0d9;color:#986b7b}
+.editorCard{padding-bottom:100px}
+.creatorShell{min-height:100svh}
+@media(max-width:420px){.creatorStepNav{gap:6px;padding:8px 9px}.creatorStepBack,.creatorStepNext{min-width:94px;padding:10px 9px;font-size:10px}.creatorStepProgress{gap:5px}.creatorStepProgress button{width:24px;height:24px}}
