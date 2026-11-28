@@ -67,7 +67,8 @@ export async function PUT(request: Request, context: { params: Promise<{ experie
         UPDATE entitlements ent
         SET level_title_snapshot = COALESCE(ent.level_title_snapshot, l.title),
             level_position_snapshot = COALESCE(ent.level_position_snapshot, l.position),
-            private_content_snapshot = COALESCE(ent.private_content_snapshot, l.private_content),\n            private_media_snapshot = COALESCE(ent.private_media_snapshot, l.private_media),
+            private_content_snapshot = COALESCE(ent.private_content_snapshot, l.private_content),
+            private_media_snapshot = COALESCE(ent.private_media_snapshot, l.private_media),
             price_minor_snapshot = COALESCE(ent.price_minor_snapshot, o.amount_minor),
             currency_snapshot = COALESCE(ent.currency_snapshot, o.currency)
         FROM experience_levels l
