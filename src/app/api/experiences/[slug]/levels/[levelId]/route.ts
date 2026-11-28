@@ -32,7 +32,7 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
        LEFT JOIN journey_level_unlocks unlocks ON unlocks.level_id = l.id AND unlocks.buyer_ref = $1
        WHERE e.slug = $2 AND l.id = $3::uuid
          AND (
-           (e.status = 'published' AND l.is_active = TRUE AND unlocks.id IS NOT NULL AND NOT EXISTS (
+           (e.status = 'published' AND l.is_active = TRUE AND (unlocks.id IS NOT NULL OR l.price_minor = 0) AND NOT EXISTS (
                SELECT 1 FROM experience_levels previous
                WHERE previous.experience_id = l.experience_id
                  AND previous.is_active = TRUE AND previous.position < l.position
