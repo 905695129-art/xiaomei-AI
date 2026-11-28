@@ -7,6 +7,7 @@ import { requireDb } from "@/lib/db";
 import { getCurrentCreator } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
+const privateHeaders = { "Cache-Control": "no-store, private", Vary: "Cookie" };
 
 const allowedTypes: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -22,18 +23,18 @@ export async function POST(request: Request) {
   const experiencesIndex = segments.indexOf("experiences");
   const experienceId = experiencesIndex >= 0 ? segments[experiencesIndex + 1] : "";
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(experienceId)) {
-    return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
+    return NextResponse.json({ error: "NOT_FOUND" }, { status: 404, headers: privateHeaders });
   }
-  if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403 });
+  if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403, headers: privateHeaders });
   try {
     const creator = await getCurrentCreator();
-    if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+    if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401, headers: privateHeaders });
 
     const parsedBody = await readJsonLimited(request, 4 * 1024);
     if (!parsedBody.ok) {
       return NextResponse.json(
         { error: parsedBody.error },
-        { status: parsedBody.error === "REQUEST_TOO_LARGE" ? 413 : 400 }
+        { status: parsedBody.error === "REQUEST_TOO_LARGE" ? 413 : 400, headers: privateHeaders }
       );
     }
     const body = parsedBody.value as { contentType?: unknown; fileSize?: unknown } | null;
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
     const fileSize = Number(body?.fileSize);
     const extension = allowedTypes[contentType];
     if (!extension || !Number.isFinite(fileSize) || fileSize <= 0 || fileSize > 8 * 1024 * 1024) {
-      return NextResponse.json({ error: "INVALID_IMAGE" }, { status: 400 });
+      return NextResponse.json({ error: "INVALID_IMAGE" }, { status: 400, headers: privateHeaders });
     }
 
     const endpoint = process.env.STORAGE_ENDPOINT;
@@ -51,12 +52,12 @@ export async function POST(request: Request) {
     const publicBase = process.env.STORAGE_PUBLIC_URL;
     const region = process.env.STORAGE_REGION || "auto";
     if (!endpoint || !bucket || !accessKeyId || !secretAccessKey || !publicBase) {
-      return NextResponse.json({ error: "STORAGE_NOT_CONFIGURED" }, { status: 503 });
+      return NextResponse.json({ error: "STORAGE_NOT_CONFIGURED" }, { status: 503, headers: privateHeaders });
     }
 
     const db = requireDb();
     const [experience] = await db`SELECT id FROM experiences WHERE id = ${experienceId}::uuid AND creator_id = ${creator.id} LIMIT 1`;
-    if (!experience) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
+    if (!experience) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404, headers: privateHeaders });
 
     const key = `covers/${experience.id}/${randomUUID()}.${extension}`;
     const client = new S3Client({
@@ -73,10 +74,10 @@ export async function POST(request: Request) {
       Conditions: [["content-length-range", 1, 8 * 1024 * 1024], ["eq", "$Content-Type", contentType]]
     });
     const publicUrl = `${publicBase.replace(/\/$/, "")}/${key.split("/").map(encodeURIComponent).join("/")}`;
-    return NextResponse.json({ uploadUrl: signedPost.url, fields: signedPost.fields, publicUrl, method: "POST" });
+    return NextResponse.json({ uploadUrl: signedPost.url, fields: signedPost.fields, publicUrl, method: "POST" }, { headers: privateHeaders });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
     const status = code === "DATABASE_NOT_CONFIGURED" ? 503 : 500;
-    return NextResponse.json({ error: status === 503 ? "SERVICE_NOT_CONFIGURED" : "UPLOAD_INIT_FAILED" }, { status });
+    return NextResponse.json({ error: status === 503 ? "SERVICE_NOT_CONFIGURED" : "UPLOAD_INIT_FAILED" }, { status, headers: privateHeaders });
   }
 }
