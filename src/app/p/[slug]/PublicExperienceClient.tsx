@@ -52,13 +52,6 @@ export default function PublicExperiencePage() {
         if (!alive) return;
         setExperience(data.experience as Experience);
 
-        // Load this browser's purchases only after the session cookie is established.
-        const purchasesResponse = await fetch("/api/buyer/purchases", { cache: "no-store" });
-        if (purchasesResponse.ok) {
-          const purchasesData = await purchasesResponse.json();
-          if (alive && Array.isArray(purchasesData.purchases)) {
-          }
-        }
       } catch (e) {
         if (alive) setError(e instanceof Error ? e.message : "加载失败");
       } finally {
