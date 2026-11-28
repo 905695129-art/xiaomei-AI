@@ -110,8 +110,8 @@ export default function ExperienceEditor() {
   async function save(){
     setBusy(true);setMessage("");setShareUrl("");
     try{
-      const invalidIndex=levels.findIndex(l=>!l.title.trim() || !Number.isFinite(Number(l.priceMinor)) || Number(l.priceMinor)<1 || Number(l.priceMinor)>100000000);
-      if(invalidIndex>=0) throw new Error(`请检查第 ${invalidIndex+1} 关：标题不能为空，价格须为 0.01 至 1,000,000 元。`);
+      const invalidIndex=levels.findIndex(l=>!l.title.trim() || !Number.isFinite(Number(l.priceMinor)) || Number(l.priceMinor)<0 || Number(l.priceMinor)>100000000);
+      if(invalidIndex>=0) throw new Error(`请检查第 ${invalidIndex+1} 关：标题不能为空，价格须为 0 至 1,000,000 元，0 元表示免费。`);
       const payload={levels:levels.map(l=>({...(l.id?{id:l.id}:{}),title:l.title.trim(),teaser:l.teaser,priceMinor:Number(l.priceMinor),privateContent:l.privateContent}))};
       const r=await fetch(`/api/creator/experiences/${experienceId}/levels`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
       const d=await r.json();
@@ -163,7 +163,7 @@ export default function ExperienceEditor() {
     {levels.map((level,index)=><article className="levelEditor" key={index}><div className="levelEditorTop"><b>第 {index+1} 关</b><div className="levelEditorControls"><button type="button" className="moveLevel" aria-label={`第 ${index+1} 关上移`} disabled={busy||index===0} onClick={()=>{setIsDirty(true);setLevels(old=>{const next=[...old];[next[index-1],next[index]]=[next[index],next[index-1]];return next;});}}>↑ 上移</button><button type="button" className="moveLevel" aria-label={`第 ${index+1} 关下移`} disabled={busy||index===levels.length-1} onClick={()=>{setIsDirty(true);setLevels(old=>{const next=[...old];[next[index],next[index+1]]=[next[index+1],next[index]];return next;});}}>↓ 下移</button><button type="button" className="removeLevel" disabled={busy||levels.length===1} onClick={()=>{setIsDirty(true);setLevels(old=>old.filter((_,i)=>i!==index));}}>删除此关</button></div></div>
       <label>关卡标题<input disabled={busy} value={level.title} maxLength={80} onChange={e=>change(index,"title",e.target.value)} placeholder="例如：第一份小惊喜"/></label>
       <label>关卡提示（进入前可见）<textarea disabled={busy} value={level.teaser} maxLength={240} onChange={e=>change(index,"teaser",e.target.value)} placeholder="写一小段提示，让对方知道这一关有什么期待…" rows={2}/></label>
-      <label>本关心意金额（展示参考，人民币）<div className="priceInput"><span>¥</span><input disabled={busy} type="number" min="0.01" max="1000000" step="0.01" value={(level.priceMinor/100).toFixed(2)} onChange={e=>change(index,"priceMinor",Math.round(Number(e.target.value||0)*100))}/></div></label>
+      <label>本关心意金额（人民币，0 元为免费）<div className="priceInput"><span>¥</span><input disabled={busy} type="number" min="0" max="1000000" step="0.01" value={(level.priceMinor/100).toFixed(2)} onChange={e=>change(index,"priceMinor",Math.round(Number(e.target.value||0)*100))}/></div></label>
       <label>打开本关后展示的惊喜内容<textarea disabled={busy} value={level.privateContent} maxLength={20000} onChange={e=>change(index,"privateContent",e.target.value)} placeholder="写下打开这一关后，希望对方看到的惊喜…" rows={5}/></label>
     </article>)}
     <button className="addLevel" type="button" disabled={busy||levels.length>=30} onClick={()=>{setIsDirty(true);setLevels(old=>[...old,blank()]);}}>＋ 添加下一关（最多 30 关）</button>
