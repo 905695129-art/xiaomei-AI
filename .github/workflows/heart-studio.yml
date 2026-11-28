@@ -94,6 +94,12 @@ jobs:
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_qr_self_attested_unlocks.sql
       - name: Test QR self-attested unlock constraints
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_qr_self_attested_unlocks.test.sql
+      - name: Apply free level migration
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_free_levels.sql
+      - name: Verify free level migration is repeatable
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_free_levels.sql
+      - name: Test free level constraint
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_free_levels.test.sql
       - name: Test persisted journey response constraints
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_journey_responses.test.sql
       - name: Test purchase, snapshot, duplicate-order and refund invariants
