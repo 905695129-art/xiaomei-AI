@@ -3,11 +3,12 @@ import { requireDb } from "@/lib/db";
 import { getCurrentCreator } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
+const privateHeaders = { "Cache-Control": "private, no-store", Vary: "Cookie" };
 
 export async function GET() {
   try {
     const creator = await getCurrentCreator();
-    if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+    if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401, headers: privateHeaders });
     const db = requireDb();
     const [summary] = await db`
       SELECT
@@ -30,10 +31,10 @@ export async function GET() {
       ORDER BY o.created_at DESC
       LIMIT 100
     `;
-    return NextResponse.json({ summary, orders, paymentsEnabled: false }, { headers: { "Cache-Control": "private, no-store", "Vary": "Cookie" } });
+    return NextResponse.json({ summary, orders, paymentsEnabled: false }, { headers: privateHeaders });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
     const status = code === "DATABASE_NOT_CONFIGURED" ? 503 : 500;
-    return NextResponse.json({ error: status === 503 ? "SERVICE_NOT_CONFIGURED" : "INTERNAL_ERROR" }, { status });
+    return NextResponse.json({ error: status === 503 ? "SERVICE_NOT_CONFIGURED" : "INTERNAL_ERROR" }, { status, headers: privateHeaders });
   }
 }
