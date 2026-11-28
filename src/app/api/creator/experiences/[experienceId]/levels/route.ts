@@ -18,7 +18,8 @@ const levelSchema = z.object({
   title: z.string().trim().min(1).max(80),
   teaser: z.string().max(240).default(""),
   priceMinor: z.number().int().min(1).max(100000000),
-  privateContent: z.string().max(20000)
+  privateContent: z.string().max(20000),
+  media: z.array(z.object({ type: z.enum(["image","audio","video"]), url: z.string().url().max(2048).refine(value => value.startsWith("https://")), name: z.string().max(160).default("") })).max(8).default([])
 });
 const bodySchema = z.object({ levels: z.array(levelSchema).min(1).max(30) });
 
@@ -30,7 +31,7 @@ export async function GET(_request: Request, context: { params: Promise<{ experi
     const db = requireDb();
     const owns = await db`SELECT id FROM experiences WHERE id = ${experienceId}::uuid AND creator_id = ${creator.id} LIMIT 1`;
     if (!owns.length) return privateJson({ error: "NOT_FOUND" }, { status: 404 });
-    const rows = await db`SELECT id, position, title, teaser, price_minor, private_content, is_active FROM experience_levels WHERE experience_id = ${experienceId}::uuid AND is_active = true ORDER BY position`;
+    const rows = await db`SELECT id, position, title, teaser, price_minor, private_content, private_media, is_active FROM experience_levels WHERE experience_id = ${experienceId}::uuid AND is_active = true ORDER BY position`;
     return privateJson({ levels: rows }, { headers: { "Cache-Control": "private, no-store", "Vary": "Cookie" } });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
@@ -66,7 +67,7 @@ export async function PUT(request: Request, context: { params: Promise<{ experie
         UPDATE entitlements ent
         SET level_title_snapshot = COALESCE(ent.level_title_snapshot, l.title),
             level_position_snapshot = COALESCE(ent.level_position_snapshot, l.position),
-            private_content_snapshot = COALESCE(ent.private_content_snapshot, l.private_content),
+            private_content_snapshot = COALESCE(ent.private_content_snapshot, l.private_content),\n            private_media_snapshot = COALESCE(ent.private_media_snapshot, l.private_media),
             price_minor_snapshot = COALESCE(ent.price_minor_snapshot, o.amount_minor),
             currency_snapshot = COALESCE(ent.currency_snapshot, o.currency)
         FROM experience_levels l
@@ -88,10 +89,10 @@ export async function PUT(request: Request, context: { params: Promise<{ experie
           ? await tx`
               UPDATE experience_levels
               SET position = ${i + 1}, title = ${level.title}, teaser = ${level.teaser},
-                  price_minor = ${level.priceMinor}, private_content = ${level.privateContent},
+                  price_minor = ${level.priceMinor}, private_content = ${level.privateContent}, private_media = ${JSON.stringify(level.media)}::jsonb,
                   is_active = true, updated_at = now()
               WHERE id = ${level.id}::uuid AND experience_id = ${experienceId}::uuid
-              RETURNING id, position, title, teaser, price_minor
+              RETURNING id, position, title, teaser, price_minor, private_media
             `
           : await tx`
               INSERT INTO experience_levels (experience_id, position, title, teaser, price_minor, private_content, is_active)
