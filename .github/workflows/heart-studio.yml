@@ -127,6 +127,8 @@ jobs:
           docker compose ps
           docker compose logs --no-color app migrate db
           exit 1
+      - name: Run sequential journey HTTP end-to-end test
+        run: node scripts/journey-http-e2e.mjs
       - name: Stop production stack
         if: always()
         env:
