@@ -12,12 +12,28 @@ function emailConfig() {
   if (!apiKey || !from || !appUrl) return null;
   let parsed: URL;
   try { parsed = new URL(appUrl); } catch { return null; }
-  if (process.env.NODE_ENV === "production" && parsed.protocol !== "https:") return null;
+  if (parsed.protocol !== "https:" && !(process.env.NODE_ENV !== "production" && parsed.protocol === "http:")) return null;
+  if (parsed.username || parsed.password || parsed.search || parsed.hash || (parsed.pathname !== "/" && parsed.pathname !== "")) return null;
   return { apiKey, from, appUrl: parsed.origin };
 }
 
 export function isEmailDeliveryConfigured() {
   return emailConfig() !== null;
+}
+
+/** Returns a validated origin for links sent in transactional email. */
+export function getPublicAppBaseUrl() {
+  const value = process.env.APP_URL;
+  if (!value) return null;
+  try {
+    const parsed = new URL(value);
+    if (parsed.username || parsed.password || parsed.search || parsed.hash) return null;
+    if (parsed.pathname !== "/" && parsed.pathname !== "") return null;
+    if (parsed.protocol !== "https:" && !(process.env.NODE_ENV !== "production" && parsed.protocol === "http:")) return null;
+    return parsed.origin;
+  } catch {
+    return null;
+  }
 }
 
 export function escapeEmailHtml(value: string) {
