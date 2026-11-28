@@ -30,6 +30,8 @@ services:
       - ON_ERROR_STOP=1
       - -f
       - /schema/schema.sql
+      - -f
+      - /schema/migrations/20261128_journey_responses.sql
     restart: "no"
 
   app:
