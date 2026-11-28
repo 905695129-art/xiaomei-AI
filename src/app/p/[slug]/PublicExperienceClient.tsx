@@ -18,6 +18,8 @@ export default function PublicExperiencePage() {
   const [experience, setExperience] = useState<Experience | null>(null);
   const [loading, setLoading] = useState(true);
   const [introOpen, setIntroOpen] = useState(true);
+  const [playfulNoteIndex, setPlayfulNoteIndex] = useState(-1);
+  const playfulNotes = ["今天也值得被认真对待，记得对自己温柔一点。 ✨","偷偷送你一颗星星：愿你打开的每一份心意都是真诚的。 ⭐","暂停一下，深呼吸。此刻不用赶路，慢慢感受就好。 ♡","叮！你收到了一个隔空的小小拥抱。 🫧","愿今天有一点点甜，刚好落在你的心上。 💗"];
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<Level | null>(null);
   const [closing, setClosing] = useState(false);
@@ -201,11 +203,12 @@ export default function PublicExperiencePage() {
   return <main className={`publicShell publicTheme-${experience.theme || "rose"}`}>{introOpen&&<div className="heartArrivalBackdrop" role="presentation"><section className="heartArrivalCard" role="dialog" aria-modal="true" aria-labelledby="heartArrivalTitle"><div className="heartArrivalSeal">♡</div><p className="publicEyebrow">A LITTLE NOTE FOR YOU</p><h1 id="heartArrivalTitle">有人把一份心意，悄悄放在了这里。</h1><p>也许是一句话、一段回忆，或一个只想让你知道的小惊喜。</p><div className="heartArrivalMessage">不必着急，也没有标准答案。按照自己的节奏，慢慢打开就好。✨</div><button type="button" onClick={()=>setIntroOpen(false)}>我想看看这份心意 ♡</button><small>你的感受和选择，始终由你自己决定。</small></section></div>} 
     <header className="publicNav"><a href="/" className="publicBrand"><span>♡</span> 心意闯关</a><div className="publicNavActions"><a href="/purchases" className="buyerCreatorLink">历史购买记录</a><button onClick={share} className="shareButton">{copied ? "已复制链接 ✓" : "分享这份心意 ↗"}</button></div></header>
     <section className="publicHero">{experience.coverUrl&&!experience.coverUrl.startsWith("preset:")?<img className="publicCoverImage" src={experience.coverUrl} alt="这份心意的专属封面" style={{objectPosition:experience.coverPosition||"center"}}/>:experience.coverUrl?<div className={`publicCoverPreset publicCover-${experience.coverUrl.slice(7)}`}>♡</div>:null}
-      <div className="publicHalo">♡</div>
+      <button type="button" className="publicHalo playfulHeart" aria-label="戳一戳心心，收下一句悄悄话" onClick={() => setPlayfulNoteIndex(index => (index + 1) % playfulNotes.length)}>♡<span className="playfulHeartHint">戳一戳试试</span></button>
       <p className="publicEyebrow">A LITTLE JOURNEY FOR YOU</p>
       <h1>{experience.title}</h1>
       <p className="publicDescription">{experience.description || "有人为你准备了一段小小的心意旅程。每打开一扇门，都有一份认真准备的惊喜。"}</p>
       <div className="publicMeta"><span>✦ {experience.levels.length} 份专属心意</span><span>♡ 每一关都是一次互动</span></div>
+      <div className="playfulCorner" aria-live="polite">{playfulNoteIndex >= 0 ? <div className="playfulNote">✦ {playfulNotes[playfulNoteIndex]}</div> : <span>这里不只是一个链接，也是一段可以慢慢探索的小小空间</span>}<button type="button" onClick={() => setPlayfulNoteIndex(index => (index + 1) % playfulNotes.length)}>{playfulNoteIndex < 0 ? "拆一张今日悄悄话" : "再拆一张 ✨"}</button></div>
     </section>
     <section className="journeySection">
       <div className="journeyHeading"><div><p className="publicEyebrow">YOUR LITTLE JOURNEY</p><h2>一关一关，慢慢打开</h2></div><span>{experience.levels.length} LEVELS</span></div>
