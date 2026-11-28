@@ -82,8 +82,13 @@ jobs:
           docker compose up -d --build
           for attempt in $(seq 1 60); do
             if curl --fail --silent http://127.0.0.1:3000/api/health >/dev/null; then
-              if curl --fail --silent http://127.0.0.1:3000/api/ready; then
-                echo "Heart Studio application and database are ready."
+              if curl --fail --silent http://127.0.0.1:3000/api/ready >/dev/null; then
+                headers="$(curl --fail --silent --show-error -D - -o /dev/null http://127.0.0.1:3000/api/health)"
+                printf '%s\\n' "$headers" | grep -qiE '^x-content-type-options: *nosniff' || { echo "Missing nosniff header"; exit 1; }
+                printf '%s\\n' "$headers" | grep -qiE '^x-frame-options: *DENY' || { echo "Missing frame protection header"; exit 1; }
+                printf '%s\\n' "$headers" | grep -qiE '^referrer-policy: *strict-origin-when-cross-origin' || { echo "Missing referrer policy"; exit 1; }
+                printf '%s\\n' "$headers" | grep -qiE '^strict-transport-security: *max-age=15552000' || { echo "Missing production HSTS header"; exit 1; }
+                echo "Heart Studio app, database, and browser security headers are ready."
                 exit 0
               fi
             fi
