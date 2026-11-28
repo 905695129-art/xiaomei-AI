@@ -26,7 +26,6 @@ export default function ExperienceEditor() {
   const [coverMessage,setCoverMessage] = useState("");
   const coverPresets=[{id:"preset:rose",label:"甜粉花雾",style:"linear-gradient(135deg,#f9dce5,#fbeef1 55%,#eac1cf)"},{id:"preset:cream",label:"奶油暖光",style:"linear-gradient(135deg,#f4e4c9,#fff8eb 55%,#e9d2aa)"},{id:"preset:lavender",label:"梦幻紫雾",style:"linear-gradient(135deg,#e5daf8,#f8f3ff 55%,#cfc0ed)"},{id:"preset:night",label:"星夜心愿",style:"linear-gradient(135deg,#444064,#8d7ba9 55%,#e6c6d6)"}];
   async function saveCoverPosition(coverPosition:string){setCoverBusy(true);setCoverMessage("");try{const r=await fetch(`/api/creator/experiences/${experienceId}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({coverPosition})});if(!r.ok)throw new Error("封面位置保存失败");setExperienceInfo(old=>({...old,coverPosition}));setCoverMessage("封面构图已保存。");}catch(e){setCoverMessage(e instanceof Error?e.message:"保存失败");}finally{setCoverBusy(false);}}
-  async function saveCover(coverUrl:string){setCoverBusy(true);setCoverMessage("");try{const r=await fetch(`/api/creator/experiences/${experienceId}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({coverUrl})});const d=await r.json();if(!r.ok)throw new Error("封面保存失败，请稍后重试。");setExperienceInfo(old=>({...old,coverUrl:d.experience.cover_url||d.experience.coverUrl||coverUrl}));setCoverMessage("封面已保存，分享页预览已同步。");}catch(e){setCoverMessage(e instanceof Error?e.message:"封面保存失败");}finally{setCoverBusy(false);}}
   async function clearCover(){setCoverBusy(true);setCoverMessage("");try{const r=await fetch(`/api/creator/experiences/${experienceId}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({coverUrl:"",coverPosition:"center"})});if(!r.ok)throw new Error("移除封面失败，请稍后重试。");setExperienceInfo(old=>({...old,coverUrl:"",coverPosition:"center"}));setCoverMessage("已移除封面，分享页将使用主题默认样式。");}catch(e){setCoverMessage(e instanceof Error?e.message:"移除失败");}finally{setCoverBusy(false);}}
   async function uploadCover(file?:File){
     if(!file)return;
@@ -49,7 +48,7 @@ export default function ExperienceEditor() {
       const upload=await fetch(`/api/creator/experiences/${experienceId}/cover-upload`,{method:"POST",body:form});
       const result=await upload.json();
       if(!upload.ok)throw new Error(result.error==="STORAGE_NOT_CONFIGURED"?"图片存储尚未配置，暂时无法上传。":result.error==="INVALID_IMAGE_CONTENT"?"图片文件内容或尺寸无效，请重新导出后上传。":result.error==="REQUEST_TOO_LARGE"?"图片不能超过 8MB。":"图片上传失败，请稍后重试。");
-      await saveCover(result.publicUrl);
+      setExperienceInfo(old=>({...old,coverUrl:result.publicUrl}));setCoverMessage("封面已安全处理并保存，分享页预览已同步。");setCoverBusy(false);
     }catch(e){setCoverMessage(e instanceof Error?e.message:"上传失败");setCoverBusy(false);}
   }
 
