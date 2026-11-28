@@ -23,6 +23,9 @@ export async function POST(request: Request) {
   if (!body.ok) {
     return NextResponse.json({ error: body.error }, { status: body.error === "REQUEST_TOO_LARGE" ? 413 : 400, headers: privateHeaders });
   }
+  if (!body.value || typeof body.value !== "object") {
+    return NextResponse.json({ error: "INVALID_CONFIRMATION" }, { status: 400, headers: privateHeaders });
+  }
   const value = body.value as { password?: unknown; confirmation?: unknown };
   if (typeof value.password !== "string" || value.password.length < 10 || value.password.length > 128 || value.confirmation !== "DELETE") {
     return NextResponse.json({ error: "INVALID_CONFIRMATION" }, { status: 400, headers: privateHeaders });
