@@ -60,6 +60,14 @@ BEGIN
   INSERT INTO buyer_sessions (buyer_ref, token_hash, expires_at)
   VALUES (buyer_ref_value, encode(digest(gen_random_uuid()::text, 'sha256'), 'hex'), now() + interval '1 day');
 
+  BEGIN
+    INSERT INTO experience_levels (experience_id, position, title, price_minor)
+    VALUES (experience_id, 2, 'Unsupported free level', 0);
+    RAISE EXCEPTION 'ZERO_PRICED_LEVEL_WAS_ACCEPTED';
+  EXCEPTION WHEN check_violation THEN
+    NULL;
+  END;
+
   INSERT INTO experience_levels (experience_id, position, title, teaser, price_minor, private_content)
   VALUES (experience_id, 1, 'Original title', 'Teaser', 990, 'Original private content')
   RETURNING id INTO level_id;
