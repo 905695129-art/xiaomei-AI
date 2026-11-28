@@ -2,7 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 
-type MediaItem = { type: "image" | "audio" | "video"; url: string; name: string };\ntype Level = { id?: string; title: string; teaser: string; priceMinor: number; privateContent: string; media: MediaItem[] };
+type MediaItem = { type: "image" | "audio" | "video"; url: string; name: string };
+type Level = { id?: string; title: string; teaser: string; priceMinor: number; privateContent: string; media: MediaItem[] };
 const blank = (): Level => ({ title: "", teaser: "", priceMinor: 990, privateContent: "", media: [] });
 export default function ExperienceEditor() {
   const { experienceId } = useParams<{ experienceId: string }>();
