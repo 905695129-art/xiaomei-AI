@@ -160,3 +160,35 @@
 .themePreview-champagne .creatorPreviewNumber,.publicTheme-champagne .journeyNumber{background:#f4ecd8;color:#a98950}
 .publicTheme-champagne .journeyAction button{background:#ad8a4e}.publicTheme-champagne .journeySection{border-color:#eee4ce}
 @media(max-width:520px){.themeOptions{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Fixed, guided creator onboarding: one calm step at a time */
+.creatorEditorHeading{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.creatorEditorHeading h1{margin:0}
+.creatorGuideReopen{flex-shrink:0;border:1px solid #efd6df;border-radius:22px;padding:10px 14px;background:#fff7fa;color:#a66d80;font-size:11px;cursor:pointer}
+.creatorGuideBackdrop{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:max(18px,env(safe-area-inset-top)) 16px max(18px,env(safe-area-inset-bottom));background:rgba(58,39,48,.48);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);animation:creatorGuideFade .24s ease both}
+.creatorGuideDialog{position:relative;width:min(100%,440px);max-height:min(88dvh,760px);overflow-y:auto;overscroll-behavior:contain;border:1px solid rgba(255,255,255,.85);border-radius:30px;padding:23px 24px 20px;background:linear-gradient(160deg,#fffafd 0%,#fff 58%,#fff5f8 100%);box-shadow:0 26px 90px rgba(66,37,49,.24);text-align:center;animation:creatorGuidePop .34s cubic-bezier(.2,.8,.2,1) both}
+.creatorGuideTop{display:flex;justify-content:space-between;align-items:center;color:#b77e91;font-size:9px;letter-spacing:2px;font-weight:700}
+.creatorGuideTop button{width:31px;height:31px;border:0;border-radius:50%;background:#fbedf1;color:#a87888;font-size:21px;cursor:pointer}
+.creatorGuideProgress{display:flex;gap:6px;margin:19px 0 25px}
+.creatorGuideProgress i{height:4px;flex:1;border-radius:8px;background:#f0e5e9;transition:background .2s}
+.creatorGuideProgress i.active{background:linear-gradient(90deg,#d58fa4,#efc4d0)}
+.creatorGuideEyebrow{margin:0;color:#c28a9d;font-size:9px;letter-spacing:2px;font-weight:700}
+.creatorGuideIcon{width:62px;height:62px;display:grid;place-items:center;margin:18px auto 15px;border-radius:23px;background:linear-gradient(145deg,#fff0f4,#f8dfe7);box-shadow:inset 0 1px 0 #fff;color:#c77f96;font:30px Georgia,serif}
+.creatorGuideDialog h2{margin:0 auto 12px;max-width:330px;color:#684b57;font:24px/1.42 Georgia,"Songti SC",serif}
+.creatorGuideBody{max-width:350px;margin:0 auto;color:#927d86;font-size:12px;line-height:1.95}
+.creatorGuideTip{margin:20px 0 0;padding:12px 14px;border:1px solid #f3e1e7;border-radius:15px;background:rgba(255,246,249,.9);color:#987d87;text-align:left;font-size:10px;line-height:1.75}
+.creatorGuideTip span{display:block;margin-bottom:3px;color:#bd8296;font-weight:700}
+.creatorGuideThemes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:17px 0 0}
+.creatorGuideThemes button{display:flex;align-items:center;gap:8px;min-width:0;border:1px solid #f0e1e6;border-radius:13px;padding:10px;background:#fff;color:#8c6d78;font-size:10px;text-align:left;cursor:pointer}
+.creatorGuideThemes button.chosen{border-color:#d69aaa;background:#fff3f6;box-shadow:0 0 0 2px #e9bdc933}
+.creatorGuideThemes i{width:17px;height:17px;flex-shrink:0;border:1px solid #00000010;border-radius:50%}
+.creatorGuideActions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:22px}
+.creatorGuideActions>div{display:flex;gap:8px}
+.creatorGuideSkip,.creatorGuideBack{border:0;border-radius:20px;padding:11px 13px;background:transparent;color:#ae8b97;font-size:10px;cursor:pointer}
+.creatorGuideNext{border:0;border-radius:22px;padding:12px 21px;background:linear-gradient(110deg,#c47d91,#dc9bad);box-shadow:0 8px 20px rgba(196,125,145,.22);color:white;font-size:11px;font-weight:650;cursor:pointer}
+.creatorGuideCount{display:block;margin-top:13px;color:#c6aeb6;font-size:9px;letter-spacing:1.5px}
+@keyframes creatorGuideFade{from{opacity:0}to{opacity:1}}
+@keyframes creatorGuidePop{0%{opacity:0;transform:translateY(18px) scale(.96)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:520px){.creatorGuideBackdrop{padding:12px 12px max(12px,env(safe-area-inset-bottom))}.creatorGuideDialog{width:100%;max-height:90dvh;border-radius:27px;padding:19px 18px 16px}.creatorGuideDialog h2{font-size:22px}.creatorGuideThemes{gap:7px}.creatorGuideThemes button{padding:9px 8px}}
+@media(prefers-reduced-motion:reduce){.creatorGuideBackdrop,.creatorGuideDialog{animation:none!important}}
