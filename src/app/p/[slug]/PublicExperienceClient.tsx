@@ -22,7 +22,6 @@ export default function PublicExperiencePage() {
   const [notice, setNotice] = useState("");
   const [privateContent, setPrivateContent] = useState("");
   const [checkingLevel, setCheckingLevel] = useState(false);
-  const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState(false);
   const [reaction, setReaction] = useState<string | null>(null);
   const [responseMessage, setResponseMessage] = useState("");
@@ -58,7 +57,6 @@ export default function PublicExperiencePage() {
         if (purchasesResponse.ok) {
           const purchasesData = await purchasesResponse.json();
           if (alive && Array.isArray(purchasesData.purchases)) {
-            setUnlockedIds(new Set(purchasesData.purchases.map((item: { level_id: string }) => item.level_id)));
           }
         }
       } catch (e) {
@@ -118,7 +116,6 @@ export default function PublicExperiencePage() {
       const data = await response.json();
       if (response.ok) {
         setPrivateContent(typeof data.content === "string" ? data.content : "");
-        setUnlockedIds(current => new Set(current).add(level.id));
         setNotice("这一关已经为你打开，看看专属惊喜吧 ♡");
       } else if (response.status === 409 && data.error === "LEVEL_LOCKED") {
         setNotice("先完成前一关的小互动，就能打开这一关啦 ♡");
