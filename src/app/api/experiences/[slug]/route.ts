@@ -25,7 +25,11 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
     const rows = await db`
       SELECT e.slug, e.title, e.description, e.cover_url, e.cover_position, e.currency, e.theme,
         l.id AS level_id, l.position, l.title AS level_title,
-        l.teaser, l.price_minor
+        l.teaser, l.price_minor,
+        EXISTS (
+          SELECT 1 FROM journey_level_progress progress
+          WHERE progress.level_id = l.id AND progress.buyer_ref = ${buyerRef}
+        ) AS completed
       FROM experiences e
       LEFT JOIN experience_levels l
         ON l.experience_id = e.id
@@ -50,7 +54,7 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
         coverUrl: first.cover_url, coverPosition: ["top", "center", "bottom"].includes(first.cover_position) ? first.cover_position : "center", currency: first.currency, theme: ["rose", "cream", "lavender"].includes(first.theme) ? first.theme : "rose",
         levels: rows.filter((r: any) => r.level_id).map((r: any) => ({
           id: r.level_id, position: r.position, title: r.level_title,
-          teaser: r.teaser, priceMinor: r.price_minor
+          teaser: r.teaser, priceMinor: r.price_minor, completed: Boolean(r.completed)
         }))
       }
     }, { headers: responseHeaders() });
