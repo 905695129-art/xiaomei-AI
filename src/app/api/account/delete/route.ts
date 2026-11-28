@@ -36,6 +36,26 @@ export async function POST(request: Request) {
 
   try {
     const db = requireDb();
+    await db`DELETE FROM account_delete_rate_limits WHERE window_started_at < now() - interval '1 day'`;
+    const [deleteLimit] = await db`
+      INSERT INTO account_delete_rate_limits (user_id, window_started_at, attempts)
+      VALUES (${creator.id}, now(), 1)
+      ON CONFLICT (user_id) DO UPDATE SET
+        attempts = CASE
+          WHEN account_delete_rate_limits.window_started_at < now() - interval '15 minutes' THEN 1
+          ELSE account_delete_rate_limits.attempts + 1
+        END,
+        window_started_at = CASE
+          WHEN account_delete_rate_limits.window_started_at < now() - interval '15 minutes' THEN now()
+          ELSE account_delete_rate_limits.window_started_at
+        END
+      RETURNING attempts, window_started_at
+    `;
+    if (Number(deleteLimit.attempts) > 5) {
+      const elapsedMs = Date.now() - new Date(deleteLimit.window_started_at).getTime();
+      const retryAfter = Math.max(1, Math.ceil((15 * 60 * 1000 - elapsedMs) / 1000));
+      return NextResponse.json({ error: "TOO_MANY_ATTEMPTS" }, { status: 429, headers: { ...privateHeaders, "Retry-After": String(retryAfter) } });
+    }
     const deleted = await db.begin(async tx => {
       const [account] = await tx`
         SELECT id, password_hash, email FROM users
@@ -91,6 +111,12 @@ export async function POST(request: Request) {
       await tx`
         DELETE FROM email_action_rate_limits
         WHERE email = ${account.email}
+      `;
+      await tx`
+        DELETE FROM auth_rate_limits WHERE email = ${account.email}
+      `;
+      await tx`
+        DELETE FROM account_delete_rate_limits WHERE user_id = ${creator.id}
       `;
       return true;
     });
