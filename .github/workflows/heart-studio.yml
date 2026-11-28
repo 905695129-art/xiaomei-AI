@@ -81,6 +81,14 @@ jobs:
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_journey_level_progress.sql
       - name: Verify sequential journey progress migration is repeatable
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_journey_level_progress.sql
+      - name: Apply anonymous creator session migration
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_anonymous_creator_sessions.sql
+      - name: Verify anonymous creator session migration is repeatable
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_anonymous_creator_sessions.sql
+      - name: Apply creator payment QR migration
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_creator_payment_qr.sql
+      - name: Verify creator payment QR migration is repeatable
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_creator_payment_qr.sql
       - name: Test sequential journey progress and visitor isolation
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_journey_level_progress.test.sql
       - name: Test persisted journey response constraints
