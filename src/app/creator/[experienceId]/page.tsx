@@ -2,8 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 
-type Level = { id?: string; title: string; teaser: string; priceMinor: number; privateContent: string };
-const blank = (): Level => ({ title: "", teaser: "", priceMinor: 990, privateContent: "" });
+type MediaItem = { type: "image" | "audio" | "video"; url: string; name: string };\ntype Level = { id?: string; title: string; teaser: string; priceMinor: number; privateContent: string; media: MediaItem[] };
+const blank = (): Level => ({ title: "", teaser: "", priceMinor: 990, privateContent: "", media: [] });
 export default function ExperienceEditor() {
   const { experienceId } = useParams<{ experienceId: string }>();
   const [levels,setLevels] = useState<Level[]>([blank()]);
@@ -72,7 +72,7 @@ export default function ExperienceEditor() {
     fetch(`/api/creator/experiences/${experienceId}/levels`).then(async r=>{
       const d=await r.json();
       if(!r.ok) throw new Error(d.error==="UNAUTHORIZED"?"请先登录创作者账户。":"无法读取关卡，请检查作品是否存在。");
-      if(d.levels?.length) setLevels(d.levels.map((x:any)=>({id:x.id,title:x.title,teaser:x.teaser||"",priceMinor:Number(x.price_minor),privateContent:x.private_content||""})));
+      if(d.levels?.length) setLevels(d.levels.map((x:any)=>({id:x.id,title:x.title,teaser:x.teaser||"",priceMinor:Number(x.price_minor),privateContent:x.private_content||"",media:Array.isArray(x.private_media)?x.private_media:[]})));
     }).catch(e=>setMessage(e instanceof Error?e.message:"加载失败")).finally(()=>setLoading(false));
   },[experienceId]);
   function change(index:number,key:keyof Level,value:string|number){
@@ -90,7 +90,7 @@ export default function ExperienceEditor() {
     try{
       const invalidIndex=levels.findIndex(l=>!l.title.trim() || !Number.isFinite(Number(l.priceMinor)) || Number(l.priceMinor)<1 || Number(l.priceMinor)>100000000);
       if(invalidIndex>=0) throw new Error(`请检查第 ${invalidIndex+1} 关：标题不能为空，价格须为 0.01 至 1,000,000 元。`);
-      const payload={levels:levels.map(l=>({...(l.id?{id:l.id}:{}),title:l.title.trim(),teaser:l.teaser,priceMinor:Number(l.priceMinor),privateContent:l.privateContent}))};
+      const payload={levels:levels.map(l=>({...(l.id?{id:l.id}:{}),title:l.title.trim(),teaser:l.teaser,priceMinor:Number(l.priceMinor),privateContent:l.privateContent,media:l.media}))};
       const r=await fetch(`/api/creator/experiences/${experienceId}/levels`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
       const d=await r.json();
       if(!r.ok) throw new Error(d.error==="UNAUTHORIZED"?"登录状态已失效，请重新登录。":"保存失败，请检查每关标题和价格。");
@@ -142,7 +142,7 @@ export default function ExperienceEditor() {
       <label>关卡标题<input disabled={busy} value={level.title} maxLength={80} onChange={e=>change(index,"title",e.target.value)} placeholder="例如：第一份小惊喜"/></label>
       <label>关卡提示（进入前可见）<textarea disabled={busy} value={level.teaser} maxLength={240} onChange={e=>change(index,"teaser",e.target.value)} placeholder="写一小段提示，让对方知道这一关有什么期待…" rows={2}/></label>
       <label>本关心意金额（展示参考，人民币）<div className="priceInput"><span>¥</span><input disabled={busy} type="number" min="0.01" max="1000000" step="0.01" value={(level.priceMinor/100).toFixed(2)} onChange={e=>change(index,"priceMinor",Math.round(Number(e.target.value||0)*100))}/></div></label>
-      <label>打开本关后展示的惊喜内容<textarea disabled={busy} value={level.privateContent} maxLength={20000} onChange={e=>change(index,"privateContent",e.target.value)} placeholder="写下打开这一关后，希望对方看到的惊喜…" rows={5}/></label>
+      <label>打开本关后展示的惊喜内容<textarea disabled={busy} value={level.privateContent} maxLength={20000} onChange={e=>change(index,"privateContent",e.target.value)} placeholder="写下打开这一关后，希望对方看到的惊喜…" rows={5}/></label>\n      <fieldset className="levelMediaEditor"><legend>本关照片 / 语音 / 视频</legend><p>填写可公开访问的 HTTPS 媒体地址；请使用自己拥有或已获授权的内容。上传到平台的功能将在对象存储配置完成后开放。</p>{level.media.map((item,mediaIndex)=><div className="levelMediaRow" key={`${index}-${mediaIndex}`}><select aria-label="媒体类型" disabled={busy} value={item.type} onChange={event=>{setIsDirty(true);setLevels(old=>old.map((row,i)=>i===index?{...row,media:row.media.map((m,j)=>j===mediaIndex?{...m,type:event.target.value as MediaItem["type"]}:m)}:row));}}><option value="image">照片</option><option value="audio">语音</option><option value="video">视频</option></select><input aria-label="媒体 HTTPS 地址" disabled={busy} type="url" value={item.url} placeholder="https://..." onChange={event=>{setIsDirty(true);setLevels(old=>old.map((row,i)=>i===index?{...row,media:row.media.map((m,j)=>j===mediaIndex?{...m,url:event.target.value}:m)}:row));}}/><input aria-label="媒体说明" disabled={busy} value={item.name} maxLength={160} placeholder="给这份素材起个名字（选填）" onChange={event=>{setIsDirty(true);setLevels(old=>old.map((row,i)=>i===index?{...row,media:row.media.map((m,j)=>j===mediaIndex?{...m,name:event.target.value}:m)}:row));}}/><button type="button" disabled={busy} onClick={()=>{setIsDirty(true);setLevels(old=>old.map((row,i)=>i===index?{...row,media:row.media.filter((_,j)=>j!==mediaIndex)}:row));}}>移除</button></div>)}<button type="button" disabled={busy||level.media.length>=8} onClick={()=>{setIsDirty(true);setLevels(old=>old.map((row,i)=>i===index?{...row,media:[...row.media,{type:"image",url:"",name:""}]}:row));}}>＋ 添加素材（最多 8 个）</button></fieldset>
     </article>)}
     <button className="addLevel" type="button" disabled={busy||levels.length>=30} onClick={()=>{setIsDirty(true);setLevels(old=>[...old,blank()]);}}>＋ 添加下一关（最多 30 关）</button>
     <div className="editorActions"><button className="primary" disabled={busy} onClick={save}>{busy?"处理中…":isDirty?"保存修改 · 有未保存内容":"保存所有关卡"}</button><button className="publishButton" disabled={busy||isDirty} onClick={publish}>发布并生成分享链接 ↗</button></div>
