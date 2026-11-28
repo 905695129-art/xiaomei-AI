@@ -5,9 +5,10 @@ import { requireDb } from "@/lib/db";
 import { isSameOriginWrite } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
+const privateHeaders = { "Cache-Control": "private, no-store", Vary: "Cookie" };
 
 export async function POST(request: Request) {
-  if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403, headers: { "Cache-Control": "no-store" } });
+  if (!isSameOriginWrite(request)) return NextResponse.json({ error: "BAD_ORIGIN" }, { status: 403, headers: privateHeaders });
   try {
     const db = requireDb();
     // Expired browser identities no longer grant access; prune them opportunistically.
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
         "SELECT buyer_ref FROM buyer_sessions WHERE token_hash = $1 AND expires_at > now() LIMIT 1",
         [existingHash]
       );
-      if (existing.length) return NextResponse.json({ ok: true, existing: true }, { headers: { "Cache-Control": "no-store, private", Vary: "Cookie" } });
+      if (existing.length) return NextResponse.json({ ok: true, existing: true }, { headers: privateHeaders });
     }
 
     const token = randomBytes(32).toString("base64url");
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
     return NextResponse.json(
       { error: code === "DATABASE_NOT_CONFIGURED" ? "SERVICE_NOT_CONFIGURED" : "INTERNAL_ERROR" },
-      { status: code === "DATABASE_NOT_CONFIGURED" ? 503 : 500 }
+      { status: code === "DATABASE_NOT_CONFIGURED" ? 503 : 500, headers: privateHeaders }
     );
   }
 }
