@@ -5,6 +5,7 @@
 ## 1. 服务器要求
 
 - 支持 Docker Engine 与 Docker Compose v2 的 Linux 主机。
+- 构建和运行镜像使用受支持的 Node.js 22 Alpine LTS 基础镜像。
 - 建议至少 2 vCPU、2GB RAM；生产环境按流量和图片存储需求扩容。
 - 一个已指向服务器的域名，以及 HTTPS 反向代理（例如由 Caddy/Nginx 终止 TLS）。
 - 防火墙只开放 HTTPS 入口；不要把 PostgreSQL 端口暴露到公网。
@@ -38,7 +39,7 @@ docker compose logs -f app
 
 Compose 会先启动 PostgreSQL，等待数据库健康检查通过，再执行可重复的 `db/schema.sql` 迁移，最后启动 Next.js 应用。数据库数据保存在名为 `heart_studio_data` 的 Docker volume 中。
 
-应用容器监听 3000 端口，Compose 默认只将其绑定到主机回环地址 `127.0.0.1:3000`，便于主机上的 Caddy/Nginx 反向代理访问。生产环境应通过 HTTPS 反向代理访问，并确保反向代理正确传递 Host、协议和请求头；不要将应用端口改为公网监听。
+应用容器监听 3000 端口，Compose 默认只将其绑定到主机回环地址 `127.0.0.1:3000`，便于主机上的 Caddy/Nginx 反向代理访问。应用对所有路由设置 `X-Content-Type-Options`、`X-Frame-Options`、`Referrer-Policy`、`Permissions-Policy` 等浏览器安全响应头；生产环境还会发送 HSTS。生产环境应通过 HTTPS 反向代理访问，并确保反向代理正确传递 Host、协议和请求头；不要将应用端口改为公网监听。
 
 健康检查分为两层：`GET /api/health` 只检查 Next.js 进程是否存活；`GET /api/ready` 会实际执行数据库查询，返回数据库是否就绪。部署验收时应两者都返回 HTTP 200。
 
