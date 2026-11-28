@@ -60,10 +60,14 @@ BEGIN
   INSERT INTO buyer_sessions (buyer_ref, token_hash, expires_at)
   VALUES (buyer_ref_value, encode(digest(gen_random_uuid()::text, 'sha256'), 'hex'), now() + interval '1 day');
 
+  -- Zero is a valid free level; negative prices remain forbidden.
+  INSERT INTO experience_levels (experience_id, position, title, price_minor)
+  VALUES (experience_id, 2, 'Free level', 0);
+
   BEGIN
     INSERT INTO experience_levels (experience_id, position, title, price_minor)
-    VALUES (experience_id, 2, 'Unsupported free level', 0);
-    RAISE EXCEPTION 'ZERO_PRICED_LEVEL_WAS_ACCEPTED';
+    VALUES (experience_id, 3, 'Negative price', -1);
+    RAISE EXCEPTION 'NEGATIVE_PRICED_LEVEL_WAS_ACCEPTED';
   EXCEPTION WHEN check_violation THEN
     NULL;
   END;
