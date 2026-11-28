@@ -26,6 +26,7 @@ export default function PublicExperiencePage() {
   const [copied, setCopied] = useState(false);
   const [reaction, setReaction] = useState<string | null>(null);
   const responsePanelRef = useRef<HTMLElement | null>(null);
+  const openerButtonRef = useRef<HTMLButtonElement | null>(null);
   function closeSelected() {
     if (!selected || closing) return;
     setClosing(true);
@@ -94,12 +95,14 @@ export default function PublicExperiencePage() {
       window.clearTimeout(focusTimer);
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
+      if (selected) window.requestAnimationFrame(() => openerButtonRef.current?.focus());
     };
   }, [selected?.id]);
 
 
 
-  async function beginUnlock(level: Level) {
+  async function beginUnlock(level: Level, opener?: HTMLButtonElement) {
+    if (opener) openerButtonRef.current = opener;
     setSelected(level);
     setReaction(null);
     setPrivateContent("");
@@ -205,7 +208,7 @@ export default function PublicExperiencePage() {
         <div className="journeyList">{experience.levels.map((level, index) => <article className={selected?.id === level.id ? "journeyCard activeJourney" : "journeyCard"} key={level.id}>
           <div className="journeyNumber">{String(level.position || index + 1).padStart(2, "0")}</div>
           <div className="journeyCopy"><span className="journeyLabel">A LITTLE SECRET</span><h3>{level.title}</h3><p>{level.teaser || "一份为你准备的小惊喜，打开后就能看到更多。"}</p></div>
-          <div className="journeyAction"><strong>{money(level.priceMinor, experience.currency || "CNY")}</strong><small className="levelPriceCaption">关卡标价</small><button disabled={checkingLevel} onClick={() => beginUnlock(level)}>{checkingLevel && selected?.id === level.id ? "确认中…" : unlockedIds.has(level.id) ? "已解锁 · 查看" : selected?.id === level.id ? "查看本关" : "查看解锁状态"} <span>♡</span></button></div>
+          <div className="journeyAction"><strong>{money(level.priceMinor, experience.currency || "CNY")}</strong><small className="levelPriceCaption">关卡标价</small><button disabled={checkingLevel} onClick={event => beginUnlock(level, event.currentTarget)}>{checkingLevel && selected?.id === level.id ? "确认中…" : unlockedIds.has(level.id) ? "已解锁 · 查看" : selected?.id === level.id ? "查看本关" : "查看解锁状态"} <span>♡</span></button></div>
         </article>)}</div>}
       <div className="journeyTotal"><span>全部关卡合计（仅供参考）</span><strong>{money(total, experience.currency || "CNY")}</strong></div>
     </section>
