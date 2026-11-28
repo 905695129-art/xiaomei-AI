@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireDb } from "@/lib/db";
-import { escapeEmailHtml, isEmailDeliveryConfigured, sendTransactionalEmail } from "@/lib/email";
+import { escapeEmailHtml, getPublicAppBaseUrl, isEmailDeliveryConfigured, sendTransactionalEmail } from "@/lib/email";
 import { isSameOriginWrite, readJsonLimited } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
@@ -41,12 +41,16 @@ export async function POST(request: Request) {
       await tx`DELETE FROM password_reset_tokens WHERE user_id = ${user.id} AND consumed_at IS NULL`;
       await tx`INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES (${user.id}, ${tokenHash}, now() + interval '30 minutes')`;
     });
-    const resetUrl = `${process.env.APP_URL!.replace(/\/$/, "")}/creator/reset-password?token=${encodeURIComponent(token)}`;
+    const appBaseUrl = getPublicAppBaseUrl();
+    if (!appBaseUrl) return NextResponse.json({ error: "EMAIL_DELIVERY_NOT_CONFIGURED" }, { status: 503, headers });
+    const resetUrl = new URL("/creator/reset-password", appBaseUrl);
+    resetUrl.searchParams.set("token", token);
+    const resetLink = resetUrl.toString();
     const safeUrl = escapeEmailHtml(resetUrl);
     await sendTransactionalEmail({
       to: user.email,
       subject: "心意闯关：重置登录密码",
-      text: `我们收到了重置心意闯关账户密码的请求。请在 30 分钟内打开以下链接设置新密码：${resetUrl}\n如果不是你本人操作，请忽略此邮件。`,
+      text: `我们收到了重置心意闯关账户密码的请求。请在 30 分钟内打开以下链接设置新密码：${resetLink}\n如果不是你本人操作，请忽略此邮件。`,
       html: `<div style="font-family:Arial,sans-serif;line-height:1.8;color:#654f58"><h2>重置登录密码</h2><p>请在 30 分钟内点击下方按钮设置新密码。</p><p><a href="${safeUrl}" style="display:inline-block;padding:12px 22px;background:#d98da4;color:white;border-radius:10px;text-decoration:none">设置新密码</a></p><p>如果不是你本人操作，请忽略此邮件。</p></div>`
     });
     return NextResponse.json({ ok: true, message: "如果该邮箱已注册，重置说明将发送至邮箱。" }, { headers });
