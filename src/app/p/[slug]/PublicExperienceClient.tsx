@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 
-type MediaItem = { type: "image" | "audio" | "video"; url: string; name?: string };\ntype Level = { id: string; position: number; title: string; teaser: string | null; priceMinor: number; completed?: boolean };
+type MediaItem = { type: "image" | "audio" | "video"; url: string; name?: string };
+type Level = { id: string; position: number; title: string; teaser: string | null; priceMinor: number; completed?: boolean };
 type Experience = { slug: string; title: string; description: string | null; coverUrl: string | null; coverPosition?: "top" | "center" | "bottom"; currency: string; theme?: "rose" | "cream" | "lavender"; levels: Level[] };
 
 function money(minor: number, currency: string) {
@@ -20,7 +21,8 @@ export default function PublicExperiencePage() {
   const [selected, setSelected] = useState<Level | null>(null);
   const [closing, setClosing] = useState(false);
   const [notice, setNotice] = useState("");
-  const [privateContent, setPrivateContent] = useState("");\n  const [privateMedia, setPrivateMedia] = useState<MediaItem[]>([]);
+  const [privateContent, setPrivateContent] = useState("");
+  const [privateMedia, setPrivateMedia] = useState<MediaItem[]>([]);
   const [checkingLevel, setCheckingLevel] = useState(false);
   const [copied, setCopied] = useState(false);
   const [reaction, setReaction] = useState<string | null>(null);
@@ -108,7 +110,8 @@ export default function PublicExperiencePage() {
       const response = await fetch(`/api/experiences/${encodeURIComponent(slug)}/levels/${encodeURIComponent(level.id)}`, { cache: "no-store" });
       const data = await response.json();
       if (response.ok) {
-        setPrivateContent(typeof data.content === "string" ? data.content : "");\n        setPrivateMedia(Array.isArray(data.media) ? data.media.filter((item: any) => item && ["image","audio","video"].includes(item.type) && typeof item.url === "string" && item.url.startsWith("https://")) : []);
+        setPrivateContent(typeof data.content === "string" ? data.content : "");
+        setPrivateMedia(Array.isArray(data.media) ? data.media.filter((item: any) => item && ["image","audio","video"].includes(item.type) && typeof item.url === "string" && item.url.startsWith("https://")) : []);
         setNotice("这一关已经为你打开，看看专属惊喜吧 ♡");
       } else if (response.status === 409 && data.error === "LEVEL_LOCKED") {
         setNotice("先完成前一关的小互动，就能打开这一关啦 ♡");
@@ -224,7 +227,8 @@ export default function PublicExperiencePage() {
         <p className="journeyDialogDescription" id="journeyDialogDescription">{selected.teaser || "一份为你准备的小惊喜，打开后就能看到更多。"}</p>
         <div className="journeyDialogPrice">{money(selected.priceMinor, experience.currency || "CNY")} <span>心意参考</span></div>
         <div className="journeyDialogStatus" aria-live="polite">{checkingLevel ? <><span className="journeySpinner" />正在为你打开这一关…</> : notice || "慢慢来，看看这份心意为你准备了什么。"}</div>
-        {privateContent && <div className="privateContentView">{privateContent}</div>}\n        {privateMedia.length > 0 && <div className="privateMediaGallery">{privateMedia.map((item,index) => <figure className="privateMediaItem" key={`${item.url}-${index}`}>{item.type === "image" ? <img src={item.url} alt={item.name || "专属照片"} loading="lazy" /> : item.type === "audio" ? <audio controls preload="none" src={item.url}>当前浏览器暂不支持播放音频</audio> : <video controls playsInline preload="metadata" src={item.url}>当前浏览器暂不支持播放视频</video>}{item.name && <figcaption>{item.name}</figcaption>}</figure>)}</div>}
+        {privateContent && <div className="privateContentView">{privateContent}</div>}
+        {privateMedia.length > 0 && <div className="privateMediaGallery">{privateMedia.map((item,index) => <figure className="privateMediaItem" key={`${item.url}-${index}`}>{item.type === "image" ? <img src={item.url} alt={item.name || "专属照片"} loading="lazy" /> : item.type === "audio" ? <audio controls preload="none" src={item.url}>当前浏览器暂不支持播放音频</audio> : <video controls playsInline preload="metadata" src={item.url}>当前浏览器暂不支持播放视频</video>}{item.name && <figcaption>{item.name}</figcaption>}</figure>)}</div>}
         <div className="heartReaction journeyDialogReactions">
           <span>此刻，你想给这份心意什么回应？</span>
           <label className="journeyResponseNote"><span>也可以留一句话（选填）</span><textarea value={responseMessage} maxLength={500} disabled={checkingLevel || sendingReaction} onChange={event => setResponseMessage(event.target.value)} placeholder="写一句此刻想说的话…" rows={3}/><small>{Array.from(responseMessage).length}/500</small></label>
