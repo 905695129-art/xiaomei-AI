@@ -38,6 +38,10 @@ services:
       - /schema/migrations/20261128_journey_response_message.sql
       - -f
       - /schema/migrations/20261128_journey_level_progress.sql
+      - -f
+      - /schema/migrations/20261128_anonymous_creator_sessions.sql
+      - -f
+      - /schema/migrations/20261128_creator_payment_qr.sql
     restart: "no"
 
   app:
