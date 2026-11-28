@@ -34,7 +34,9 @@ services:
       - /schema/migrations/20261128_journey_responses.sql
       - -f
       - /schema/migrations/20261128_journey_response_read.sql
+      - -f
       - /schema/migrations/20261128_journey_response_message.sql
+      - -f
       - /schema/migrations/20261128_journey_level_progress.sql
     restart: "no"
 
