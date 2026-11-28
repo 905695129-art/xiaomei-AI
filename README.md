@@ -66,6 +66,11 @@
 
 仓库包含一个独立的静态交互预览：`docs/index.html`。它可以在手机上切换樱花粉/奶油白/雾霭紫主题、点开示例关卡查看提示，并模拟“心动 / 想你 / 抱抱”回应如何进入创作者收件箱；所有互动均为本地演示，不连接真实账户、订单或支付。GitHub Pages 工作流会尝试发布该预览，正式应用仍需要数据库与服务端环境，不能用静态预览代替生产站点。
 
+
+## 中国大陆上线准备
+
+中国大陆生产部署、ICP备案、运营主体与业务分类、数据与隐私、支付准入及上线验收清单见 [`docs/mainland-readiness.md`](docs/mainland-readiness.md)。该清单明确区分代码已实现与必须由运营主体/云厂商完成的外部事项；在域名、备案和生产服务配置完成前，不应宣称正式上线。
+
 ## 容器部署
 
 已提供 `Dockerfile`、`docker-compose.yml` 和 `.dockerignore`，可用 Docker Compose 启动 PostgreSQL、执行数据库迁移并运行 Next.js standalone 应用；`/api/health` 检查应用进程存活，`/api/ready` 实际检查数据库连通性；生产响应还设置 `nosniff`、禁止 iframe 嵌入、Referrer Policy、Permissions Policy 和 HSTS 等基础浏览器安全响应头。CI 会执行 Compose 配置校验、生产容器构建及应用与数据库双层冒烟测试。应用端口默认只绑定 `127.0.0.1:3000`。完整的服务器准备、HTTPS 反向代理、邮件/对象存储配置、备份恢复和上线验收步骤见 [`docs/deployment.md`](docs/deployment.md)。容器配置不会自动创建云服务器、域名或服务商账户；真实支付仍保持关闭。
