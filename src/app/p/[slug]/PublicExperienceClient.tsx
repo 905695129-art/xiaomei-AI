@@ -130,6 +130,25 @@ export default function PublicExperiencePage() {
     }
   }
 
+  async function sendReaction(label: string) {
+    if (!selected || !experience) return;
+    const reactionCode = label.startsWith("心动") ? "heart" : label.startsWith("想你") ? "miss_you" : "hug";
+    setNotice("正在把这份回应送出…");
+    try {
+      const response = await fetch(`/api/experiences/${encodeURIComponent(slug)}/responses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ levelId: selected.id, reaction: reactionCode })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error === "BUYER_SESSION_REQUIRED" ? "体验身份已失效，请刷新页面后再试。" : "暂时无法发送回应，请稍后再试。");
+      setReaction(label);
+      setNotice("你的回应已经送到创作者的心意收件箱 ♡");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "发送失败，请稍后再试。");
+    }
+  }
+
   if (loading) return <main className="publicShell"><div className="publicLoading">正在打开这份心意… ♡</div></main>;
   if (error || !experience) return <main className="publicShell"><section className="publicError"><div className="publicFlower">♡</div><h1>这份心意暂时找不到</h1><p>{error || "请检查分享链接是否正确。"}</p><a href="/">返回首页</a></section></main>;
 
@@ -153,7 +172,7 @@ export default function PublicExperiencePage() {
         </article>)}</div>}
       <div className="journeyTotal"><span>全部关卡合计（仅供参考）</span><strong>{money(total, experience.currency || "CNY")}</strong></div>
     </section>
-    {selected && <section className="unlockNotice" aria-live="polite"><div className="noticeIcon">♡</div><div><b>{selected.title}</b><p>{notice || "选择了这一关。"}</p>{privateContent && <div className="privateContentView">{privateContent}</div>}<div className="heartReaction"><span>此刻，你想给这份心意什么回应？</span><div>{["心动 ♡","想你 ✨","抱抱 🫶"].map(item => <button type="button" key={item} className={reaction === item ? "chosenReaction" : ""} onClick={() => setReaction(item)}>{item}</button>)}</div>{reaction && <small aria-live="polite">收到你的回应：{reaction}。把这一刻的心情留给自己吧。</small>}</div></div><button onClick={() => setSelected(null)} aria-label="关闭">×</button></section>}
+    {selected && <section className="unlockNotice" aria-live="polite"><div className="noticeIcon">♡</div><div><b>{selected.title}</b><p>{notice || "选择了这一关。"}</p>{privateContent && <div className="privateContentView">{privateContent}</div>}<div className="heartReaction"><span>此刻，你想给这份心意什么回应？</span><div>{["心动 ♡","想你 ✨","抱抱 🫶"].map(item => <button type="button" key={item} className={reaction === item ? "chosenReaction" : ""} onClick={() => void sendReaction(item)}>{item}</button>)}</div>{reaction && <small aria-live="polite">收到你的回应：{reaction}。创作者已经可以在心意收件箱里看到它。</small>}</div></div><button onClick={() => setSelected(null)} aria-label="关闭">×</button></section>}
     <footer className="publicFooter"><span>用一点点心意，开启一段小旅程。</span><b>HEART STUDIO ♡</b><small>一段专属互动体验 · Heart Studio</small></footer>
   </main>;
 }
