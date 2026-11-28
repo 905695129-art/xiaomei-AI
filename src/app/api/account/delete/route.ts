@@ -64,6 +64,12 @@ export async function POST(request: Request) {
       `;
       if (!account?.password_hash || !verifyPassword(value.password as string, account.password_hash)) return false;
 
+      // Remove anonymous response events associated with this creator's works
+      // as part of the creator's account-erasure request.
+      await tx`
+        DELETE FROM journey_responses
+        WHERE experience_id IN (SELECT id FROM experiences WHERE creator_id = ${creator.id})
+      `;
       // Preserve financial audit rows and foreign-key integrity, but remove the
       // creator's identifying profile and unpublished/published creative content.
       await tx`

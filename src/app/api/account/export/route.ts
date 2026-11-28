@@ -41,6 +41,16 @@ export async function GET() {
       WHERE e.creator_id = ${creator.id}
       ORDER BY l.experience_id, l.position, l.created_at
     `;
+    const journeyResponses = await db`
+      SELECT r.id, r.experience_id, e.title AS experience_title,
+        r.level_id, l.title AS level_title, l.position,
+        r.reaction, r.created_at, r.updated_at
+      FROM journey_responses r
+      JOIN experiences e ON e.id = r.experience_id
+      JOIN experience_levels l ON l.id = r.level_id
+      WHERE e.creator_id = ${creator.id}
+      ORDER BY r.created_at ASC
+    `;
     const orders = await db`
       SELECT o.id, o.experience_id, e.title AS experience_title,
         o.level_id, COALESCE(o.level_title_snapshot, ent.level_title_snapshot, l.title) AS level_title,
@@ -66,6 +76,7 @@ export async function GET() {
       experiences,
       levels,
       creatorOrders: orders,
+      journeyResponses,
       excludedForSecurity: [
         "密码哈希和盐值",
         "登录会话令牌及其哈希",
