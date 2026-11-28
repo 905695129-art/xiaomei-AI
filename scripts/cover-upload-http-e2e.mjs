@@ -98,7 +98,7 @@ try {
   const valid = await upload(cookie, png, "image/png", "cover.png");
   assert.equal(valid.status, 200, "valid authenticated image should upload");
   const result = await valid.json();
-  assert.match(result.publicUrl, /^http:\/\/127\.0\.0\.1:9000\/heart-test\/covers\//);
+  assert.match(result.publicUrl, /^http:\/\/127\.0\.0\.1:9090\/heart-test\/covers\//);
 
   const stored = await fetch(result.publicUrl);
   assert.equal(stored.status, 200, "normalized cover should be publicly readable from the configured cover bucket");
