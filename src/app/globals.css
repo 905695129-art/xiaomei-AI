@@ -258,3 +258,15 @@
 .creatorPaymentQr{margin:18px auto;padding:16px 14px;max-width:320px;text-align:center;border:1px solid #f0dfe4;border-radius:18px;background:#fff9fb}.creatorPaymentQr p{margin:0 0 12px;color:#8e6573;font-size:13px;font-weight:650}.creatorPaymentQr img{display:block;width:min(220px,100%);aspect-ratio:1;object-fit:contain;margin:0 auto;padding:8px;background:#fff;border-radius:12px}.creatorPaymentQr small{display:block;margin-top:12px;color:#a18a90;font-size:10px;line-height:1.7}
 
 .paymentQrEditor{margin-top:22px;padding:18px;background:#fff8fa;border:1px solid #f0dfe4;border-radius:18px}.paymentQrEditor>b{display:block;color:#805d68;font-size:13px}.paymentQrEditor>p{margin:7px 0 12px;color:#a18a90;font-size:11px;line-height:1.7}.paymentQrEditor>img{display:block;width:150px;height:150px;object-fit:contain;padding:7px;background:white;border:1px solid #f0e5e7;border-radius:12px;margin:12px auto}.paymentQrEditor .coverUploadButton{margin-top:10px}
+
+
+/* Delightful creator-side touch feedback: tiny pink bubbles rise from each tap. */
+.heartTapBubble{position:fixed;z-index:20000;pointer-events:none;width:var(--bubble-size);height:var(--bubble-size);border-radius:50%;background:radial-gradient(circle at 32% 28%,#fff 0 13%,#ffdce8 35%,#e99ab5 100%);box-shadow:0 1px 7px #e9a6bd88;transform:translate(-50%,-50%) scale(.35);animation:heartTapFloat .72s cubic-bezier(.16,.72,.3,1) var(--bubble-delay) both}
+.heartTapBubble:nth-child(3n){background:radial-gradient(circle at 32% 28%,#fff 0 12%,#ffe8f0 38%,#f3bfd0 100%)}
+@keyframes heartTapFloat{0%{opacity:0;transform:translate(-50%,-50%) scale(.25)}18%{opacity:.95}100%{opacity:0;transform:translate(calc(-50% + var(--bubble-x)),calc(-50% + var(--bubble-y))) scale(1.15)}}
+.creatorShell .editorCard button,.creatorShell .editorCard a,.creatorShell .editorCard label{transition:transform .18s ease,box-shadow .2s ease,background-color .2s ease}
+.creatorShell .editorCard button:active,.creatorShell .editorCard a:active{transform:scale(.97)}
+.creatorShell .editorCard button:focus-visible,.creatorShell .editorCard a:focus-visible,.creatorShell .editorCard input:focus-visible,.creatorShell .editorCard textarea:focus-visible,.creatorShell .editorCard select:focus-visible{outline:2px solid #d995ac;outline-offset:3px;box-shadow:0 0 0 5px #f8e1e9}
+.creatorStepNext,.creatorGuideNext,.creatorGuideThemes button,.creatorStepProgress button{transition:transform .18s ease,box-shadow .22s ease,background .22s ease}
+.creatorStepNext:hover,.creatorGuideNext:hover{box-shadow:0 9px 24px #d28da155;filter:saturate(1.06)}
+@media(prefers-reduced-motion:reduce){.heartTapBubble{display:none!important}.creatorShell .editorCard button,.creatorShell .editorCard a{transition:none!important}}
