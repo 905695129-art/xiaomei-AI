@@ -18,7 +18,7 @@
 cp .env.example .env
 ```
 
-编辑 `.env`，至少将 `POSTGRES_PASSWORD` 替换为长随机密码；同时检查 `.env.example` 中所有适用变量。不要沿用示例占位值。建议使用 openssl rand -hex 32 生成数据库密码及应用所需随机密钥（分别生成、不要复用）。生产部署还应设置：
+编辑 `.env`，至少将 `POSTGRES_PASSWORD` 替换为长随机密码；同时检查 `.env.example` 中所有适用变量。不要沿用示例占位值。可使用 `openssl rand -hex 32` 生成数据库密码。当前应用的登录会话令牌由服务端使用密码学安全随机数生成，并以哈希形式存储在数据库中；代码没有读取 `SESSION_SECRET`，因此模板不再提供一个未接入的伪配置项。生产部署还应设置：
 
 - `APP_URL=https://你的正式域名`（必须与实际对外 HTTPS 地址一致，邮件验证和密码重置链接依赖它）
 - `RESEND_API_KEY`：Resend 服务端 API Key
@@ -72,7 +72,7 @@ cat heart-studio-backup.sql | docker compose exec -T db psql -U heart -d heart_s
 - [ ] PostgreSQL 未暴露公网，数据库密码为强随机值。
 - [ ] Resend 发件域名已验证，实际收到邮箱验证和密码重置邮件。
 - [ ] 开启 `REQUIRE_VERIFIED_EMAIL=true` 后，未验证账户不能发布作品。
-- [ ] 对象存储 CORS 仅允许正式域名；测试上传 JPG/PNG/WEBP/GIF，确认 8MB 限制和公开图片 URL 正常。
+- [ ] 对象存储 CORS 仅允许正式域名；测试上传 JPG/PNG/WEBP/GIF，确认 8MB 限制和公开图片 URL 正常。注意：当前上传初始化接口校验客户端声明的 MIME 类型和大小，并生成对象存储直传签名，但不会读取文件字节验证真实格式；正式开放用户上传前，必须增加服务端/可信处理任务的文件签名（magic bytes）检测、必要的解码重编码及恶意内容检查，不能把 MIME 声明视为文件安全证明。
 - [ ] 备份和恢复演练成功。
 - [ ] 隐私政策、服务条款已由运营主体补齐并完成目标市场法律审查。
 - [ ] 支付机构商户准入、创作者结算安排和退款规则已获批准。
@@ -98,7 +98,7 @@ cat heart-studio-backup.sql | docker compose exec -T db psql -U heart -d heart_s
 | `DATABASE_URL` | 应用容器内部由 Compose 根据数据库服务生成 | 检查容器运行环境指向内部数据库服务，不使用公网数据库端口 |
 | `APP_URL` | 生产环境始终需要 | 与正式 HTTPS 域名完全一致；测试邮件中的链接 |
 | `RESEND_API_KEY`、`EMAIL_FROM` | 启用邮箱验证、密码找回时需要 | 使用服务端密钥；发件域名已验证并收到真实测试邮件 |
-| `STORAGE_*` 六项 | 启用自定义照片上传时需要 | 用正式域名完成一次上传、读取和删除测试；限制桶权限与 CORS |
+| `STORAGE_*` 六项 | 启用自定义照片上传时需要 | 用正式域名完成上传、读取和删除测试；限制桶权限与 CORS，并先完成文件真实格式检测和安全处理 |
 | `PAYMENT_PROVIDER` | 当前必须保持 `disabled`，直到真实支付集成完成 | `POST /api/orders` 应继续明确返回未配置状态；不要在没有验签回调和退款流程时开放收费 |
 
 **发布前禁止项：** 不要将 `.env`、数据库备份、用户上传图片、Resend/S3/支付密钥或生产数据提交到仓库；不要把 PostgreSQL 端口暴露到公网；不要把 GitHub Pages 静态预览当作正式应用。真实支付尚未接入，不能向体验者收取平台订单款项。
