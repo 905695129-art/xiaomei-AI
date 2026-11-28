@@ -27,7 +27,6 @@ export default function ExperienceEditor() {
   const [guideStep,setGuideStep] = useState(0);
   const [editorStep,setEditorStep] = useState(0);
   const editorStepLabels=["主题","封面","关卡","预览"];
-  const [editorStep,setEditorStep] = useState(0);
   const editorSteps=["选择主题","设置封面","设计关卡","预览与分享"];
   function goEditorStep(next:number){setEditorStep(Math.max(0,Math.min(editorSteps.length-1,next)));window.scrollTo({top:0,behavior:"smooth"});}
   useEffect(()=>{if(!experienceId)return;const key=`heart-studio-creator-guide-seen:${experienceId}`;if(!window.localStorage.getItem(key))setGuideOpen(true);},[experienceId]);
