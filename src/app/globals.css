@@ -62,3 +62,31 @@
 
 /* Tiny emotional interaction on the shared journey */
 .heartReaction{margin-top:14px;padding-top:13px;border-top:1px dashed #ebd5dc}.heartReaction>span{display:block;color:#9d7b86;font-size:11px}.heartReaction>div{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}.heartReaction button{border:1px solid #efdce1;border-radius:18px;background:#fff;padding:7px 12px;color:#a87584;font-size:11px;cursor:pointer;transition:background .18s,border-color .18s,transform .18s}.heartReaction button:active{transform:scale(.97)}.heartReaction button.chosenReaction{border-color:#d79aaa;background:#fff0f4;color:#a35f75}.heartReaction small{display:block;margin-top:9px;color:#ad8793;font-size:10px;line-height:1.6}
+
+
+/* Soft, accessible level-opening modal on the real shared experience */
+.journeyModalBackdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;overflow-y:auto;padding:24px 16px;padding-bottom:max(24px,env(safe-area-inset-bottom));background:rgba(57,36,45,0);backdrop-filter:blur(0);-webkit-backdrop-filter:blur(0);opacity:0;animation:journeyBackdropIn .28s ease forwards}
+.journeyDialog{position:relative;isolation:isolate;width:min(100%,440px);max-height:min(88dvh,820px);overflow-y:auto;overscroll-behavior:contain;padding:32px 28px 22px;border:1px solid rgba(255,255,255,.92);border-radius:30px;background:linear-gradient(155deg,#fff 0%,#fffafb 58%,#fff5f7 100%);box-shadow:0 28px 90px rgba(55,31,42,.24),0 6px 22px rgba(173,112,132,.13);text-align:center;opacity:0;transform:translateY(25px) scale(.94);animation:journeyDialogIn .44s cubic-bezier(.2,.82,.25,1.12) .04s forwards}
+.journeyDialogGlow{position:absolute;z-index:-1;top:-58px;left:15%;width:70%;height:160px;border-radius:50%;background:radial-gradient(ellipse,rgba(255,221,232,.88),transparent 70%);pointer-events:none}
+.journeyDialogClose{position:absolute;top:14px;right:14px;width:34px;height:34px;border:1px solid #f2e3e7;border-radius:50%;background:#fff8fa;color:#a77b89;font-size:23px;line-height:1;cursor:pointer;transition:transform .2s,background .2s}
+.journeyDialogClose:hover{transform:rotate(90deg);background:#fcebf0}
+.journeyDialogSeal{display:grid;place-items:center;width:58px;height:58px;margin:4px auto 15px;border-radius:50%;background:linear-gradient(145deg,#fff0f4,#f8dfe7);color:#c17c91;font-size:31px;box-shadow:0 9px 24px rgba(193,124,145,.18)}
+.journeyDialogEyebrow{margin:0;color:#bd8999;font-size:9px;letter-spacing:3px}
+.journeyDialog h2{margin:11px 0 9px;color:#704f5b;font:27px Georgia,"Songti SC",serif;font-weight:500}
+.journeyDialogDescription{max-width:330px;margin:0 auto;color:#a18a92;font-size:12px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere}
+.journeyDialogPrice{margin:18px 0 14px;color:#b87589;font-size:19px;font-weight:750}
+.journeyDialogPrice span{margin-left:5px;color:#b49ca1;font-size:9px;font-weight:400}
+.journeyDialogStatus{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;margin:0 0 12px;padding:10px 13px;border:1px solid #f2e1e6;border-radius:13px;background:rgba(255,247,249,.9);color:#987b85;font-size:11px;line-height:1.7}
+.journeySpinner{width:14px;height:14px;flex:0 0 14px;border:2px solid #f0d7df;border-top-color:#bd7b90;border-radius:50%;animation:journeySpin .8s linear infinite}
+.journeyDialogReactions{margin-top:16px;padding-top:15px}
+.journeyDialogReactions>div{justify-content:center}
+.journeyDialogReactions button{padding:9px 15px}
+.journeyDialogReactions button:disabled{opacity:.5;cursor:wait}
+.journeyDialogDone{width:100%;margin-top:18px;padding:13px 18px;border:0;border-radius:24px;background:linear-gradient(110deg,#c47d91,#d994a6);box-shadow:0 9px 22px rgba(196,125,145,.2);color:white;font-size:12px;font-weight:650;cursor:pointer;transition:transform .18s,box-shadow .18s}
+.journeyDialogDone:active{transform:scale(.985)}
+.journeyDialogFootnote{margin:13px 0 0;color:#c0a9b0;font-size:9px;letter-spacing:.5px}
+@keyframes journeyBackdropIn{to{opacity:1;background:rgba(57,36,45,.48);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}}
+@keyframes journeyDialogIn{0%{opacity:0;transform:translateY(25px) scale(.94)}68%{opacity:1;transform:translateY(-3px) scale(1.012)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes journeySpin{to{transform:rotate(360deg)}}
+@media(max-width:520px){.journeyModalBackdrop{align-items:end;padding:12px 12px max(12px,env(safe-area-inset-bottom))}.journeyDialog{width:100%;max-height:88dvh;border-radius:28px 28px 24px 24px;padding:29px 21px 19px}.journeyDialog h2{font-size:24px}.journeyDialogDone{margin-top:15px}}
+@media(prefers-reduced-motion:reduce){.journeyModalBackdrop,.journeyDialog,.journeyDialogClose,.journeyDialogDone,.journeySpinner{animation:none!important;transition:none!important}.journeyModalBackdrop{opacity:1;background:rgba(57,36,45,.48);backdrop-filter:blur(5px)}.journeyDialog{opacity:1;transform:none}}

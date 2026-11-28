@@ -63,7 +63,29 @@ export default function PublicExperiencePage() {
 
   useEffect(() => {
     if (!selected) return;
-    window.requestAnimationFrame(() => responsePanelRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const focusTimer = window.setTimeout(() => {
+      document.querySelector<HTMLButtonElement>(".journeyDialogClose")?.focus();
+    }, 40);
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSelected(null);
+      if (event.key === "Tab") {
+        const dialog = document.querySelector<HTMLElement>(".journeyDialog");
+        const focusable = dialog?.querySelectorAll<HTMLElement>('button:not(:disabled),a[href],[tabindex]:not([tabindex="-1"])');
+        if (!focusable?.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.clearTimeout(focusTimer);
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
   }, [selected?.id]);
 
 
@@ -178,7 +200,26 @@ export default function PublicExperiencePage() {
         </article>)}</div>}
       <div className="journeyTotal"><span>全部关卡合计（仅供参考）</span><strong>{money(total, experience.currency || "CNY")}</strong></div>
     </section>
-    {selected && <section ref={responsePanelRef} className="unlockNotice" aria-live="polite"><div className="noticeIcon">♡</div><div><b>{selected.title}</b><p>{notice || "选择了这一关。"}</p>{privateContent && <div className="privateContentView">{privateContent}</div>}<div className="heartReaction"><span>此刻，你想给这份心意什么回应？</span><div>{["心动 ♡","想你 ✨","抱抱 🫶"].map(item => <button type="button" key={item} className={reaction === item ? "chosenReaction" : ""} onClick={() => void sendReaction(item)}>{item}</button>)}</div>{reaction && <small aria-live="polite">收到你的回应：{reaction}。创作者已经可以在心意收件箱里看到它。</small>}</div></div><button onClick={() => setSelected(null)} aria-label="关闭">×</button></section>}
+    {selected && <div className="journeyModalBackdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setSelected(null); }}>
+      <section ref={responsePanelRef} className="journeyDialog" role="dialog" aria-modal="true" aria-labelledby="journeyDialogTitle" aria-describedby="journeyDialogDescription">
+        <button type="button" className="journeyDialogClose" onClick={() => setSelected(null)} aria-label="关闭这份心意">×</button>
+        <div className="journeyDialogGlow" aria-hidden="true" />
+        <div className="journeyDialogSeal">♡</div>
+        <p className="journeyDialogEyebrow">A LITTLE SECRET FOR YOU</p>
+        <h2 id="journeyDialogTitle">{selected.title}</h2>
+        <p className="journeyDialogDescription" id="journeyDialogDescription">{selected.teaser || "一份为你准备的小惊喜，打开后就能看到更多。"}</p>
+        <div className="journeyDialogPrice">{money(selected.priceMinor, experience.currency || "CNY")} <span>心意参考</span></div>
+        <div className="journeyDialogStatus" aria-live="polite">{checkingLevel ? <><span className="journeySpinner" />正在为你打开这一关…</> : notice || "慢慢来，看看这份心意为你准备了什么。"}</div>
+        {privateContent && <div className="privateContentView">{privateContent}</div>}
+        <div className="heartReaction journeyDialogReactions">
+          <span>此刻，你想给这份心意什么回应？</span>
+          <div>{["心动 ♡","想你 ✨","抱抱 🫶"].map(item => <button type="button" key={item} disabled={checkingLevel} className={reaction === item ? "chosenReaction" : ""} onClick={() => void sendReaction(item)}>{item}</button>)}</div>
+          {reaction && <small aria-live="polite">收到你的回应：{reaction}。创作者已经可以在心意收件箱里看到它。</small>}
+        </div>
+        <button type="button" className="journeyDialogDone" onClick={() => setSelected(null)}>把这份心意收好 ♡</button>
+        <p className="journeyDialogFootnote">一段专属互动体验 · Heart Studio</p>
+      </section>
+    </div>}
     <footer className="publicFooter"><span>用一点点心意，开启一段小旅程。</span><b>HEART STUDIO ♡</b><small>一段专属互动体验 · Heart Studio</small></footer>
   </main>;
 }
