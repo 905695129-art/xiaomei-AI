@@ -732,3 +732,9 @@ END;
 $$;
 REVOKE ALL ON FUNCTION heart_finalize_verified_payment(UUID, UUID, TEXT, INTEGER, CHAR(3), CHAR(64)) FROM PUBLIC;
 
+
+
+-- Per-level media attachments (photo/audio/video). Additive and safe for existing deployments.
+ALTER TABLE experience_levels ADD COLUMN IF NOT EXISTS private_media JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE entitlements ADD COLUMN IF NOT EXISTS private_media_snapshot JSONB;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS private_media_snapshot JSONB;
