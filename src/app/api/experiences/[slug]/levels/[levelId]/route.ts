@@ -18,11 +18,23 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
     const sessions = await db.unsafe("SELECT buyer_ref FROM buyer_sessions WHERE token_hash = $1 AND expires_at > now() LIMIT 1", [tokenHash]);
     if (!sessions.length) return NextResponse.json({ error: "PURCHASE_REQUIRED" }, { status: 403, headers: privateHeaders });
     const buyerRef = sessions[0].buyer_ref;
-    // A verified paid entitlement remains valid even if the creator later archives
-    // the experience or removes this level from the public list. Prefer immutable
-    // purchase-time snapshots so later edits cannot change what was bought.
-    const rows = await db.unsafe("SELECT COALESCE(en.level_title_snapshot, l.title) AS title, COALESCE(en.private_content_snapshot, l.private_content) AS private_content FROM experiences e JOIN experience_levels l ON l.experience_id = e.id JOIN entitlements en ON en.level_id = l.id AND en.buyer_ref = $1 JOIN orders o ON o.id = en.order_id AND o.status = 'paid' AND o.buyer_ref = en.buyer_ref AND o.level_id = l.id WHERE e.slug = $2 AND l.id = $3::uuid LIMIT 1", [buyerRef, slug, levelId]);
-    if (!rows.length) return NextResponse.json({ error: "PURCHASE_REQUIRED" }, { status: 403, headers: privateHeaders });
+    // Published journeys are share-link experiences: anyone with the link and
+    // a valid HttpOnly visitor session can open active levels without paying.
+    // Paid entitlements remain valid for archived/removed levels and use snapshots.
+    const rows = await db.unsafe(
+      `SELECT
+         CASE WHEN o.id IS NOT NULL THEN COALESCE(en.level_title_snapshot, l.title) ELSE l.title END AS title,
+         CASE WHEN o.id IS NOT NULL THEN COALESCE(en.private_content_snapshot, l.private_content) ELSE l.private_content END AS private_content
+       FROM experiences e
+       JOIN experience_levels l ON l.experience_id = e.id
+       LEFT JOIN entitlements en ON en.level_id = l.id AND en.buyer_ref = $1
+       LEFT JOIN orders o ON o.id = en.order_id AND o.status = 'paid' AND o.buyer_ref = en.buyer_ref AND o.level_id = l.id
+       WHERE e.slug = $2 AND l.id = $3::uuid
+         AND ((e.status = 'published' AND l.is_active = TRUE) OR o.id IS NOT NULL)
+       LIMIT 1`,
+      [buyerRef, slug, levelId]
+    );
+    if (!rows.length) return NextResponse.json({ error: "LEVEL_NOT_AVAILABLE" }, { status: 404, headers: privateHeaders });
     return NextResponse.json({ title: rows[0].title, content: rows[0].private_content }, { headers: privateHeaders });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";

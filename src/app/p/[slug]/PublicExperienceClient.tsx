@@ -107,7 +107,7 @@ export default function PublicExperiencePage() {
     setReaction(null);
     setPrivateContent("");
     setCheckingLevel(true);
-    setNotice("正在确认这台设备是否已经解锁过本关…");
+    setNotice("正在为你打开这一关…");
     try {
       const session = await fetch("/api/buyer/session", { method: "POST" });
       if (!session.ok) throw new Error("体验者身份暂时不可用，请稍后再试。");
@@ -116,9 +116,9 @@ export default function PublicExperiencePage() {
       if (response.ok) {
         setPrivateContent(typeof data.content === "string" ? data.content : "");
         setUnlockedIds(current => new Set(current).add(level.id));
-        setNotice("已确认解锁成功。这是你此前购买的专属内容。");
-      } else if (response.status === 403 && data.error === "PURCHASE_REQUIRED") {
-        setNotice("你还没有解锁这一关。当前版本尚未开通合规支付，因此不会向你收款，也不会创建订单。");
+        setNotice("这一关已经为你打开，看看专属惊喜吧 ♡");
+      } else if (response.status === 404 && data.error === "LEVEL_NOT_AVAILABLE") {
+        setNotice("这一关暂时无法访问，可能已被创作者移除或作品已归档。");
       } else if (response.status === 503) {
         setNotice("内容服务暂时未配置，请稍后再试。");
       } else {
