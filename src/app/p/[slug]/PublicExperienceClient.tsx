@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 
-type Level = { id: string; position: number; title: string; teaser: string | null; priceMinor: number; completed?: boolean };
+type Level = { id: string; position: number; title: string; teaser: string | null; priceMinor: number; completed?: boolean; selfUnlocked?: boolean };
 type Experience = { slug: string; title: string; description: string | null; coverUrl: string | null; paymentQrUrl?: string | null; coverPosition?: "top" | "center" | "bottom"; currency: string; theme?: "rose" | "cream" | "lavender"; levels: Level[] };
 
 function money(minor: number, currency: string) {
@@ -245,7 +245,7 @@ export default function PublicExperiencePage() {
         <div className="journeyList">{experience.levels.map((level, index) => <article className={selected?.id === level.id ? "journeyCard activeJourney" : "journeyCard"} key={level.id}>
           <div className="journeyNumber">{String(level.position || index + 1).padStart(2, "0")}</div>
           <div className="journeyCopy"><span className="journeyLabel">A LITTLE SECRET</span><h3>{level.title}</h3><p>{level.teaser || "一份为你准备的小惊喜，打开后就能看到更多。"}</p></div>
-          <div className="journeyAction"><strong>{money(level.priceMinor, experience.currency || "CNY")}</strong><small className="levelPriceCaption">{level.completed ? "已完成 ♡" : "本关解锁金额"}</small><button disabled={checkingLevel || (index > 0 && !experience.levels.slice(0, index).every(previous => previous.completed))} onClick={event => beginUnlock(level, event.currentTarget)}>{checkingLevel && selected?.id === level.id ? "打开中…" : level.completed ? "再次回味这一关" : index > 0 && !experience.levels.slice(0, index).every(previous => previous.completed) ? "完成前一关后解锁" : "查看本关"} <span>{level.completed ? "✓" : index > 0 && !experience.levels.slice(0, index).every(previous => previous.completed) ? "🔒" : "♡"}</span></button></div>
+          <div className="journeyAction"><strong>{money(level.priceMinor, experience.currency || "CNY")}</strong><small className="levelPriceCaption">{level.completed ? "已完成 ♡" : "本关解锁金额"}</small><button disabled={checkingLevel || (index > 0 && !experience.levels.slice(0, index).every(previous => previous.completed))} onClick={event => beginUnlock(level, event.currentTarget)}>{checkingLevel && selected?.id === level.id ? "打开中…" : level.completed ? "再次回味这一关" : index > 0 && !experience.levels.slice(0, index).every(previous => previous.completed) ? "完成前一关后解锁" : level.priceMinor === 0 ? "打开免费关卡" : "查看本关"} <span>{level.completed ? "✓" : index > 0 && !experience.levels.slice(0, index).every(previous => previous.completed) ? "🔒" : "♡"}</span></button></div>
         </article>)}</div>}
       <div className="journeyTotal"><span>每一关，都有一份专属的小惊喜</span><strong>慢慢打开 ♡</strong></div>
     </section>
@@ -257,7 +257,7 @@ export default function PublicExperiencePage() {
         <p className="journeyDialogEyebrow">A LITTLE SECRET FOR YOU</p>
         <h2 id="journeyDialogTitle">{selected.title}</h2>
         <p className="journeyDialogDescription" id="journeyDialogDescription">{selected.teaser || "一份为你准备的小惊喜，打开后就能看到更多。"}</p>
-        <div className="journeyDialogPrice">{money(selected.priceMinor, experience.currency || "CNY")} <span>心意参考</span></div>
+        <div className="journeyDialogPrice">{selected.priceMinor === 0 ? "免费" : money(selected.priceMinor, experience.currency || "CNY")} <span>{selected.priceMinor === 0 ? "无需支付" : "心意参考"}</span></div>
         <div className="journeyDialogStatus" aria-live="polite">{checkingLevel ? <><span className="journeySpinner" />正在为你打开这一关…</> : notice || "慢慢来，看看这份心意为你准备了什么。"}</div>
         {paymentQrUrl && <div className="privateContentView" style={{textAlign:"center"}}><p>请使用对应支付应用扫码，并自行核对收款人、金额和备注。</p><img src={paymentQrUrl} alt="创作者提供的收款码" style={{maxWidth:240,maxHeight:240,objectFit:"contain",background:"#fff",padding:12,borderRadius:16}}/><p style={{fontSize:12,opacity:.75}}>平台无法核验此收款码的到账情况。请勿向陌生收款人转账。</p><button type="button" className="journeyDialogDone" disabled={confirmingTransfer} onClick={()=>void confirmSelfAttestedTransfer()}>{confirmingTransfer?"正在确认…":"我已按约定完成转账，继续解锁"}</button></div>}
         {privateContent && <div className="privateContentView">{privateContent}</div>}
