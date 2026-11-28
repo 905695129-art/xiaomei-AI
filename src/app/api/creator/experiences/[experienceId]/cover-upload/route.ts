@@ -62,8 +62,14 @@ export async function POST(request: Request) {
     const creator = await getCurrentCreator();
     if (!creator) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401, headers: privateHeaders });
 
-    const contentLength = Number(request.headers.get("content-length") || 0);
-    if (contentLength > maxBytes + 64 * 1024) return NextResponse.json({ error: "REQUEST_TOO_LARGE" }, { status: 413, headers: privateHeaders });
+    const contentLengthHeader = request.headers.get("content-length");
+    if (!contentLengthHeader || !/^\\d+$/.test(contentLengthHeader)) {
+      return NextResponse.json({ error: "CONTENT_LENGTH_REQUIRED" }, { status: 411, headers: privateHeaders });
+    }
+    const contentLength = Number(contentLengthHeader);
+    if (!Number.isSafeInteger(contentLength) || contentLength <= 0 || contentLength > maxBytes + 64 * 1024) {
+      return NextResponse.json({ error: "REQUEST_TOO_LARGE" }, { status: 413, headers: privateHeaders });
+    }
     if (!(request.headers.get("content-type") || "").toLowerCase().includes("multipart/form-data")) {
       return NextResponse.json({ error: "INVALID_IMAGE" }, { status: 400, headers: privateHeaders });
     }
