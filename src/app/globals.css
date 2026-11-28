@@ -106,3 +106,25 @@
 .creatorJourneyDialog .journeyDialogStatus{background:#fff8fa}
 @media(max-width:520px){.creatorPreviewOpen{grid-column:2;justify-self:stretch;text-align:center}.creatorJourneyDialog{max-height:88dvh}}
 @media(prefers-reduced-motion:reduce){.creatorPreviewLevels article,.creatorPreviewOpen{transition:none!important}}
+
+
+/* Mainland mobile browser and notched-screen refinements */
+@supports (padding: max(0px)) {
+  .publicShell {
+    padding-left: max(15px, env(safe-area-inset-left));
+    padding-right: max(15px, env(safe-area-inset-right));
+    padding-bottom: calc(35px + env(safe-area-inset-bottom));
+  }
+}
+:where(button, a, input, textarea):focus-visible {
+  outline: 2px solid #c47d91;
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
