@@ -12,7 +12,7 @@ export async function getCurrentCreator() {
     SELECT u.id, u.email, u.display_name, u.role
     FROM creator_sessions s
     JOIN users u ON u.id = s.user_id
-    WHERE s.token_hash = ${tokenHash} AND s.expires_at > now()
+    WHERE s.token_hash = ${tokenHash} AND s.expires_at > now() AND u.deleted_at IS NULL
     LIMIT 1
   `;
   return rows[0] ?? null;
