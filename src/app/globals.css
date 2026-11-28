@@ -314,3 +314,15 @@
 .heartArrivalCard>button:active{transform:scale(.975)}
 .heartArrivalCard>small{display:block;margin-top:14px;color:#bd9bad;font-size:10px}
 @media(prefers-reduced-motion:reduce){.heartArrivalBackdrop,.heartArrivalCard,.heartArrivalSeal{animation:none}}
+
+
+/* Recipient play layer: make the shared journey feel like a tiny place to explore. */
+.playfulHeart{position:relative;border:0;cursor:pointer;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s}
+.playfulHeart:hover{transform:translateY(-5px) rotate(-7deg) scale(1.08);box-shadow:0 15px 42px #c17c9130}
+.playfulHeart:active{transform:scale(.9)}
+.playfulHeartHint{position:absolute;left:50%;top:calc(100% + 9px);transform:translateX(-50%);white-space:nowrap;padding:5px 10px;border-radius:20px;background:#fff8fb;color:#bd8494;font:10px "Songti SC",serif;box-shadow:0 5px 18px #bd84941c;animation:heartWelcomeFloat 2.4s ease-in-out infinite}
+.playfulCorner{display:flex;flex-direction:column;align-items:center;gap:11px;margin:26px auto 0;max-width:440px;min-height:58px;color:#b18e9a;font-size:11px;line-height:1.7;text-align:center}
+.playfulCorner button{border:1px solid #f1d5e1;border-radius:30px;padding:10px 18px;background:linear-gradient(135deg,#fff,#fff1f7);color:#bd7894;font-size:11px;box-shadow:0 7px 22px #d98eae18;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.playfulCorner button:hover{transform:translateY(-2px);box-shadow:0 10px 25px #d98eae30}
+.playfulNote{padding:12px 18px;border:1px solid #f8dce8;border-radius:18px;background:rgba(255,255,255,.82);color:#a66c86;box-shadow:0 8px 25px #d98eae18;animation:heartWelcomeRise .3s ease both}
+@media(prefers-reduced-motion:reduce){.playfulHeart,.playfulHeartHint,.playfulCorner button,.playfulNote{animation:none!important;transition:none!important}}
