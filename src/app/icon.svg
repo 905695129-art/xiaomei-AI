@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="paper" cx="48%" cy="42%" r="72%">
+      <stop offset="0" stop-color="#fff5e9"/>
+      <stop offset="1" stop-color="#f8dfd0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="url(#paper)"/>
+  <path d="M256 330
+    C226 303 143 249 143 181
+    C143 130 183 103 222 112
+    C241 117 254 132 263 150
+    C275 128 293 112 318 111
+    C363 109 391 144 385 187
+    C378 240 313 291 256 330Z"
+    fill="none" stroke="#c56f83" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M256 330 C238 353 216 373 192 392 M256 330 C275 350 304 366 350 378"
+    fill="none" stroke="#c56f83" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

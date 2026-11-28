@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 
-type Level = { id: string; position: number; title: string; teaser: string | null; priceMinor: number; completed?: boolean };
-type Experience = { slug: string; title: string; description: string | null; coverUrl: string | null; coverPosition?: "top" | "center" | "bottom"; currency: string; theme?: "rose" | "cream" | "lavender"; levels: Level[] };
+type Level = { id: string; position: number; title: string; teaser: string | null; priceMinor: number; completed?: boolean; selfUnlocked?: boolean };
+type Experience = { slug: string; title: string; description: string | null; coverUrl: string | null; paymentQrUrl?: string | null; coverPosition?: "top" | "center" | "bottom"; currency: string; theme?: "rose" | "cream" | "lavender"; levels: Level[] };
 
 function money(minor: number, currency: string) {
   try { return new Intl.NumberFormat("zh-CN", { style: "currency", currency }).format(minor / 100); }
@@ -21,6 +21,8 @@ export default function PublicExperiencePage() {
   const [closing, setClosing] = useState(false);
   const [notice, setNotice] = useState("");
   const [privateContent, setPrivateContent] = useState("");
+  const [paymentQrUrl, setPaymentQrUrl] = useState<string | null>(null);
+  const [confirmingTransfer, setConfirmingTransfer] = useState(false);
   const [checkingLevel, setCheckingLevel] = useState(false);
   const [copied, setCopied] = useState(false);
   const [reaction, setReaction] = useState<string | null>(null);
@@ -100,6 +102,7 @@ export default function PublicExperiencePage() {
     setReaction(null);
     setResponseMessage("");
     setPrivateContent("");
+    setPaymentQrUrl(null);
     setCheckingLevel(true);
     setNotice("正在为你打开这一关…");
     try {
@@ -114,6 +117,11 @@ export default function PublicExperiencePage() {
         setNotice("先完成前一关的小互动，就能打开这一关啦 ♡");
       } else if (response.status === 404 && data.error === "LEVEL_NOT_AVAILABLE") {
         setNotice("这一关暂时无法访问，可能已被创作者移除或作品已归档。");
+      } else if (response.status === 402 && data.error === "PAYMENT_CONFIRMATION_REQUIRED") {
+        setPaymentQrUrl(data.paymentQrUrl || null);
+        setNotice("请先核对收款人和金额，完成转账后再自行确认。平台不会核验静态收款码的实际到账。");
+      } else if (response.status === 409 && data.error === "PAYMENT_QR_NOT_CONFIGURED") {
+        setNotice("创作者尚未配置本关收款码，暂时无法解锁。");
       } else if (response.status === 503) {
         setNotice("内容服务暂时未配置，请稍后再试。");
       } else {
@@ -136,6 +144,7 @@ export default function PublicExperiencePage() {
 
   async function share() {
     const url = window.location.href;
+    const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
     try {
       if (navigator.share) {
         await navigator.share({ title: experience?.title ?? "心意闯关", text: "有人为你准备了一段专属心意，来看看吧。", url });
@@ -143,25 +152,68 @@ export default function PublicExperiencePage() {
       }
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
+      // Some embedded browsers expose Web Share but reject it at runtime.
+      // Continue to the clipboard fallback instead of leaving the button inert.
     }
+
+    let copiedToClipboard = false;
     try {
-      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(url);
-      else {
-        const input = document.createElement("textarea");
-        input.value = url;
-        input.setAttribute("readonly", "");
-        input.style.position = "fixed";
-        input.style.opacity = "0";
-        document.body.appendChild(input);
-        input.select();
-        const ok = document.execCommand("copy");
-        input.remove();
-        if (!ok) throw new Error("COPY_FAILED");
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        copiedToClipboard = true;
       }
+    } catch {
+      // Clipboard API can be unavailable in insecure or embedded webviews.
+    }
+
+    if (!copiedToClipboard) {
+      const input = document.createElement("textarea");
+      input.value = url;
+      input.setAttribute("readonly", "");
+      input.setAttribute("aria-hidden", "true");
+      input.style.position = "fixed";
+      input.style.top = "0";
+      input.style.left = "-9999px";
+      input.style.opacity = "0";
+      document.body.appendChild(input);
+      input.select();
+      try { copiedToClipboard = document.execCommand("copy"); }
+      finally { input.remove(); }
+    }
+
+    if (copiedToClipboard) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2200);
-    } catch {
-      setNotice("暂时无法自动复制，请长按浏览器地址栏复制分享链接。");
+      if (isWeChat) {
+        setNotice("链接已复制。若要在微信内转发，请点击右上角「…」，选择发送给朋友或分享到朋友圈 ♡");
+      }
+      return;
+    }
+
+    setNotice(isWeChat
+      ? "请点击右上角「…」分享给朋友；也可以长按页面链接复制 ♡"
+      : "暂时无法自动复制，请长按浏览器地址栏复制分享链接。");
+  }
+
+  async function confirmSelfAttestedTransfer() {
+    if (!selected || confirmingTransfer) return;
+    setConfirmingTransfer(true);
+    setNotice("正在记录你的自主确认…");
+    try {
+      const response = await fetch(`/api/experiences/${encodeURIComponent(slug)}/levels/${encodeURIComponent(selected.id)}/confirm-payment`, { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error === "LEVEL_LOCKED" ? "请先完成前一关。" : data.error === "PAYMENT_QR_NOT_CONFIGURED" ? "创作者尚未配置收款码。" : "暂时无法记录确认，请稍后再试。");
+      const contentResponse = await fetch(`/api/experiences/${encodeURIComponent(slug)}/levels/${encodeURIComponent(selected.id)}`, { cache: "no-store" });
+      const content = await contentResponse.json();
+      if (!contentResponse.ok) throw new Error("确认记录已提交，但内容暂时无法打开，请刷新后重试。");
+      setPrivateContent(typeof content.content === "string" ? content.content : "");
+      setPaymentQrUrl(null);
+      setNotice("已记录你的自主确认。这不是平台核验的支付成功记录。现在可以体验本关内容了 ♡");
+      setExperience(current => current ? { ...current, levels: current.levels.map(level => level.id === selected.id ? { ...level, selfUnlocked: true } : level) } : current);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "确认失败，请稍后再试。");
+    } finally {
+      setConfirmingTransfer(false);
     }
   }
 
@@ -205,12 +257,12 @@ export default function PublicExperiencePage() {
     </section>
     <section className="journeySection">
       <div className="journeyHeading"><div><p className="publicEyebrow">YOUR LITTLE JOURNEY</p><h2>一关一关，慢慢打开</h2></div><span>{experience.levels.length} LEVELS</span></div>
-      <div className="paymentStatusNotice"><span>♡</span><div><b>这是一段为你准备的小旅程</b><p>慢慢体验每一关吧。进入任意一关即可查看专属惊喜并留下心意回应；金额仅作展示参考，当前不会收款。</p></div></div>
+      <div className="paymentStatusNotice"><span>♡</span><div><b>这是一段为你准备的小旅程</b><p>慢慢体验每一关吧。每一关单独解锁；如创作者设置了收款码，请先核对信息并自行确认转账。平台不会核验静态收款码到账。</p></div></div>
       {experience.levels.length === 0 ? <div className="emptyJourney">这段旅程还在准备中，稍后再来看看吧。</div> :
         <div className="journeyList">{experience.levels.map((level, index) => <article className={selected?.id === level.id ? "journeyCard activeJourney" : "journeyCard"} key={level.id}>
           <div className="journeyNumber">{String(level.position || index + 1).padStart(2, "0")}</div>
           <div className="journeyCopy"><span className="journeyLabel">A LITTLE SECRET</span><h3>{level.title}</h3><p>{level.teaser || "一份为你准备的小惊喜，打开后就能看到更多。"}</p></div>
-          <div className="journeyAction"><strong>{money(level.priceMinor, experience.currency || "CNY")}</strong><small className="levelPriceCaption">{level.completed ? "已完成 ♡" : "心意金额参考"}</small><button disabled={checkingLevel || (index > 0 && !experience.levels.slice(0, index).every(previous => previous.completed))} onClick={event => beginUnlock(level, event.currentTarget)}>{checkingLevel && selected?.id === level.id ? "打开中…" : level.completed ? "再次回味这一关" : index > 0 && !experience.levels.slice(0, index).every(previous => previous.completed) ? "完成前一关后解锁" : "进入互动"} <span>{level.completed ? "✓" : index > 0 && !experience.levels.slice(0, index).every(previous => previous.completed) ? "🔒" : "♡"}</span></button></div>
+          <div className="journeyAction"><strong>{level.priceMinor === 0 ? "免费" : money(level.priceMinor, experience.currency || "CNY")}</strong><small className="levelPriceCaption">{level.completed ? "已完成 ♡" : level.priceMinor === 0 ? "无需付费 · 完成前一关即可打开" : "本关解锁金额"}</small><button disabled={checkingLevel || (index > 0 && !experience.levels.slice(0, index).every(previous => previous.completed))} onClick={event => beginUnlock(level, event.currentTarget)}>{checkingLevel && selected?.id === level.id ? "打开中…" : level.completed ? "再次回味这一关" : index > 0 && !experience.levels.slice(0, index).every(previous => previous.completed) ? "完成前一关后解锁" : level.priceMinor === 0 ? "打开免费关卡" : "查看本关"} <span>{level.completed ? "✓" : index > 0 && !experience.levels.slice(0, index).every(previous => previous.completed) ? "🔒" : "♡"}</span></button></div>
         </article>)}</div>}
       <div className="journeyTotal"><span>每一关，都有一份专属的小惊喜</span><strong>慢慢打开 ♡</strong></div>
     </section>
@@ -222,8 +274,9 @@ export default function PublicExperiencePage() {
         <p className="journeyDialogEyebrow">A LITTLE SECRET FOR YOU</p>
         <h2 id="journeyDialogTitle">{selected.title}</h2>
         <p className="journeyDialogDescription" id="journeyDialogDescription">{selected.teaser || "一份为你准备的小惊喜，打开后就能看到更多。"}</p>
-        <div className="journeyDialogPrice">{money(selected.priceMinor, experience.currency || "CNY")} <span>心意参考</span></div>
+        <div className="journeyDialogPrice">{selected.priceMinor === 0 ? "免费" : money(selected.priceMinor, experience.currency || "CNY")} <span>{selected.priceMinor === 0 ? "无需支付" : "心意参考"}</span></div>
         <div className="journeyDialogStatus" aria-live="polite">{checkingLevel ? <><span className="journeySpinner" />正在为你打开这一关…</> : notice || "慢慢来，看看这份心意为你准备了什么。"}</div>
+        {paymentQrUrl && <div className="privateContentView" style={{textAlign:"center"}}><p>请使用对应支付应用扫码，并自行核对收款人、金额和备注。</p><img src={paymentQrUrl} alt="创作者提供的收款码" style={{maxWidth:240,maxHeight:240,objectFit:"contain",background:"#fff",padding:12,borderRadius:16}}/><p style={{fontSize:12,opacity:.75}}>平台无法核验此收款码的到账情况。请勿向陌生收款人转账。</p><button type="button" className="journeyDialogDone" disabled={confirmingTransfer} onClick={()=>void confirmSelfAttestedTransfer()}>{confirmingTransfer?"正在确认…":"我已按约定完成转账，继续解锁"}</button></div>}
         {privateContent && <div className="privateContentView">{privateContent}</div>}
         <div className="heartReaction journeyDialogReactions">
           <span>此刻，你想给这份心意什么回应？</span>

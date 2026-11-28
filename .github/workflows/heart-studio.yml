@@ -9,12 +9,14 @@ on:
       - 'app/**'
       - 'android/**'
       - 'db/**'
+      - 'scripts/**'
       - 'docs/**'
       - 'README.md'
       - 'package.json'
       - 'next.config.mjs'
       - 'Dockerfile'
       - 'docker-compose.yml'
+      - 'docker-compose.ci.yml'
       - '.dockerignore'
       - '.env.example'
       - 'tsconfig.json'
@@ -23,12 +25,14 @@ on:
     paths:
       - 'src/**'
       - 'db/**'
+      - 'scripts/**'
       - 'docs/**'
       - 'README.md'
       - 'package.json'
       - 'next.config.mjs'
       - 'Dockerfile'
       - 'docker-compose.yml'
+      - 'docker-compose.ci.yml'
       - '.dockerignore'
       - '.env.example'
       - 'tsconfig.json'
@@ -52,6 +56,7 @@ jobs:
           --health-retries 10
     env:
       DATABASE_URL: postgres://heart:heart_test_password@localhost:5432/heart_test
+      COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
     steps:
       - uses: actions/checkout@v4
       - name: Install PostgreSQL client
@@ -83,6 +88,18 @@ jobs:
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_journey_level_progress.sql
       - name: Test sequential journey progress and visitor isolation
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_journey_level_progress.test.sql
+      - name: Apply QR self-attested unlock migration
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_qr_self_attested_unlocks.sql
+      - name: Verify QR unlock migration is repeatable
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_qr_self_attested_unlocks.sql
+      - name: Test QR self-attested unlock constraints
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_qr_self_attested_unlocks.test.sql
+      - name: Apply free level migration
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_free_levels.sql
+      - name: Verify free level migration is repeatable
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_free_levels.sql
+      - name: Test free level constraint
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_free_levels.test.sql
       - name: Test persisted journey response constraints
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/20261128_journey_responses.test.sql
       - name: Test purchase, snapshot, duplicate-order and refund invariants
@@ -92,6 +109,12 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npx tsc --noEmit
+      - name: Test cover image decoding and normalization
+        run: node --experimental-strip-types scripts/cover-image-test.mjs
+      - name: Test fail-closed transactional email provider selection
+        run: node --experimental-strip-types scripts/email-provider-test.mjs
+      - name: Test interaction motion coverage
+        run: node scripts/interaction-motion-test.mjs
       - run: npm run build
       - name: Validate Docker Compose configuration
         env:
@@ -131,6 +154,10 @@ jobs:
         env:
           POSTGRES_PASSWORD: ci-compose-validation-password
         run: node scripts/journey-http-e2e.mjs
+      - name: Run cover upload HTTP end-to-end test
+        env:
+          POSTGRES_PASSWORD: ci-compose-validation-password
+        run: node scripts/cover-upload-http-e2e.mjs
       - name: Stop production stack
         if: always()
         env:

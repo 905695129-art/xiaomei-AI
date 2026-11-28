@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const db = requireDb();
     const rows = await db`
-      SELECT title, description
+      SELECT title, description, cover_url
       FROM experiences
       WHERE slug = ${slug} AND status = 'published'
       LIMIT 1
@@ -25,13 +25,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title: pageTitle,
       description,
+      alternates: { canonical: `/p/${encodeURIComponent(slug)}` },
       openGraph: {
         type: "website",
         title: pageTitle,
         description,
+        url: `/p/${encodeURIComponent(slug)}`,
         siteName: "Heart Studio",
+        images: rows[0].cover_url ? [{ url: String(rows[0].cover_url), alt: title }] : undefined,
       },
-      twitter: { card: "summary", title: pageTitle, description },
+      twitter: {
+        card: rows[0].cover_url ? "summary_large_image" : "summary",
+        title: pageTitle,
+        description,
+        images: rows[0].cover_url ? [String(rows[0].cover_url)] : undefined,
+      },
     };
   } catch {
     return fallback;

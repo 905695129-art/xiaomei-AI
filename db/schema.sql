@@ -31,6 +31,12 @@ CREATE TABLE IF NOT EXISTS buyer_sessions (
 );
 CREATE INDEX IF NOT EXISTS buyer_sessions_expiry_idx ON buyer_sessions(expires_at);
 
+CREATE TABLE IF NOT EXISTS creator_upload_rate_limits (
+  creator_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  window_started_at TIMESTAMPTZ NOT NULL,
+  request_count INTEGER NOT NULL CHECK (request_count >= 1 AND request_count <= 10)
+);
+
 CREATE TABLE IF NOT EXISTS experiences (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   creator_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -54,17 +60,16 @@ CREATE TABLE IF NOT EXISTS experience_levels (
   position INTEGER NOT NULL CHECK (position BETWEEN 1 AND 30),
   title TEXT NOT NULL,
   teaser TEXT NOT NULL DEFAULT '',
-  price_minor INTEGER NOT NULL CHECK (price_minor >= 1),
+  price_minor INTEGER NOT NULL CHECK (price_minor >= 0),
   private_content TEXT NOT NULL DEFAULT '',
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
--- Recreate the NOT VALID constraint idempotently. Existing legacy zero-priced
--- rows remain readable, while new inserts/updates must use a positive price.
+-- Recreate the NOT VALID constraint idempotently; zero means a free level.
 ALTER TABLE experience_levels DROP CONSTRAINT IF EXISTS experience_levels_price_positive;
 ALTER TABLE experience_levels
-  ADD CONSTRAINT experience_levels_price_positive CHECK (price_minor >= 1) NOT VALID;
+  ADD CONSTRAINT experience_levels_price_positive CHECK (price_minor >= 0) NOT VALID;
 CREATE UNIQUE INDEX IF NOT EXISTS levels_active_position_unique ON experience_levels(experience_id, position) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS levels_experience_idx ON experience_levels(experience_id, is_active, position);
 
@@ -732,3 +737,19 @@ END;
 $$;
 REVOKE ALL ON FUNCTION heart_finalize_verified_payment(UUID, UUID, TEXT, INTEGER, CHAR(3), CHAR(64)) FROM PUBLIC;
 
+
+-- Trust-based, visitor-scoped QR unlocks; never a verified payment/order.
+ALTER TABLE experiences ADD COLUMN IF NOT EXISTS payment_qr_url TEXT;
+CREATE TABLE IF NOT EXISTS journey_level_unlocks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  experience_id UUID NOT NULL REFERENCES experiences(id) ON DELETE CASCADE,
+  level_id UUID NOT NULL REFERENCES experience_levels(id) ON DELETE CASCADE,
+  buyer_ref TEXT NOT NULL,
+  confirmation_method TEXT NOT NULL CHECK (confirmation_method = 'self_attested_transfer'),
+  amount_minor_snapshot INTEGER NOT NULL CHECK (amount_minor_snapshot >= 0),
+  currency_snapshot CHAR(3) NOT NULL DEFAULT 'CNY',
+  confirmed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (level_id, buyer_ref)
+);
+CREATE INDEX IF NOT EXISTS journey_level_unlocks_buyer_idx
+  ON journey_level_unlocks(buyer_ref, experience_id, confirmed_at DESC);

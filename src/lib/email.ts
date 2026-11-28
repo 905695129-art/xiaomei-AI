@@ -6,6 +6,9 @@ type TransactionalEmailInput = {
 };
 
 function emailConfig() {
+  // Fail closed by default. Mainland production must not silently use an overseas provider.
+  const provider = process.env.EMAIL_PROVIDER || "disabled";
+  if (provider !== "resend") return null;
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
   const appUrl = process.env.APP_URL;

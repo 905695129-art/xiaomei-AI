@@ -8,6 +8,7 @@ const creatorId = randomUUID();
 const experienceId = randomUUID();
 const firstId = randomUUID();
 const secondId = randomUUID();
+const thirdId = randomUUID();
 const buyerTokens = [];
 
 function psql(statement) {
@@ -30,10 +31,11 @@ async function call(path, cookie, options = {}) {
 try {
   psql(`
     INSERT INTO users (id, display_name, role) VALUES ('${creatorId}', 'Journey HTTP CI', 'creator');
-    INSERT INTO experiences (id, creator_id, slug, title, status) VALUES ('${experienceId}', '${creatorId}', '${slug}', 'Journey HTTP CI', 'published');
+    INSERT INTO experiences (id, creator_id, slug, title, status, payment_qr_url) VALUES ('${experienceId}', '${creatorId}', '${slug}', 'Journey HTTP CI', 'published', 'https://assets.example.test/payment-qr.png');
     INSERT INTO experience_levels (id, experience_id, position, title, teaser, price_minor, private_content) VALUES
       ('${firstId}', '${experienceId}', 1, '第一关', '先完成这一关', 100, '第一关专属惊喜'),
-      ('${secondId}', '${experienceId}', 2, '第二关', '完成第一关后出现', 200, '第二关专属惊喜');
+      ('${secondId}', '${experienceId}', 2, '第二关', '完成第一关后出现', 200, '第二关专属惊喜'),
+      ('${thirdId}', '${experienceId}', 3, '免费关卡', '这一关无需付费', 0, '免费关卡专属惊喜');
   `);
 
   const session1 = await call("/api/buyer/session", null, { method: "POST", headers: { "sec-fetch-site": "same-origin" } });
@@ -43,16 +45,26 @@ try {
   const listing = await call("/api/experiences/" + slug, cookie1);
   assert.equal(listing.status, 200);
   const listingJson = await listing.json();
-  assert.equal(listingJson.experience.levels.length, 2);
+  assert.equal(listingJson.experience.levels.length, 3);
   assert.equal(listingJson.experience.levels[0].completed, false);
+
+  const lockedFreeGet = await call("/api/experiences/" + slug + "/levels/" + thirdId, cookie1);
+  assert.equal(lockedFreeGet.status, 409, "free level must still respect sequential progression");
+  assert.equal((await lockedFreeGet.json()).error, "LEVEL_LOCKED");
 
   const lockedGet = await call("/api/experiences/" + slug + "/levels/" + secondId, cookie1);
   assert.equal(lockedGet.status, 409, "direct URL must not bypass sequential lock");
   assert.equal((await lockedGet.json()).error, "LEVEL_LOCKED");
 
   const firstGet = await call("/api/experiences/" + slug + "/levels/" + firstId, cookie1);
-  assert.equal(firstGet.status, 200);
-  assert.equal((await firstGet.json()).content, "第一关专属惊喜");
+  assert.equal(firstGet.status, 402, "priced level must require explicit self-attested transfer");
+  assert.equal((await firstGet.json()).error, "PAYMENT_CONFIRMATION_REQUIRED");
+  const confirmFirst = await call("/api/experiences/" + slug + "/levels/" + firstId + "/confirm-payment", cookie1, { method: "POST", headers: { "sec-fetch-site": "same-origin" } });
+  assert.equal(confirmFirst.status, 200);
+  assert.equal((await confirmFirst.json()).confirmationMethod, "self_attested_transfer");
+  const firstUnlocked = await call("/api/experiences/" + slug + "/levels/" + firstId, cookie1);
+  assert.equal(firstUnlocked.status, 200);
+  assert.equal((await firstUnlocked.json()).content, "第一关专属惊喜");
 
   const lockedPost = await call("/api/experiences/" + slug + "/responses", cookie1, {
     method: "POST", headers: { "sec-fetch-site": "same-origin", "content-type": "application/json" },
@@ -68,8 +80,42 @@ try {
   assert.equal((await submitted.json()).ok, true);
 
   const secondGet = await call("/api/experiences/" + slug + "/levels/" + secondId, cookie1);
-  assert.equal(secondGet.status, 200, "level two should unlock after response");
-  assert.equal((await secondGet.json()).content, "第二关专属惊喜");
+  assert.equal(secondGet.status, 402, "level two must require its own independent unlock");
+  const confirmSecond = await call("/api/experiences/" + slug + "/levels/" + secondId + "/confirm-payment", cookie1, { method: "POST", headers: { "sec-fetch-site": "same-origin" } });
+  assert.equal(confirmSecond.status, 200);
+  const secondUnlocked = await call("/api/experiences/" + slug + "/levels/" + secondId, cookie1);
+  assert.equal(secondUnlocked.status, 200, "level two should unlock after its own confirmation");
+  assert.equal((await secondUnlocked.json()).content, "第二关专属惊喜");
+
+  const secondResponse = await call("/api/experiences/" + slug + "/responses", cookie1, {
+    method: "POST", headers: { "sec-fetch-site": "same-origin", "content-type": "application/json" },
+    body: JSON.stringify({ levelId: secondId, reaction: "hug", message: "第二关完成" })
+  });
+  assert.equal(secondResponse.status, 200);
+  const freeGet = await call("/api/experiences/" + slug + "/levels/" + thirdId, cookie1);
+  assert.equal(freeGet.status, 200, "free level should open after prior level completion without QR payment");
+  assert.equal((await freeGet.json()).content, "免费关卡专属惊喜");
+  const freeResponse = await call("/api/experiences/" + slug + "/responses", cookie1, {
+    method: "POST", headers: { "sec-fetch-site": "same-origin", "content-type": "application/json" },
+    body: JSON.stringify({ levelId: thirdId, reaction: "heart", message: "免费关卡也可以互动" })
+  });
+  assert.equal(freeResponse.status, 200, "free level must accept the same interaction after opening");
+  const afterFreeResponse = await call("/api/experiences/" + slug, cookie1);
+  assert.equal((await afterFreeResponse.json()).experience.levels[2].completed, true);
+  const freeConfirm = await call("/api/experiences/" + slug + "/levels/" + thirdId + "/confirm-payment", cookie1, { method: "POST", headers: { "sec-fetch-site": "same-origin" } });
+  assert.equal(freeConfirm.status, 409, "free levels must not create transfer confirmations");
+  assert.equal((await freeConfirm.json()).error, "FREE_LEVEL_DOES_NOT_REQUIRE_PAYMENT");
+
+  psql(`
+    DO $$ BEGIN
+      IF EXISTS (SELECT 1 FROM orders WHERE level_id = '${thirdId}') THEN
+        RAISE EXCEPTION 'FREE_LEVEL_CREATED_ORDER';
+      END IF;
+      IF EXISTS (SELECT 1 FROM journey_level_unlocks WHERE level_id = '${thirdId}') THEN
+        RAISE EXCEPTION 'FREE_LEVEL_CREATED_PAYMENT_UNLOCK';
+      END IF;
+    END $$;
+  `);
 
   const refreshed = await call("/api/experiences/" + slug, cookie1);
   assert.equal((await refreshed.json()).experience.levels[0].completed, true);
@@ -80,9 +126,11 @@ try {
   const otherListing = await call("/api/experiences/" + slug, cookie2);
   assert.equal((await otherListing.json()).experience.levels[0].completed, false, "progress must be visitor-scoped");
   const otherSecond = await call("/api/experiences/" + slug + "/levels/" + secondId, cookie2);
-  assert.equal(otherSecond.status, 409, "another visitor must not inherit unlocked levels");
+  assert.equal(otherSecond.status, 409, "another visitor must not inherit sequential progress");
+  const otherFirst = await call("/api/experiences/" + slug + "/levels/" + firstId, cookie2);
+  assert.equal(otherFirst.status, 402, "another visitor must not inherit self-attested payment unlocks");
 
-  console.log("PASS: session, direct-link lock, interaction, sequential unlock, progress read, visitor isolation.");
+  console.log("PASS: session, direct-link lock, paid and free sequential unlock, interaction, progress read, visitor isolation.");
 } finally {
   const tokenHashes = buyerTokens.map(token => createHash("sha256").update(token).digest("hex"));
   const deleteSessions = tokenHashes.length

@@ -41,6 +41,15 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
          JOIN experience_levels l ON l.experience_id = e.id AND l.is_active = TRUE
          JOIN buyer_sessions b ON b.token_hash = $3 AND b.expires_at > now()
          WHERE e.slug = $1 AND e.status = 'published' AND l.id = $2::uuid
+           AND (
+             EXISTS (SELECT 1 FROM journey_level_unlocks unlocks WHERE unlocks.level_id = l.id AND unlocks.buyer_ref = b.buyer_ref)
+             OR l.price_minor = 0
+             OR EXISTS (
+               SELECT 1 FROM entitlements ent JOIN orders o ON o.id = ent.order_id
+               WHERE ent.level_id = l.id AND ent.buyer_ref = b.buyer_ref
+                 AND o.status = 'paid' AND o.buyer_ref = b.buyer_ref AND o.level_id = l.id
+             )
+           )
            AND NOT EXISTS (
              SELECT 1 FROM experience_levels previous
              WHERE previous.experience_id = l.experience_id
